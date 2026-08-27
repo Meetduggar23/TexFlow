@@ -18,10 +18,10 @@ model User {
   updatedAt     DateTime  @updatedAt
   deletedAt     DateTime?
 
-  projects      Project[]
   ownedProjects Project[] @relation("ProjectOwner")
   memberships   ProjectMember[]
   comments      Comment[]
+  commentReplies CommentReply[]
   versions      DocumentVersion[]
   compilations  Compilation[]
   notifications Notification[]

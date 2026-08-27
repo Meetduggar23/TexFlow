@@ -4,6 +4,7 @@ import { useAppDispatch } from '../store/hooks';
 import { createProject } from '../store/projectSlice';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import AuthModal from './AuthModal';
 
 interface CreateProjectModalProps {
   onClose: () => void;
@@ -15,6 +16,22 @@ export default function CreateProjectModal({ onClose }: CreateProjectModalProps)
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    return (
+      <>
+        <AuthModal
+          onClose={onClose}
+          onSuccess={() => {
+            setShowAuthModal(false);
+          }}
+        />
+      </>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

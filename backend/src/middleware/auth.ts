@@ -25,6 +25,6 @@ export function authenticate(req: AuthRequest, res: Response, next: NextFunction
 
 export function generateToken(userId: string): string {
   return jwt.sign({ userId }, process.env.JWT_SECRET || 'secret', {
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d'
+    expiresIn: '7d' as any
   });
 }

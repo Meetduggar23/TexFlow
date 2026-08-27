@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { fetchProject, fetchFiles, setCurrentFile, clearCurrentProject, updateFileInTree, updateFileContent } from '../store/projectSlice';
+import { fetchProject, fetchFiles, setCurrentFile, clearCurrentProject, updateFileInTree, updateFileContent, createFile } from '../store/projectSlice';
 import { setContent, compileProject, togglePdf, setSplitRatio } from '../store/editorSlice';
 import { setSidebarOpen } from '../store/uiSlice';
 import EditorHeader from '../components/EditorHeader';
@@ -59,10 +59,10 @@ export default function Editor() {
 
   useEffect(() => {
     if (!socket) return;
-    socket.on('file:updated', (data: { fileId: string; content: string }) => {
+    socket.on('file-updated', (data: { fileId: string; content: string }) => {
       dispatch(updateFileInTree(data));
     });
-    return () => { socket.off('file:updated'); };
+    return () => { socket.off('file-updated'); };
   }, [socket, dispatch]);
 
   useEffect(() => {
@@ -86,10 +86,11 @@ export default function Editor() {
 
   const handleContentChange = useCallback((newContent: string) => {
     dispatch(setContent(newContent));
-    if (socket && currentFile) {
-      socket.emit('file:edit', { fileId: currentFile.id, content: newContent });
+    if (socket && currentFile && projectId) {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      socket.emit('file-update', { projectId, fileId: currentFile.id, content: newContent, userId: user.id });
     }
-  }, [dispatch, socket, currentFile]);
+  }, [dispatch, socket, currentFile, projectId]);
 
   const handleSave = useCallback(async () => {
     if (!currentFile) return;
@@ -112,7 +113,10 @@ export default function Editor() {
   const handleDownloadProject = useCallback(async () => {
     if (!currentProject) return;
     try {
-      const res = await fetch(`/api/files/project/${projectId}`);
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/files/project/${projectId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const data = await res.json();
       const zip = new JSZip();
       for (const file of (data.files || [])) {
@@ -133,16 +137,23 @@ export default function Editor() {
     }
   }, [currentFile, content, dispatch]);
 
-  const handleNewFile = useCallback(() => {
+  const handleNewFile = useCallback(async () => {
     const name = prompt('Enter file name:');
-    if (!name) return;
-    dispatch(updateFileContent({ fileId: '', content: '' }) as any);
-  }, [dispatch]);
+    if (!name || !projectId) return;
+    try {
+      await dispatch(createFile({ projectId, name, parentId: null, type: 'file' })).unwrap();
+      toast.success('File created');
+    } catch { toast.error('Failed to create file'); }
+  }, [dispatch, projectId]);
 
-  const handleNewFolder = useCallback(() => {
+  const handleNewFolder = useCallback(async () => {
     const name = prompt('Enter folder name:');
-    if (!name) return;
-  }, []);
+    if (!name || !projectId) return;
+    try {
+      await dispatch(createFile({ projectId, name, parentId: null, type: 'folder' })).unwrap();
+      toast.success('Folder created');
+    } catch { toast.error('Failed to create folder'); }
+  }, [dispatch, projectId]);
 
   if (!currentProject) {
     return (

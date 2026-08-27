@@ -5,13 +5,13 @@ import LoadingScreen from './components/LoadingScreen';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
-import Dashboard from './pages/Dashboard';
 import DashboardLayout from './pages/DashboardLayout';
 import AllProjects from './pages/AllProjects';
 import TemplateBrowser from './pages/TemplateBrowser';
 import TrashPage from './pages/TrashPage';
 import Settings from './pages/Settings';
 import Editor from './pages/Editor';
+import RequireAuth from './components/RequireAuth';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -37,7 +37,8 @@ export default function App() {
         }}
       />
       <Routes>
-        <Route path="/" element={<Landing />} />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/landing" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/templates" element={<TemplateBrowser />} />
@@ -49,8 +50,8 @@ export default function App() {
           <Route path="shared" element={<AllProjects />} />
           <Route path="trash" element={<TrashPage />} />
         </Route>
-        <Route path="/project/:projectId" element={<Editor />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/project/:projectId" element={<RequireAuth><Editor /></RequireAuth>} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </>
   );

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   FileText, Edit3, Eye, Users, MessageSquare, History, BookOpen, 
-  Share2, Cloud, Zap, ArrowRight, ChevronRight, Star, Check,
+  Share2, Cloud, Zap, ArrowRight, ChevronRight,
   Menu, X, Github, Twitter, Mail
 } from 'lucide-react';
 
@@ -37,7 +37,6 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-dark-900">
-      {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 glass">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -50,12 +49,11 @@ export default function Landing() {
               <a href="#features" className="text-sm text-slate-300 hover:text-white transition-colors">Features</a>
               <a href="#templates" className="text-sm text-slate-300 hover:text-white transition-colors">Templates</a>
               <a href="#how-it-works" className="text-sm text-slate-300 hover:text-white transition-colors">How It Works</a>
-              <a href="#pricing" className="text-sm text-slate-300 hover:text-white transition-colors">Pricing</a>
             </div>
 
             <div className="hidden md:flex items-center gap-3">
               <button onClick={() => navigate('/login')} className="btn-ghost text-sm">Log in</button>
-              <button onClick={() => navigate('/signup')} className="btn-primary text-sm">Sign up free</button>
+              <button onClick={() => navigate('/dashboard')} className="btn-primary text-sm">Get Started</button>
             </div>
 
             <button 
@@ -73,16 +71,14 @@ export default function Landing() {
               <a href="#features" className="block text-slate-300 hover:text-white py-2">Features</a>
               <a href="#templates" className="block text-slate-300 hover:text-white py-2">Templates</a>
               <a href="#how-it-works" className="block text-slate-300 hover:text-white py-2">How It Works</a>
-              <a href="#pricing" className="block text-slate-300 hover:text-white py-2">Pricing</a>
               <hr className="border-texflow-800" />
               <button onClick={() => navigate('/login')} className="block w-full text-left text-slate-300 hover:text-white py-2">Log in</button>
-              <button onClick={() => navigate('/signup')} className="block w-full btn-primary text-center">Sign up free</button>
+              <button onClick={() => navigate('/dashboard')} className="block w-full btn-primary text-center">Get Started</button>
             </div>
           </div>
         )}
       </nav>
 
-      {/* Hero Section */}
       <section className="relative pt-32 pb-20 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-texflow-900/50 to-dark-900" />
         <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-texflow-600/10 rounded-full blur-[120px]" />
@@ -91,7 +87,7 @@ export default function Landing() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-texflow-700 bg-texflow-900/50 text-texflow-300 text-sm mb-8 animate-fade-in">
             <Zap size={14} />
-            Fast LaTeX compilation in the cloud
+            Free LaTeX writing platform
           </div>
           
           <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-6 leading-tight animate-slide-up">
@@ -101,19 +97,18 @@ export default function Landing() {
           
           <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 animate-slide-up" style={{ animationDelay: '0.1s' }}>
             The complete online LaTeX workspace for research papers, theses, reports, 
-            CVs, and academic documents. Write professionally, compile instantly.
+            CVs, and academic documents. Write professionally, compile instantly. Free to use.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-            <button onClick={() => navigate('/signup')} className="btn-primary text-lg px-8 py-3 flex items-center gap-2">
+            <button onClick={() => navigate('/dashboard')} className="btn-primary text-lg px-8 py-3 flex items-center gap-2">
               Start Writing <ArrowRight size={18} />
             </button>
-            <button onClick={() => navigate('/signup')} className="btn-secondary text-lg px-8 py-3 flex items-center gap-2">
+            <button onClick={() => navigate('/dashboard')} className="btn-secondary text-lg px-8 py-3 flex items-center gap-2">
               Explore Templates <ChevronRight size={18} />
             </button>
           </div>
 
-          {/* Editor Preview */}
           <div className="mt-16 mx-auto max-w-5xl animate-slide-up" style={{ animationDelay: '0.3s' }}>
             <div className="rounded-xl overflow-hidden border border-texflow-800 shadow-2xl shadow-texflow-900/50">
               <div className="flex items-center gap-2 px-4 py-2 bg-dark-800 border-b border-texflow-800">
@@ -141,7 +136,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Features Section */}
       <section id="features" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -149,7 +143,7 @@ export default function Landing() {
               Everything you need for <span className="gradient-text">LaTeX</span>
             </h2>
             <p className="text-slate-400 max-w-2xl mx-auto">
-              A complete platform for writing, compiling, and collaborating on LaTeX documents.
+              A complete platform for writing, compiling, and collaborating on LaTeX documents. Free to use.
             </p>
           </div>
           
@@ -168,7 +162,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* How It Works */}
       <section id="how-it-works" className="py-20 bg-dark-800/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -190,7 +183,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Templates Section */}
       <section id="templates" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
@@ -210,77 +202,20 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section id="pricing" className="py-20 bg-dark-800/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Simple <span className="gradient-text">pricing</span>
-            </h2>
-            <p className="text-slate-400">Start for free. Upgrade when you need more.</p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <div className="card">
-              <h3 className="text-lg font-bold text-white mb-2">Free</h3>
-              <div className="text-3xl font-bold text-white mb-4">$0<span className="text-sm font-normal text-slate-400">/month</span></div>
-              <ul className="space-y-2 mb-6">
-                <li className="flex items-center gap-2 text-sm text-slate-300"><Check size={16} className="text-texflow-400" /> Unlimited projects</li>
-                <li className="flex items-center gap-2 text-sm text-slate-300"><Check size={16} className="text-texflow-400" /> pdfLaTeX compilation</li>
-                <li className="flex items-center gap-2 text-sm text-slate-300"><Check size={16} className="text-texflow-400" /> 1 collaborator</li>
-                <li className="flex items-center gap-2 text-sm text-slate-300"><Check size={16} className="text-texflow-400" /> 50MB storage</li>
-              </ul>
-              <button onClick={() => navigate('/signup')} className="btn-secondary w-full">Get Started</button>
-            </div>
-            
-            <div className="card relative" style={{ borderColor: '#720455', boxShadow: '0 0 30px rgba(114,4,85,0.2)' }}>
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-xs font-medium text-white" style={{ background: 'linear-gradient(135deg, #720455, #910A67)' }}>
-                Popular
-              </div>
-              <h3 className="text-lg font-bold text-white mb-2">Pro</h3>
-              <div className="text-3xl font-bold text-white mb-4">$12<span className="text-sm font-normal text-slate-400">/month</span></div>
-              <ul className="space-y-2 mb-6">
-                <li className="flex items-center gap-2 text-sm text-slate-300"><Check size={16} className="text-texflow-400" /> Everything in Free</li>
-                <li className="flex items-center gap-2 text-sm text-slate-300"><Check size={16} className="text-texflow-400" /> All compilers (XeLaTeX, LuaLaTeX)</li>
-                <li className="flex items-center gap-2 text-sm text-slate-300"><Check size={16} className="text-texflow-400" /> 10 collaborators</li>
-                <li className="flex items-center gap-2 text-sm text-slate-300"><Check size={16} className="text-texflow-400" /> 5GB storage</li>
-                <li className="flex items-center gap-2 text-sm text-slate-300"><Check size={16} className="text-texflow-400" /> Priority compilation</li>
-              </ul>
-              <button onClick={() => navigate('/signup')} className="btn-primary w-full">Start Free Trial</button>
-            </div>
-            
-            <div className="card">
-              <h3 className="text-lg font-bold text-white mb-2">Team</h3>
-              <div className="text-3xl font-bold text-white mb-4">$29<span className="text-sm font-normal text-slate-400">/month</span></div>
-              <ul className="space-y-2 mb-6">
-                <li className="flex items-center gap-2 text-sm text-slate-300"><Check size={16} className="text-texflow-400" /> Everything in Pro</li>
-                <li className="flex items-center gap-2 text-sm text-slate-300"><Check size={16} className="text-texflow-400" /> Unlimited collaborators</li>
-                <li className="flex items-center gap-2 text-sm text-slate-300"><Check size={16} className="text-texflow-400" /> 50GB storage</li>
-                <li className="flex items-center gap-2 text-sm text-slate-300"><Check size={16} className="text-texflow-400" /> Admin panel</li>
-                <li className="flex items-center gap-2 text-sm text-slate-300"><Check size={16} className="text-texflow-400" /> Priority support</li>
-              </ul>
-              <button onClick={() => navigate('/signup')} className="btn-secondary w-full">Contact Sales</button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             Start your next document with <span className="gradient-text">TexFlow</span>
           </h2>
           <p className="text-slate-400 mb-8">
-            Join thousands of researchers, students, and writers using TexFlow every day.
+            Join thousands of researchers, students, and writers using TexFlow every day. It's free.
           </p>
-          <button onClick={() => navigate('/signup')} className="btn-primary text-lg px-8 py-3">
+          <button onClick={() => navigate('/dashboard')} className="btn-primary text-lg px-8 py-3">
             Get Started for Free
           </button>
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="border-t border-texflow-800 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -292,7 +227,6 @@ export default function Landing() {
             <div className="flex items-center gap-6 text-sm text-slate-400">
               <a href="#features" className="hover:text-white transition-colors">Features</a>
               <a href="#templates" className="hover:text-white transition-colors">Templates</a>
-              <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
               <a href="#" className="hover:text-white transition-colors">Docs</a>
             </div>
             
@@ -304,7 +238,7 @@ export default function Landing() {
           </div>
           
           <div className="text-center text-xs text-slate-500 mt-8">
-            © 2024 TexFlow. All rights reserved.
+            TexFlow - Free Collaborative LaTeX Platform
           </div>
         </div>
       </footer>

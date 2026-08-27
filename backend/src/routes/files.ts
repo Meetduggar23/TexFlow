@@ -19,7 +19,11 @@ router.get('/project/:projectId', async (req: AuthRequest, res: Response) => {
       where: { projectId: req.params.projectId },
       orderBy: { path: 'asc' }
     });
-    res.json({ files });
+    const folders = await prisma.folder.findMany({
+      where: { projectId: req.params.projectId },
+      orderBy: { path: 'asc' }
+    });
+    res.json({ files, folders });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }

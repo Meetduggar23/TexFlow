@@ -26,7 +26,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 
 app.use('/api/auth', authRoutes);
-app.use('/api/projects', authenticate, projectRoutes);
+app.use('/api/projects', projectRoutes);
 app.use('/api/files', authenticate, fileRoutes);
 app.use('/api/compile', authenticate, compileRoutes);
 app.use('/api/comments', authenticate, commentRoutes);

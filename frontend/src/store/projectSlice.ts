@@ -79,9 +79,9 @@ export const fetchFiles = createAsyncThunk(
   'project/fetchFiles',
   async (projectId: string) => {
     const token = localStorage.getItem('token');
-    const response = await fetch(`${API}/files/project/${projectId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const response = await fetch(`${API}/files/project/${projectId}`, { headers });
     if (!response.ok) throw new Error('Failed to fetch files');
     const data = await response.json();
     return data.files || data;
@@ -168,7 +168,7 @@ const projectSlice = createSlice({
         return false;
       };
       updateNode(state.files);
-      if (state.currentFile?.id === fileId) {
+      if (state.currentFile?.id === fileId && state.currentFile) {
         state.currentFile.content = content;
       }
     },
@@ -197,18 +197,45 @@ const projectSlice = createSlice({
         state.projects = state.projects.filter(p => p.id !== action.payload);
       })
       .addCase(fetchFiles.fulfilled, (state, action) => {
-        const files = action.payload;
-        if (Array.isArray(files)) {
-          state.files = files.map((f: any) => ({
-            id: f.id,
-            name: f.name,
-            type: (f.mimeType?.includes('folder') ? 'folder' : 'file') as 'file' | 'folder',
-            content: f.content,
-            parentId: f.folderId || null,
-            createdAt: f.createdAt,
-            updatedAt: f.updatedAt,
-          }));
+        const payload = action.payload;
+        const rawFiles = Array.isArray(payload) ? payload : (payload.files || []);
+        const rawFolders = Array.isArray(payload) ? [] : (payload.folders || []);
+
+        const folderNodes: FileNode[] = rawFolders.map((f: any) => ({
+          id: f.id,
+          name: f.name,
+          type: 'folder' as const,
+          parentId: f.parentId || null,
+          children: [],
+          createdAt: f.createdAt,
+          updatedAt: f.updatedAt,
+        }));
+
+        const fileNodes: FileNode[] = rawFiles.map((f: any) => ({
+          id: f.id,
+          name: f.name,
+          type: 'file' as const,
+          content: f.content,
+          parentId: f.folderId || null,
+          createdAt: f.createdAt,
+          updatedAt: f.updatedAt,
+        }));
+
+        const allNodes = [...folderNodes, ...fileNodes];
+        const nodeMap = new Map<string, FileNode>();
+        allNodes.forEach(n => nodeMap.set(n.id, n));
+
+        const roots: FileNode[] = [];
+        for (const node of allNodes) {
+          if (node.parentId && nodeMap.has(node.parentId)) {
+            const parent = nodeMap.get(node.parentId)!;
+            if (!parent.children) parent.children = [];
+            parent.children.push(node);
+          } else {
+            roots.push(node);
+          }
         }
+        state.files = roots;
       })
       .addCase(updateFileContent.fulfilled, (state, action) => {
         const updated = action.payload;

@@ -9,7 +9,10 @@ export default function TrashPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/projects?trashed=true').then(r => r.json()).then(data => {
+    const token = localStorage.getItem('token');
+    fetch('/api/projects?trashed=true', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    }).then(r => r.json()).then(data => {
       setProjects(data.projects || []);
       setLoading(false);
     }).catch(() => setLoading(false));
@@ -17,7 +20,11 @@ export default function TrashPage() {
 
   const handleRestore = async (id: string) => {
     try {
-      await fetch(`/api/projects/${id}/restore`, { method: 'POST' });
+      const token = localStorage.getItem('token');
+      await fetch(`/api/projects/${id}/restore`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setProjects(p => p.filter(proj => proj.id !== id));
       toast.success('Project restored');
     } catch { toast.error('Failed to restore'); }
@@ -26,7 +33,11 @@ export default function TrashPage() {
   const handlePermanentDelete = async (id: string) => {
     if (!window.confirm('Permanently delete this project? This cannot be undone.')) return;
     try {
-      await fetch(`/api/projects/${id}`, { method: 'DELETE' });
+      const token = localStorage.getItem('token');
+      await fetch(`/api/projects/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setProjects(p => p.filter(proj => proj.id !== id));
       toast.success('Project permanently deleted');
     } catch { toast.error('Failed to delete'); }

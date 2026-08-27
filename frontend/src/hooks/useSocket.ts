@@ -10,12 +10,12 @@ export default function useSocket(projectId: string | undefined) {
 
     const newSocket = io({
       path: '/socket.io',
-      query: { projectId },
       transports: ['websocket', 'polling'],
     });
 
     newSocket.on('connect', () => {
       console.log('Connected to server');
+      newSocket.emit('join-project', projectId);
     });
 
     newSocket.on('disconnect', () => {

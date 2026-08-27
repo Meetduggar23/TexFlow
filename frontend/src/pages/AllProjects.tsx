@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, FileText, Trash2, Clock, Users, Search, Upload, BookOpen, Star, MoreVertical, Download } from 'lucide-react';
+import { Plus, FileText, Trash2, Download, Search, File, Image, MoreHorizontal } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { fetchProjects, deleteProject } from '../store/projectSlice';
 import CreateProjectModal from '../components/CreateProjectModal';
+import AuthModal from '../components/AuthModal';
 import toast from 'react-hot-toast';
 
 export default function AllProjects() {
@@ -11,14 +12,21 @@ export default function AllProjects() {
   const navigate = useNavigate();
   const { projects, loading } = useAppSelector(state => state.project);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'updatedAt' | 'name' | 'createdAt'>('updatedAt');
-  const [filter, setFilter] = useState<'all' | 'owned' | 'shared' | 'favorites'>('all');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  useEffect(() => { dispatch(fetchProjects()); }, [dispatch]);
+  const token = localStorage.getItem('token');
+
+  useEffect(() => {
+    const controller = new AbortController();
+    dispatch(fetchProjects());
+    return () => controller.abort();
+  }, [dispatch]);
 
   const handleDelete = async (e: React.MouseEvent, projectId: string) => {
     e.stopPropagation();
+    if (!token) { setShowAuthModal(true); return; }
     if (window.confirm('Move this project to trash?')) {
       try {
         await dispatch(deleteProject(projectId)).unwrap();
@@ -27,99 +35,208 @@ export default function AllProjects() {
     }
   };
 
-  const handleToggleFavorite = async (e: React.MouseEvent, projectId: string) => {
+  const handleNewProject = () => {
+    if (!token) { setShowAuthModal(true); return; }
+    setShowCreateModal(true);
+  };
+
+  const handleOpenProject = (projectId: string) => {
+    if (!token) { setShowAuthModal(true); return; }
+    navigate(`/project/${projectId}`);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === filteredProjects.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredProjects.map(p => p.id)));
+    }
+  };
+
+  const handleSelectOne = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    try {
-      await fetch(`/api/projects/${projectId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isFavorite: true }),
-      });
-      dispatch(fetchProjects());
-    } catch { toast.error('Failed'); }
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setSelectedIds(next);
   };
 
   const filteredProjects = projects
-    .filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a, b) => {
-      if (sortBy === 'name') return a.name.localeCompare(b.name);
-      return new Date(b[sortBy]).getTime() - new Date(a[sortBy]).getTime();
-    });
+    .filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+  const getFileIcon = (name: string) => {
+    const ext = name.split('.').pop()?.toLowerCase();
+    if (ext === 'tex') return <FileText size={14} className="text-texflow-400" />;
+    if (ext === 'bib') return <File size={14} className="text-green-400" />;
+    if (['png', 'jpg', 'jpeg', 'svg'].includes(ext || '')) return <Image size={14} className="text-blue-400" />;
+    return <FileText size={14} className="text-slate-400" />;
+  };
+
+  const formatTimeAgo = (date: string) => {
+    const now = new Date();
+    const d = new Date(date);
+    const diffMs = now.getTime() - d.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} minutes ago`;
+    if (diffHours < 24) return `${diffHours} hours ago`;
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 30) return `${diffDays} days ago`;
+    return d.toLocaleDateString();
+  };
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-white">My Projects</h1>
-          <p className="text-slate-400 mt-1">{projects.length} project{projects.length !== 1 ? 's' : ''}</p>
+    <div className="h-full flex flex-col" style={{ background: '#0a0c3d' }}>
+      <div className="px-6 pt-6 pb-4">
+        <div className="flex items-center justify-between mb-5">
+          <h1 className="text-2xl font-bold text-white">All projects</h1>
+          <button onClick={handleNewProject} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-all" style={{ background: 'linear-gradient(135deg, #720455, #910A67)' }}>
+            <Plus size={16} />
+            New project
+          </button>
         </div>
-        <div className="flex items-center gap-2">
-          <button className="btn-secondary flex items-center gap-2 text-sm">
-            <Upload size={16} /> Upload
-          </button>
-          <button className="btn-secondary flex items-center gap-2 text-sm" onClick={() => navigate('/templates')}>
-            <BookOpen size={16} /> Templates
-          </button>
-          <button onClick={() => setShowCreateModal(true)} className="btn-primary flex items-center gap-2 text-sm">
-            <Plus size={16} /> New Project
-          </button>
+
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+          <input
+            type="text"
+            placeholder="Search in all projects..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 text-sm rounded-lg transition-all focus:outline-none focus:ring-2"
+            style={{ background: '#030637', border: '1px solid #3C0753', color: '#f1f5f9' }}
+          />
         </div>
       </div>
 
-      <div className="flex items-center gap-4 mb-6">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-          <input type="text" placeholder="Search projects..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="input-field w-full pl-10" />
-        </div>
-        <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)} className="input-field text-sm">
-          <option value="updatedAt">Recently Modified</option>
-          <option value="name">Name</option>
-          <option value="createdAt">Created Date</option>
-        </select>
-        <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#0a0c3d', border: '1px solid #3C0753' }}>
-          {(['all', 'owned', 'shared', 'favorites'] as const).map(f => (
-            <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 text-xs font-medium rounded transition-colors capitalize ${filter === f ? 'text-white' : 'text-slate-400 hover:text-white'}`} style={filter === f ? { background: 'linear-gradient(135deg, #720455, #910A67)' } : {}}>
-              {f}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-2 border-texflow-500 border-t-transparent" /></div>
-      ) : filteredProjects.length === 0 ? (
-        <div className="text-center py-20">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(114,4,85,0.2), rgba(145,10,103,0.2))' }}><FileText className="text-texflow-400" size={28} /></div>
-          <h3 className="text-lg font-medium text-slate-300 mb-2">{searchQuery ? 'No projects found' : 'No projects yet'}</h3>
-          <p className="text-slate-400 mb-6">{searchQuery ? 'Try a different search term' : 'Create your first LaTeX project to get started'}</p>
-          {!searchQuery && <button onClick={() => setShowCreateModal(true)} className="btn-primary">Create Project</button>}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredProjects.map((project) => (
-            <div key={project.id} onClick={() => navigate(`/project/${project.id}`)} className="card hover:translate-y-[-2px] cursor-pointer group relative">
-              <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onClick={(e) => { e.stopPropagation(); }} className="p-1 hover:bg-dark-700 rounded transition-colors"><Download size={14} className="text-slate-400" /></button>
-                <button onClick={(e) => handleDelete(e, project.id)} className="p-1 hover:bg-dark-700 rounded transition-colors"><Trash2 size={14} className="text-slate-400 hover:text-red-400" /></button>
-              </div>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, rgba(114,4,85,0.3), rgba(145,10,103,0.3))' }}>
-                  <FileText className="text-texflow-400" size={20} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-white group-hover:text-texflow-300 transition-colors truncate">{project.name}</h3>
-                  {project.description && <p className="text-sm text-slate-400 line-clamp-1">{project.description}</p>}
-                </div>
-              </div>
-              <div className="flex items-center justify-between text-xs text-slate-400">
-                <span className="flex items-center gap-1"><Clock size={12} />{new Date(project.updatedAt).toLocaleDateString()}</span>
-                <span className="flex items-center gap-1"><Users size={12} />{project.collaborators?.length || 1}</span>
-              </div>
+      <div className="flex-1 overflow-auto px-6 pb-4">
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-texflow-500 border-t-transparent" />
+          </div>
+        ) : filteredProjects.length === 0 ? (
+          <div className="text-center py-20">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(114,4,85,0.2), rgba(145,10,103,0.2))' }}>
+              <FileText className="text-texflow-400" size={28} />
             </div>
-          ))}
+            <h3 className="text-lg font-medium text-slate-300 mb-2">
+              {searchQuery ? 'No projects found' : 'No projects yet'}
+            </h3>
+            <p className="text-slate-400 mb-6">
+              {searchQuery ? 'Try a different search term' : 'Create your first LaTeX project to get started'}
+            </p>
+            {!searchQuery && <button onClick={handleNewProject} className="btn-primary">Create Project</button>}
+          </div>
+        ) : (
+          <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #3C0753' }}>
+            <table className="w-full">
+              <thead>
+                <tr style={{ background: '#030637' }}>
+                  <th className="w-10 px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.size === filteredProjects.length && filteredProjects.length > 0}
+                      onChange={handleSelectAll}
+                      className="w-4 h-4 rounded accent-texflow-500 cursor-pointer"
+                    />
+                  </th>
+                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-slate-400">Title</th>
+                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-slate-400 w-32">Owner</th>
+                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-slate-400 w-48">Last modified</th>
+                  <th className="text-right px-4 py-3 text-[13px] font-semibold text-slate-400 w-40">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredProjects.map((project) => (
+                  <tr
+                    key={project.id}
+                    onClick={() => handleOpenProject(project.id)}
+                    className="cursor-pointer transition-colors hover:bg-dark-700/30"
+                    style={{ borderTop: '1px solid #3C0753' }}
+                  >
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(project.id)}
+                        onClick={(e) => handleSelectOne(e, project.id)}
+                        onChange={() => {}}
+                        className="w-4 h-4 rounded accent-texflow-500 cursor-pointer"
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2.5">
+                        <FileText size={16} className="text-texflow-400 flex-shrink-0" />
+                        <span className="text-sm font-medium text-white hover:text-texflow-300 transition-colors truncate">
+                          {project.name}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-sm text-slate-400">
+                        {project.owner?.name || 'You'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-sm text-slate-400">
+                        {formatTimeAgo(project.updatedAt)} by {project.owner?.name || 'You'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleOpenProject(project.id); }}
+                          className="p-1.5 rounded hover:bg-dark-600 transition-colors"
+                          title="Open"
+                        >
+                          <FileText size={14} className="text-slate-400" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleOpenProject(project.id); }}
+                          className="p-1.5 rounded hover:bg-dark-600 transition-colors"
+                          title="Download"
+                        >
+                          <Download size={14} className="text-slate-400" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); }}
+                          className="p-1.5 rounded hover:bg-dark-600 transition-colors"
+                          title="PDF"
+                        >
+                          <FileText size={14} className="text-slate-400" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleOpenProject(project.id); }}
+                          className="p-1.5 rounded hover:bg-dark-600 transition-colors"
+                          title="Open in editor"
+                        >
+                          <MoreHorizontal size={14} className="text-slate-400" />
+                        </button>
+                        <button
+                          onClick={(e) => handleDelete(e, project.id)}
+                          className="p-1.5 rounded hover:bg-dark-600 transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 size={14} className="text-slate-400 hover:text-red-400" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {filteredProjects.length > 0 && (
+        <div className="px-6 py-3 text-[13px] text-slate-400" style={{ borderTop: '1px solid #3C0753' }}>
+          Showing {filteredProjects.length} out of {projects.length} projects.
         </div>
       )}
+
       {showCreateModal && <CreateProjectModal onClose={() => setShowCreateModal(false)} />}
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onSuccess={() => {}} />}
     </div>
   );
 }

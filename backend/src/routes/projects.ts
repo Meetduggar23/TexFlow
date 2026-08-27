@@ -1,12 +1,16 @@
-import { Router, Response } from 'express';
+import { Router, Response, NextFunction } from 'express';
 import { prisma } from '../index';
-import { AuthRequest } from '../middleware/auth';
+import { AuthRequest, authenticate } from '../middleware/auth';
 import { z } from 'zod';
 import { v4 as uuid } from 'uuid';
 import fs from 'fs';
 import path from 'path';
 
 const router = Router();
+
+function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
+  return authenticate(req, res, next);
+}
 
 const createProjectSchema = z.object({
   name: z.string().min(1),
@@ -53,6 +57,9 @@ Happy writing with TexFlow!
 
 router.get('/', async (req: AuthRequest, res: Response) => {
   try {
+    if (!req.userId) {
+      return res.json({ projects: [] });
+    }
     const projects = await prisma.project.findMany({
       where: {
         OR: [
@@ -74,7 +81,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
   }
 });
 
-router.post('/', async (req: AuthRequest, res: Response) => {
+router.post('/', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const { name, description, compiler } = createProjectSchema.parse(req.body);
     
@@ -135,10 +142,13 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
     if (!project) return res.status(404).json({ error: 'Project not found' });
     if (project.deletedAt) return res.status(404).json({ error: 'Project not found' });
     
-    const isOwner = project.ownerId === req.userId;
-    const isMember = project.members.some(m => m.userId === req.userId);
-    
-    if (!isOwner && !isMember && !project.isPublic) {
+    if (req.userId) {
+      const isOwner = project.ownerId === req.userId;
+      const isMember = project.members.some(m => m.userId === req.userId);
+      if (!isOwner && !isMember && !project.isPublic) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+    } else if (!project.isPublic) {
       return res.status(403).json({ error: 'Access denied' });
     }
     
@@ -148,7 +158,7 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
   }
 });
 
-router.patch('/:id', async (req: AuthRequest, res: Response) => {
+router.patch('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const project = await prisma.project.findUnique({ where: { id: req.params.id } });
     if (!project) return res.status(404).json({ error: 'Project not found' });
@@ -175,7 +185,7 @@ router.patch('/:id', async (req: AuthRequest, res: Response) => {
   }
 });
 
-router.delete('/:id', async (req: AuthRequest, res: Response) => {
+router.delete('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const project = await prisma.project.findUnique({ where: { id: req.params.id } });
     if (!project) return res.status(404).json({ error: 'Project not found' });
@@ -192,7 +202,7 @@ router.delete('/:id', async (req: AuthRequest, res: Response) => {
   }
 });
 
-router.post('/:id/restore', async (req: AuthRequest, res: Response) => {
+router.post('/:id/restore', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const project = await prisma.project.findUnique({ where: { id: req.params.id } });
     if (!project) return res.status(404).json({ error: 'Project not found' });
@@ -209,7 +219,7 @@ router.post('/:id/restore', async (req: AuthRequest, res: Response) => {
   }
 });
 
-router.get('/:id/history', async (req: AuthRequest, res: Response) => {
+router.get('/:id/history', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const versions = await prisma.documentVersion.findMany({
       where: { projectId: req.params.id },
@@ -223,7 +233,7 @@ router.get('/:id/history', async (req: AuthRequest, res: Response) => {
   }
 });
 
-router.post('/:id/versions', async (req: AuthRequest, res: Response) => {
+router.post('/:id/versions', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const { label } = req.body;
     const files = await prisma.file.findMany({ where: { projectId: req.params.id } });
@@ -243,7 +253,7 @@ router.post('/:id/versions', async (req: AuthRequest, res: Response) => {
   }
 });
 
-router.post('/:id/restore/:versionId', async (req: AuthRequest, res: Response) => {
+router.post('/:id/restore/:versionId', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const version = await prisma.documentVersion.findUnique({
       where: { id: req.params.versionId }
@@ -282,7 +292,7 @@ router.post('/:id/restore/:versionId', async (req: AuthRequest, res: Response) =
   }
 });
 
-router.get('/:id/download', async (req: AuthRequest, res: Response) => {
+router.get('/:id/download', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const project = await prisma.project.findUnique({
       where: { id: req.params.id },

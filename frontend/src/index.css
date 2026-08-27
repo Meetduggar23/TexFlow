@@ -207,3 +207,25 @@ body {
 .transition-theme {
   transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
+
+/* Table styles */
+table {
+  border-collapse: collapse;
+}
+
+table th {
+  white-space: nowrap;
+}
+
+table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Checkbox styles */
+input[type="checkbox"] {
+  cursor: pointer;
+}
+
+input[type="checkbox"]:checked {
+  accent-color: #720455;
+}
