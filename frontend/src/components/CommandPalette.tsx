@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Search, FilePlus, FolderPlus, Play, Save, Download, Eye, Share2, History, Settings, X, Command, Zap, ZapOff } from 'lucide-react';
+import { Search, FilePlus, FolderPlus, Play, Save, Download, Eye, Share2, History, Settings, X, Command, Zap, ZapOff, PanelLeftOpen, Terminal, LayoutTemplate } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setAutoCompile } from '../store/editorSlice';
+import { toggleSidebar, togglePdf, toggleTerminal, resetLayout } from '../store/uiSlice';
 
 interface CommandPaletteProps {
   onClose: () => void;
   onCompile: () => void;
   onSave: () => void;
-  onTogglePdf: () => void;
   onToggleShare: () => void;
   onToggleHistory: () => void;
   onNewFile: () => void;
@@ -16,7 +16,7 @@ interface CommandPaletteProps {
   onDownloadProject: () => void;
 }
 
-export default function CommandPalette({ onClose, onCompile, onSave, onTogglePdf, onToggleShare, onToggleHistory, onNewFile, onNewFolder, onDownloadPdf, onDownloadProject }: CommandPaletteProps) {
+export default function CommandPalette({ onClose, onCompile, onSave, onToggleShare, onToggleHistory, onNewFile, onNewFolder, onDownloadPdf, onDownloadProject }: CommandPaletteProps) {
   const dispatch = useAppDispatch();
   const { autoCompile } = useAppSelector(state => state.editor);
   const [query, setQuery] = useState('');
@@ -28,11 +28,14 @@ export default function CommandPalette({ onClose, onCompile, onSave, onTogglePdf
     { icon: autoCompile ? Zap : ZapOff, label: `Auto Compile: ${autoCompile ? 'ON' : 'OFF'}`, action: () => dispatch(setAutoCompile(!autoCompile)) },
     { icon: FilePlus, label: 'New File', action: onNewFile },
     { icon: FolderPlus, label: 'New Folder', action: onNewFolder },
-    { icon: Eye, label: 'Toggle PDF', action: onTogglePdf, shortcut: 'Ctrl+B' },
+    { icon: Eye, label: 'Toggle PDF Preview', action: () => dispatch(togglePdf()), shortcut: 'Ctrl+B' },
+    { icon: PanelLeftOpen, label: 'Toggle Files Sidebar', action: () => dispatch(toggleSidebar()), shortcut: 'Ctrl+Shift+B' },
+    { icon: Terminal, label: 'Toggle Terminal', action: () => dispatch(toggleTerminal()), shortcut: 'Ctrl+`' },
     { icon: Download, label: 'Download PDF', action: onDownloadPdf },
     { icon: Download, label: 'Download Source', action: onDownloadProject },
     { icon: Share2, label: 'Share Project', action: onToggleShare },
     { icon: History, label: 'Version History', action: onToggleHistory },
+    { icon: LayoutTemplate, label: 'Reset Layout', action: () => dispatch(resetLayout()) },
     { icon: Settings, label: 'Settings', action: () => window.location.href = '/settings' },
   ];
 

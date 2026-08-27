@@ -14,11 +14,6 @@ interface EditorState {
   compiling: boolean;
   compileResult: CompileResult | null;
   cursors: CursorPosition[];
-  sidebarWidth: number;
-  pdfVisible: boolean;
-  splitRatio: number;
-  terminalHeight: number;
-  terminalOpen: boolean;
   openTabs: EditorTab[];
   activeTabId: string | null;
   sourceRevision: number;
@@ -36,11 +31,6 @@ const initialState: EditorState = {
   compiling: false,
   compileResult: null,
   cursors: [],
-  sidebarWidth: 280,
-  pdfVisible: true,
-  splitRatio: 50,
-  terminalHeight: 192,
-  terminalOpen: false,
   openTabs: [],
   activeTabId: null,
   sourceRevision: 0,
@@ -158,24 +148,6 @@ const editorSlice = createSlice({
     removeCursor(state, action) {
       state.cursors = state.cursors.filter(c => c.userId !== action.payload);
     },
-    setSidebarWidth(state, action) {
-      state.sidebarWidth = action.payload;
-    },
-    togglePdf(state) {
-      state.pdfVisible = !state.pdfVisible;
-    },
-    setSplitRatio(state, action) {
-      state.splitRatio = action.payload;
-    },
-    setTerminalHeight(state, action) {
-      state.terminalHeight = action.payload;
-    },
-    toggleTerminal(state) {
-      state.terminalOpen = !state.terminalOpen;
-    },
-    setTerminalOpen(state, action) {
-      state.terminalOpen = action.payload;
-    },
     clearCompileResult(state) {
       state.compileResult = null;
     },
@@ -268,7 +240,6 @@ const editorSlice = createSlice({
           state.compileStatus = 'compiled';
         } else {
           state.compileStatus = 'error';
-          state.terminalOpen = true;
         }
       })
       .addCase(compileProject.rejected, (state) => {
@@ -278,15 +249,12 @@ const editorSlice = createSlice({
           errors: [{ line: 0, column: 0, message: 'Compilation failed. Please try again.' }],
         };
         state.compileStatus = 'error';
-        state.terminalOpen = true;
       });
   },
 });
 
 export const {
   setContent, setCursors, updateCursor, removeCursor,
-  setSidebarWidth, togglePdf, setSplitRatio,
-  setTerminalHeight, toggleTerminal, setTerminalOpen,
   clearCompileResult, openTab, closeTab, setActiveTab,
   closeAllTabs, closeOtherTabs, markTabSaved, setSaving,
   setAutoCompile, setCompileStatus,

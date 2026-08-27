@@ -9,8 +9,7 @@ import {
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import BrandLogo from './BrandLogo';
-import { toggleSidebar } from '../store/uiSlice';
-import { togglePdf, toggleTerminal } from '../store/editorSlice';
+import { toggleSidebar, togglePdf, toggleTerminal, resetLayout } from '../store/uiSlice';
 import type { Project } from '../types';
 
 interface EditorHeaderProps {
@@ -78,8 +77,8 @@ export default function EditorHeader({
   onOpenSearch, onOpenCommandPalette,
 }: EditorHeaderProps) {
   const dispatch = useAppDispatch();
-  const { compiling, pdfVisible } = useAppSelector(state => state.editor);
-  const { sidebarOpen } = useAppSelector(state => state.ui);
+  const { compiling } = useAppSelector(state => state.editor);
+  const { filesOpen: sidebarOpen, pdfOpen: pdfVisible } = useAppSelector(state => state.ui);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
   const closeMenu = useCallback(() => setActiveMenu(null), []);
@@ -123,12 +122,14 @@ export default function EditorHeader({
   ];
 
   const viewMenu: MenuItem[] = [
-    { label: sidebarOpen ? 'Hide File Explorer' : 'Show File Explorer', icon: sidebarOpen ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />, action: () => dispatch(toggleSidebar()) },
-    { label: pdfVisible ? 'Hide PDF' : 'Show PDF', icon: pdfVisible ? <EyeOff size={14} /> : <Eye size={14} />, action: () => dispatch(togglePdf()) },
-    { label: 'Toggle Terminal', icon: <Terminal size={14} />, action: () => dispatch(toggleTerminal()) },
+    { label: sidebarOpen ? 'Hide File Explorer' : 'Show File Explorer', icon: sidebarOpen ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />, action: () => dispatch(toggleSidebar()), shortcut: 'Ctrl+Shift+B' },
+    { label: pdfVisible ? 'Hide PDF' : 'Show PDF', icon: pdfVisible ? <EyeOff size={14} /> : <Eye size={14} />, action: () => dispatch(togglePdf()), shortcut: 'Ctrl+B' },
+    { label: 'Toggle Terminal', icon: <Terminal size={14} />, action: () => dispatch(toggleTerminal()), shortcut: 'Ctrl+`' },
     { divider: true },
     { label: 'Search', icon: <Search size={14} />, action: onOpenSearch, shortcut: 'Ctrl+Shift+F' },
     { label: 'Command Palette', icon: <Command size={14} />, action: onOpenCommandPalette, shortcut: 'Ctrl+K' },
+    { divider: true },
+    { label: 'Reset Layout', icon: <LayoutTemplate size={14} />, action: () => dispatch(resetLayout()) },
   ];
 
   const toolsMenu: MenuItem[] = [
