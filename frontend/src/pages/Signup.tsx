@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
+import BrandLogo from '../components/BrandLogo';
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -45,7 +46,7 @@ export default function Signup() {
       <div className="relative w-full max-w-md">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <img src="/logo.png" alt="TexFlow" className="w-10 h-10 object-contain" />
+            <BrandLogo className="w-10 h-10 object-contain" />
             <span className="text-2xl font-bold text-texflow-900">Tex<span className="gradient-text">Flow</span></span>
           </Link>
           <h1 className="text-2xl font-bold text-texflow-900 mb-2">Create your account</h1>

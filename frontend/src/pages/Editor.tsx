@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { fetchProject, fetchFiles, setCurrentFile, clearCurrentProject, updateFileInTree, updateFileContent, createFile } from '../store/projectSlice';
@@ -40,6 +40,7 @@ export default function Editor() {
   const [showTable, setShowTable] = useState(false);
   const [showBib, setShowBib] = useState(false);
   const [showImage, setShowImage] = useState(false);
+  const workspaceRef = useRef<HTMLDivElement>(null);
 
   const socket = useSocket(projectId);
 
@@ -155,6 +156,23 @@ export default function Editor() {
     } catch { toast.error('Failed to create folder'); }
   }, [dispatch, projectId]);
 
+  const handleSplitPointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      const workspace = workspaceRef.current;
+      if (!workspace) return;
+      const bounds = workspace.getBoundingClientRect();
+      const ratio = ((moveEvent.clientX - bounds.left) / bounds.width) * 100;
+      dispatch(setSplitRatio(Math.min(75, Math.max(25, ratio))));
+    };
+    const handlePointerUp = () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp, { once: true });
+  }, [dispatch]);
+
   if (!currentProject) {
     return (
       <div className="h-screen flex items-center justify-center bg-dark-900">
@@ -181,12 +199,15 @@ export default function Editor() {
           </aside>
         )}
 
-        <div className="flex-1 flex overflow-hidden">
+        <div ref={workspaceRef} className="flex-1 flex overflow-hidden editor-workspace">
           <div className="flex flex-col border-r border-texflow-800" style={{ width: pdfVisible ? `${splitRatio}%` : '100%' }}>
             <CodeEditor content={content} onChange={handleContentChange} onSave={handleSave} file={currentFile} />
           </div>
           {pdfVisible && (
-            <div className="flex flex-col" style={{ width: `${100 - splitRatio}%` }}>
+            <div className="editor-split-handle" role="separator" aria-label="Resize editor and PDF panels" aria-orientation="vertical" onPointerDown={handleSplitPointerDown} />
+          )}
+          {pdfVisible && (
+            <div className="flex flex-col min-w-0" style={{ width: `calc(${100 - splitRatio}% - 6px)` }}>
               <PDFViewer projectId={projectId!} />
             </div>
           )}

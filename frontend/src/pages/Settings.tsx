@@ -10,7 +10,7 @@ export default function Settings() {
   const [email, setEmail] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
-  const [editorTheme, setEditorTheme] = useState('dark');
+  const [editorTheme, setEditorTheme] = useState(() => localStorage.getItem('theme') || 'light');
   const [fontSize, setFontSize] = useState('14');
   const [autosave, setAutosave] = useState(true);
   const [autoCompile, setAutoCompile] = useState(false);
@@ -20,6 +20,16 @@ export default function Settings() {
     setName(user.name || '');
     setEmail(user.email || '');
   }, []);
+
+  const handleThemeChange = (theme: string) => {
+    setEditorTheme(theme);
+    if (theme === 'dark' || theme === 'light') {
+      document.documentElement.dataset.theme = theme;
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+    localStorage.setItem('theme', theme);
+  };
 
   const handleSaveProfile = async () => {
     try {
@@ -84,7 +94,7 @@ export default function Settings() {
           {activeTab === 'preferences' && (
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-texflow-900 mb-4">Editor Preferences</h2>
-              <div><label className="block text-sm text-texflow-700 mb-1">Editor Theme</label><select value={editorTheme} onChange={e => setEditorTheme(e.target.value)} className="input-field w-full"><option value="dark">Dark</option><option value="light">Light</option><option value="high-contrast">High Contrast</option></select></div>
+              <div><label className="block text-sm text-texflow-700 mb-1">Theme</label><select value={editorTheme} onChange={e => handleThemeChange(e.target.value)} className="input-field w-full"><option value="light">Light</option><option value="dark">Dark</option><option value="system">System</option></select></div>
               <div><label className="block text-sm text-texflow-700 mb-1">Font Size</label><select value={fontSize} onChange={e => setFontSize(e.target.value)} className="input-field w-full"><option value="12">12px</option><option value="14">14px</option><option value="16">16px</option><option value="18">18px</option></select></div>
               <div className="flex items-center justify-between"><label className="text-sm text-texflow-700">Autosave</label><button onClick={() => setAutosave(!autosave)} className={`w-11 h-6 rounded-full transition-colors ${autosave ? '' : 'bg-dark-600'}`} style={autosave ? { background: 'linear-gradient(135deg, #F5AFAF, #e89595)' } : {}}><div className={`w-5 h-5 bg-white rounded-full transform transition-transform ${autosave ? 'translate-x-5.5' : 'translate-x-0.5'}`} style={{ marginTop: '2px', marginLeft: autosave ? '22px' : '2px' }} /></button></div>
               <div className="flex items-center justify-between"><label className="text-sm text-texflow-700">Auto-compile on save</label><button onClick={() => setAutoCompile(!autoCompile)} className={`w-11 h-6 rounded-full transition-colors ${autoCompile ? '' : 'bg-dark-600'}`} style={autoCompile ? { background: 'linear-gradient(135deg, #F5AFAF, #e89595)' } : {}}><div className={`w-5 h-5 bg-white rounded-full transform transition-transform`} style={{ marginTop: '2px', marginLeft: autoCompile ? '22px' : '2px' }} /></button></div>

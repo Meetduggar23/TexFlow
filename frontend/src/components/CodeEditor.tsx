@@ -6,6 +6,7 @@ import { bracketMatching, foldGutter, indentOnInput, StreamLanguage } from '@cod
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import { lintKeymap } from '@codemirror/lint';
 import { tags } from '@lezer/highlight';
+import { FileText } from 'lucide-react';
 import type { FileNode } from '../types';
 
 const latexStreamParser = {
@@ -116,7 +117,7 @@ export default function CodeEditor({ content, onChange, onSave, file }: CodeEdit
       <div className="h-full flex items-center justify-center bg-dark-900">
         <div className="text-center">
           <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(245,175,175,0.2), rgba(249,223,223,0.2))' }}>
-            <span className="text-3xl">📝</span>
+            <FileText size={30} className="text-texflow-500" aria-hidden="true" />
           </div>
           <h3 className="text-lg font-medium text-texflow-700 mb-2">No file selected</h3>
           <p className="text-sm text-texflow-500">Select a file from the sidebar to start editing</p>

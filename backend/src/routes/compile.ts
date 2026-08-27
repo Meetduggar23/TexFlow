@@ -12,6 +12,25 @@ const execAsync = promisify(exec);
 
 const STORAGE_PATH = process.env.STORAGE_PATH || './storage';
 
+router.get('/:projectId/pdf', async (req: AuthRequest, res: Response) => {
+  try {
+    const project = await prisma.project.findUnique({
+      where: { id: req.params.projectId },
+      select: { ownerId: true, members: { select: { userId: true } } }
+    });
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    if (project.ownerId !== req.userId && !project.members.some(member => member.userId === req.userId)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const pdfPath = path.resolve(STORAGE_PATH, 'pdfs', req.params.projectId, 'main.pdf');
+    if (!fs.existsSync(pdfPath)) return res.status(404).json({ error: 'PDF not found' });
+    return res.sendFile(pdfPath);
+  } catch {
+    return res.status(500).json({ error: 'Server error' });
+  }
+});
+
 router.post('/:projectId', async (req: AuthRequest, res: Response) => {
   try {
     const { compiler } = req.body;
@@ -66,7 +85,7 @@ router.post('/:projectId', async (req: AuthRequest, res: Response) => {
         fs.mkdirSync(pdfDir, { recursive: true });
         const destPdf = path.join(pdfDir, 'main.pdf');
         fs.copyFileSync(pdfPath, destPdf);
-        pdfUrl = `/storage/pdfs/${project.id}/main.pdf`;
+        pdfUrl = `/api/compile/${project.id}/pdf`;
       }
       
       const hasError = logContent.includes('! ') || logContent.includes('Error');

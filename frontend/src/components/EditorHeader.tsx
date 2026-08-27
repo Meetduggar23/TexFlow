@@ -1,5 +1,6 @@
 import { ArrowLeft, Play, PanelLeftClose, PanelLeftOpen, Users, Download, Share2, History, MessageSquare, Search, Command } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
+import BrandLogo from './BrandLogo';
 import { toggleSidebar } from '../store/uiSlice';
 import { togglePdf } from '../store/editorSlice';
 import type { Project } from '../types';
@@ -28,7 +29,7 @@ export default function EditorHeader({ project, onCompile, onBack, onToggleComme
       </button>
       <div className="w-px h-5 bg-texflow-800" />
       <div className="flex items-center gap-2">
-        <img src="/logo.png" alt="" className="w-5 h-5 object-contain" />
+        <BrandLogo alt="TexFlow" className="w-5 h-5 object-contain" />
         <span className="text-sm font-medium text-texflow-900">{project.name}</span>
       </div>
 

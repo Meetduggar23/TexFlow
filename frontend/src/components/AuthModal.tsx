@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X, Mail, Lock, User, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import BrandLogo from './BrandLogo';
 
 interface AuthModalProps {
   onClose: () => void;
@@ -45,7 +46,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
     if (!email || !password || !name) return;
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/signup', {
+      const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, name }),
@@ -70,7 +71,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
       <div className="relative border border-texflow-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden" style={{ background: '#FBEFEF' }}>
         <div className="flex items-center justify-between p-4 border-b border-texflow-800">
           <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="TexFlow" className="w-7 h-7 object-contain" />
+            <BrandLogo className="w-7 h-7 object-contain" />
             <span className="text-lg font-bold text-texflow-900">Tex<span style={{ background: 'linear-gradient(135deg, #e89595, #d47777)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Flow</span></span>
           </div>
           <button onClick={onClose} className="p-1 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded transition-colors">

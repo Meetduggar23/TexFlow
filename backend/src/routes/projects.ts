@@ -1,6 +1,6 @@
 import { Router, Response, NextFunction } from 'express';
 import { prisma } from '../index';
-import { AuthRequest, authenticate } from '../middleware/auth';
+import { AuthRequest, authenticate, optionalAuthenticate } from '../middleware/auth';
 import { z } from 'zod';
 import { v4 as uuid } from 'uuid';
 import fs from 'fs';
@@ -55,7 +55,7 @@ Happy writing with TexFlow!
 \\end{document}
 `;
 
-router.get('/', async (req: AuthRequest, res: Response) => {
+router.get('/', optionalAuthenticate, async (req: AuthRequest, res: Response) => {
   try {
     if (!req.userId) {
       return res.json({ projects: [] });
@@ -126,7 +126,7 @@ router.post('/', requireAuth, async (req: AuthRequest, res: Response) => {
   }
 });
 
-router.get('/:id', async (req: AuthRequest, res: Response) => {
+router.get('/:id', optionalAuthenticate, async (req: AuthRequest, res: Response) => {
   try {
     const project = await prisma.project.findUnique({
       where: { id: req.params.id },

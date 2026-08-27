@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
 import { Github, Settings, Bell } from 'lucide-react';
+import BrandLogo from './BrandLogo';
 
 export default function Header() {
   return (
     <header className="h-14 border-b border-texflow-800 bg-dark-900/80 backdrop-blur-sm flex items-center px-4">
       <Link to="/" className="flex items-center gap-2">
-        <img src="/logo.png" alt="TexFlow" className="w-8 h-8 object-contain" />
+        <BrandLogo className="w-8 h-8 object-contain" />
         <span className="text-lg font-bold text-texflow-900">Tex<span className="gradient-text">Flow</span></span>
       </Link>
 

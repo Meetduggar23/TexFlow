@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import BrandLogo from './BrandLogo';
 
 interface LoadingScreenProps {
   onComplete: () => void;
@@ -27,23 +28,7 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
   return (
     <div className={`loading-screen transition-opacity duration-500 ${fadeOut ? 'opacity-0' : 'opacity-100'}`}>
       <div className="loading-logo mb-6">
-        <img 
-          src="/logo.png" 
-          alt="TexFlow" 
-          className="w-24 h-24 object-contain"
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.style.display = 'none';
-            const parent = target.parentElement;
-            if (parent) {
-              const fallback = document.createElement('div');
-              fallback.className = 'w-24 h-24 rounded-2xl flex items-center justify-center';
-              fallback.style.background = 'linear-gradient(135deg, #F5AFAF, #e89595)';
-              fallback.innerHTML = '<span class="text-texflow-900 font-bold text-4xl">T</span>';
-              parent.appendChild(fallback);
-            }
-          }}
-        />
+        <BrandLogo className="w-24 h-24 object-contain" />
       </div>
       
       <h1 className="text-3xl font-bold text-texflow-900 mb-2 tracking-tight">

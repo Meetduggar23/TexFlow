@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { FolderOpen, Users, Archive, Plus, BookOpen, Trash2, HelpCircle, User, LogOut } from 'lucide-react';
 import clsx from 'clsx';
 import AuthModal from './AuthModal';
+import BrandLogo from './BrandLogo';
 
 export default function DashboardSidebar() {
   const navigate = useNavigate();
@@ -40,7 +41,7 @@ export default function DashboardSidebar() {
       <aside className="w-60 h-full flex flex-col" style={{ background: '#FCF8F8', borderRight: '1px solid #F9DFDF' }}>
         <div className="p-4 pb-3">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/dashboard')}>
-            <img src="/logo.png" alt="TexFlow" className="w-7 h-7 object-contain" />
+            <BrandLogo className="w-7 h-7 object-contain" />
             <span className="text-lg font-bold" style={{ color: '#3d2626' }}>Tex<span className="gradient-text">Flow</span></span>
           </div>
         </div>

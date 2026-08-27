@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, Download, ZoomIn, ZoomOut, Maximize2, Loader2 } from 'lucide-react';
+import { RefreshCw, Download, ZoomIn, ZoomOut, Maximize2, Loader2, FileText } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { compileProject } from '../store/editorSlice';
 import toast from 'react-hot-toast';
@@ -12,11 +12,15 @@ export default function PDFViewer({ projectId }: PDFViewerProps) {
   const dispatch = useAppDispatch();
   const { compiling, compileResult } = useAppSelector(state => state.editor);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [zoom, setZoom] = useState(100);
 
   useEffect(() => {
     if (compileResult?.pdfUrl) {
-      setPdfUrl(compileResult.pdfUrl);
+      const nextPdfUrl = compileResult.pdfUrl;
+      const separator = nextPdfUrl.includes('?') ? '&' : '?';
+      setPdfUrl(nextPdfUrl);
+      setPreviewUrl(`${nextPdfUrl}${separator}v=${Date.now()}`);
     }
   }, [compileResult]);
 
@@ -40,38 +44,38 @@ export default function PDFViewer({ projectId }: PDFViewerProps) {
 
   return (
     <div className="h-full flex flex-col bg-dark-900">
-      <div className="flex items-center justify-between px-3 py-1.5 border-b border-texflow-800" style={{ background: 'rgba(252,248,248,0.5)' }}>
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-texflow-800 bg-dark-800">
         <span className="text-xs font-medium text-texflow-600">PDF Preview</span>
         <div className="flex items-center gap-1">
-          <button onClick={() => setZoom(p => Math.max(p - 10, 50))} className="p-1 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded transition-colors" title="Zoom out">
+          <button onClick={() => setZoom(p => Math.max(p - 10, 50))} className="p-1 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded transition-colors" title="Zoom out" aria-label="Zoom out">
             <ZoomOut size={14} />
           </button>
           <span className="text-xs text-texflow-600 min-w-[40px] text-center">{zoom}%</span>
-          <button onClick={() => setZoom(p => Math.min(p + 10, 200))} className="p-1 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded transition-colors" title="Zoom in">
+          <button onClick={() => setZoom(p => Math.min(p + 10, 200))} className="p-1 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded transition-colors" title="Zoom in" aria-label="Zoom in">
             <ZoomIn size={14} />
           </button>
-          <button onClick={() => setZoom(100)} className="p-1 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded transition-colors" title="Fit width">
+          <button onClick={() => setZoom(100)} className="p-1 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded transition-colors" title="Fit width" aria-label="Fit width">
             <Maximize2 size={14} />
           </button>
           <div className="w-px h-4 bg-texflow-800 mx-1" />
-          <button onClick={handleRefresh} disabled={compiling} className="p-1 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded transition-colors disabled:opacity-50" title="Recompile">
+          <button onClick={handleRefresh} disabled={compiling} className="p-1 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded transition-colors disabled:opacity-50" title="Recompile" aria-label="Recompile">
             {compiling ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
           </button>
-          <button onClick={handleDownload} disabled={!pdfUrl} className="p-1 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded transition-colors disabled:opacity-50" title="Download PDF">
+          <button onClick={handleDownload} disabled={!pdfUrl} className="p-1 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded transition-colors disabled:opacity-50" title="Download PDF" aria-label="Download PDF">
             <Download size={14} />
           </button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto flex items-start justify-center p-4" style={{ background: '#FBEFEF' }}>
+      <div className="flex-1 overflow-auto flex items-start justify-center p-4 bg-dark-900">
         {compiling ? (
           <div className="flex flex-col items-center justify-center h-full">
             <Loader2 size={32} className="animate-spin text-texflow-400 mb-3" />
             <p className="text-sm text-texflow-600">Compiling LaTeX...</p>
           </div>
-        ) : pdfUrl ? (
+        ) : previewUrl ? (
           <iframe
-            src={pdfUrl}
+            src={previewUrl}
             className="pdf-frame"
             style={{ width: `${zoom}%`, height: '100%', minHeight: '600px', border: 'none' }}
             title="PDF Preview"
@@ -79,7 +83,7 @@ export default function PDFViewer({ projectId }: PDFViewerProps) {
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(245,175,175,0.2), rgba(232,149,149,0.2))' }}>
-              <span className="text-3xl">📄</span>
+              <FileText size={30} className="text-texflow-500" aria-hidden="true" />
             </div>
             <h3 className="text-lg font-medium text-texflow-700 mb-2">No PDF generated</h3>
             <p className="text-sm text-texflow-500 mb-4">Click "Compile" to generate a PDF preview</p>

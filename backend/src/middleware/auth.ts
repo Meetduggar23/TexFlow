@@ -23,6 +23,21 @@ export function authenticate(req: AuthRequest, res: Response, next: NextFunction
   }
 }
 
+export function optionalAuthenticate(req: AuthRequest, _res: Response, next: NextFunction) {
+  const token = req.cookies.token || req.headers.authorization?.replace('Bearer ', '');
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { userId: string };
+      req.userId = decoded.userId;
+    } catch {
+      // Public routes continue as anonymous when an optional token is invalid.
+    }
+  }
+
+  next();
+}
+
 export function generateToken(userId: string): string {
   return jwt.sign({ userId }, process.env.JWT_SECRET || 'secret', {
     expiresIn: '7d' as any
