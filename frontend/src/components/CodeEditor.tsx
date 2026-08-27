@@ -9,6 +9,7 @@ import { tags } from '@lezer/highlight';
 import { FileText, X, FileCode2, BookOpen, File, FileType, Undo2, Redo2, Bold, Italic, Strikethrough, Code, List, ListOrdered, Link2, Image as ImageIcon, Table2, Superscript, Subscript, AlignLeft } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { closeTab, setActiveTab, openTab, setContent, CompileStatus } from '../store/editorSlice';
+import { useTheme } from '../ThemeProvider';
 import type { FileNode } from '../types';
 
 const latexStreamParser = {
@@ -35,22 +36,24 @@ function applySelectionFormatting(view: EditorView, before: string, after: strin
   view.focus();
 }
 
-const texflowTheme = EditorView.theme({
-  '&': { height: '100%', background: 'var(--color-surface)' },
-  '.cm-scroller': { overflow: 'auto', fontFamily: '"JetBrains Mono", monospace', fontSize: '13.5px', lineHeight: '1.6' },
-  '.cm-gutters': { background: 'var(--color-background)', borderRight: '1px solid var(--color-border)', color: 'var(--color-text-disabled)' },
-  '.cm-activeLineGutter': { background: 'var(--color-accent-soft)' },
-  '.cm-activeLine': { background: 'var(--color-surface-secondary)' },
-  '.cm-cursor': { borderLeftColor: 'var(--color-accent)' },
-  '.cm-selectionBackground': { background: 'var(--tf-editor-selection) !important' },
-  '&.cm-focused .cm-selectionBackground': { background: 'var(--tf-editor-selection) !important' },
-  '.cm-matchingBracket': { background: 'var(--tf-editor-selection)', outline: '1px solid var(--color-accent)' },
-  '.cm-content': { caretColor: 'var(--tf-editor-cursor)', color: 'var(--tf-editor-foreground)' },
-  '.cm-line': { padding: '0 6px' },
-  '.ͼ5': { color: 'var(--color-accent)' },
-  '.ͼ6': { color: 'var(--tf-editor-foreground)' },
-  '.ͼ7': { color: 'var(--color-text-disabled)', fontStyle: 'italic' },
-}, { dark: false });
+function makeTexflowTheme(isDark: boolean) {
+  return EditorView.theme({
+    '&': { height: '100%', background: 'var(--color-surface)' },
+    '.cm-scroller': { overflow: 'auto', fontFamily: '"JetBrains Mono", monospace', fontSize: '13.5px', lineHeight: '1.6' },
+    '.cm-gutters': { background: 'var(--color-background)', borderRight: '1px solid var(--color-border)', color: 'var(--color-text-disabled)' },
+    '.cm-activeLineGutter': { background: 'var(--color-accent-soft)' },
+    '.cm-activeLine': { background: 'var(--color-surface-secondary)' },
+    '.cm-cursor': { borderLeftColor: 'var(--color-accent)' },
+    '.cm-selectionBackground': { background: 'var(--tf-editor-selection) !important' },
+    '&.cm-focused .cm-selectionBackground': { background: 'var(--tf-editor-selection) !important' },
+    '.cm-matchingBracket': { background: 'var(--tf-editor-selection)', outline: '1px solid var(--color-accent)' },
+    '.cm-content': { caretColor: 'var(--tf-editor-cursor)', color: 'var(--tf-editor-foreground)' },
+    '.cm-line': { padding: '0 6px' },
+    '.ͼ5': { color: 'var(--color-accent)' },
+    '.ͼ6': { color: 'var(--tf-editor-foreground)' },
+    '.ͼ7': { color: 'var(--color-text-disabled)', fontStyle: 'italic' },
+  }, { dark: isDark });
+}
 
 function getFileIcon(name: string) {
   const ext = name.split('.').pop()?.toLowerCase();
@@ -248,6 +251,7 @@ export default function CodeEditor({ content, onChange, onSave, file, allFiles, 
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const editableCompartment = useRef(new Compartment());
+  const darkModeCompartment = useRef(new Compartment());
   const [editorView, setEditorView] = useState<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
   const onSaveRef = useRef(onSave);
@@ -255,6 +259,8 @@ export default function CodeEditor({ content, onChange, onSave, file, allFiles, 
   const { openTabs, activeTabId } = useAppSelector(state => state.editor);
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
   const [editingAs, setEditingAs] = useState<'editing' | 'suggesting' | 'viewing'>('editing');
+  const { theme } = useTheme();
+  const isDark = theme.type !== 'light';
 
   onChangeRef.current = onChange;
   onSaveRef.current = onSave;
@@ -302,7 +308,7 @@ export default function CodeEditor({ content, onChange, onSave, file, allFiles, 
         keymap.of(customKeymap),
         editableCompartment.current.of(EditorView.editable.of(true)),
         latexLanguage,
-        texflowTheme,
+        darkModeCompartment.current.of(makeTexflowTheme(isDark)),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             onChangeRef.current(update.state.doc.toString());
@@ -335,6 +341,13 @@ export default function CodeEditor({ content, onChange, onSave, file, allFiles, 
       editorView.dom.contentEditable = editingAs === 'viewing' ? 'false' : 'true';
     }
   }, [editorView, editingAs]);
+
+  // Reconfigure dark/light mode when theme changes
+  useEffect(() => {
+    if (editorView) {
+      editorView.dispatch({ effects: darkModeCompartment.current.reconfigure(makeTexflowTheme(isDark)) });
+    }
+  }, [editorView, isDark]);
 
   useEffect(() => {
     if (viewRef.current && file) {
