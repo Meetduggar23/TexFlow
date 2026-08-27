@@ -12,6 +12,11 @@ import TrashPage from './pages/TrashPage';
 import Settings from './pages/Settings';
 import Editor from './pages/Editor';
 import RequireAuth from './components/RequireAuth';
+import HelpPage from './pages/HelpPage';
+import DocumentationPage from './pages/DocumentationPage';
+import ContactPage from './pages/ContactPage';
+import BlogPage from './pages/BlogPage';
+import BlogArticlePage from './pages/BlogArticlePage';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -43,6 +48,11 @@ export default function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/templates" element={<TemplateBrowser />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/help" element={<HelpPage />} />
+        <Route path="/documentation" element={<DocumentationPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/blog" element={<BlogPage />} />
+        <Route path="/blog/:slug" element={<BlogArticlePage />} />
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<AllProjects />} />
           <Route path="projects" element={<AllProjects />} />
