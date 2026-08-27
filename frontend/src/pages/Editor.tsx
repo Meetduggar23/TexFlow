@@ -30,7 +30,10 @@ import useSocket from '../hooks/useSocket';
 import toast from 'react-hot-toast';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
-import { ChevronRight, ChevronLeft, FileText, FolderPlus, Search } from 'lucide-react';
+import {
+  ChevronRight, ChevronLeft, FileText, FolderPlus, Search,
+  FolderTree, MessageSquare, History, Settings, HelpCircle,
+} from 'lucide-react';
 
 const AUTO_COMPILE_DELAY = 1000;
 const SAVE_COMPILE_DELAY = 500;
@@ -347,64 +350,87 @@ export default function Editor() {
       />
 
       <div className="flex-1 flex overflow-hidden" style={{ minHeight: 0 }}>
+        {/* Icon Rail - always visible */}
+        <div className="flex-shrink-0 flex flex-col items-center py-2 gap-1 border-r" style={{ width: 40, background: 'var(--color-background)', borderColor: 'var(--color-border)' }}>
+          <button
+            onClick={() => dispatch(toggleSidebar())}
+            className="p-2 rounded transition-colors"
+            style={{
+              background: filesOpen ? 'var(--color-accent)' : 'transparent',
+              color: filesOpen ? '#fff' : 'var(--color-text-muted)',
+            }}
+            title="File tree"
+            aria-label="Toggle file tree"
+          >
+            <FolderTree size={16} />
+          </button>
+          <button
+            onClick={() => setShowSearch(p => !p)}
+            className="p-2 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
+            style={{ color: 'var(--color-text-muted)' }}
+            title="Search (Ctrl+Shift+F)"
+            aria-label="Search"
+          >
+            <Search size={16} />
+          </button>
+          <button
+            onClick={() => setShowComments(p => !p)}
+            className="p-2 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
+            style={{ color: showComments ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
+            title="Comments"
+            aria-label="Comments"
+          >
+            <MessageSquare size={16} />
+          </button>
+          <button
+            onClick={() => setShowHistory(p => !p)}
+            className="p-2 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
+            style={{ color: showHistory ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
+            title="History"
+            aria-label="History"
+          >
+            <History size={16} />
+          </button>
+          <div className="flex-1" />
+          <button
+            className="p-2 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
+            style={{ color: 'var(--color-text-muted)' }}
+            title="Help"
+            aria-label="Help"
+          >
+            <HelpCircle size={16} />
+          </button>
+          <button
+            className="p-2 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
+            style={{ color: 'var(--color-text-muted)' }}
+            title="Settings"
+            aria-label="Settings"
+          >
+            <Settings size={16} />
+          </button>
+        </div>
+
+        {/* File Tree Panel */}
         <div
-          className="flex-shrink-0 border-r border-[var(--color-border)] overflow-hidden"
+          className="flex-shrink-0 border-r overflow-hidden"
           style={{
-            width: filesWidth,
+            width: filesOpen ? filesWidth : 0,
             background: 'var(--color-background)',
+            borderColor: 'var(--color-border)',
             transition: 'width 220ms cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
-          {filesOpen ? (
-            <div className="h-full flex flex-col relative">
-              <FileTree files={files} projectId={projectId!} />
-              <div
-                ref={filesResizeRef}
-                className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-[var(--color-accent)] active:bg-[var(--color-accent)] z-10 transition-colors"
-                style={{ background: 'transparent' }}
-                onPointerDown={handleFilesResize}
-              />
-            </div>
-          ) : (
-            <div className="h-full flex flex-col items-center py-2 gap-1">
-              <button
-                onClick={() => dispatch(toggleSidebar())}
-                className="p-1.5 rounded transition-colors hover:bg-[var(--color-accent-soft)]"
-                style={{ color: 'var(--color-accent)' }}
-                title="Expand Files (Ctrl+Shift+B)"
-                aria-label="Expand Files"
-              >
-                <ChevronRight size={16} />
-              </button>
-              <button
-                onClick={() => { dispatch(toggleSidebar()); setTimeout(() => handleNewFile(), 300); }}
-                className="p-1.5 rounded transition-colors hover:bg-[var(--color-accent-soft)]"
-                style={{ color: 'var(--color-text-muted)' }}
-                title="New File"
-                aria-label="New File"
-              >
-                <FileText size={16} />
-              </button>
-              <button
-                onClick={() => { dispatch(toggleSidebar()); setTimeout(() => handleNewFolder(), 300); }}
-                className="p-1.5 rounded transition-colors hover:bg-[var(--color-accent-soft)]"
-                style={{ color: 'var(--color-text-muted)' }}
-                title="New Folder"
-                aria-label="New Folder"
-              >
-                <FolderPlus size={16} />
-              </button>
-              <button
-                onClick={() => { dispatch(toggleSidebar()); setShowSearch(true); }}
-                className="p-1.5 rounded transition-colors hover:bg-[var(--color-accent-soft)]"
-                style={{ color: 'var(--color-text-muted)' }}
-                title="Search (Ctrl+Shift+F)"
-                aria-label="Search"
-              >
-                <Search size={16} />
-              </button>
-            </div>
-          )}
+          <div className="h-full flex flex-col relative" style={{ width: filesWidth }}>
+            <FileTree files={files} projectId={projectId!} />
+            <div
+              ref={filesResizeRef}
+              className="absolute top-0 right-0 w-1 h-full cursor-col-resize z-10 transition-colors"
+              style={{ background: 'transparent' }}
+              onPointerDown={handleFilesResize}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-accent)'; }}
+              onMouseLeave={e => { if (!document.body.style.cursor) e.currentTarget.style.background = 'transparent'; }}
+            />
+          </div>
         </div>
 
         <div ref={workspaceRef} className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -422,15 +448,49 @@ export default function Editor() {
               />
             </div>
 
+            {/* PDF Divider with arrows */}
             {pdfOpen && (
-              <div
-                ref={pdfResizeRef}
-                className="editor-split-handle flex-shrink-0"
-                role="separator"
-                aria-label="Resize editor and PDF panels"
-                aria-orientation="vertical"
-                onPointerDown={handlePdfResize}
-              />
+              <div className="flex-shrink-0 flex flex-col items-center justify-center gap-1" style={{ width: 12, background: 'var(--color-background)', borderLeft: '1px solid var(--color-border)', borderRight: '1px solid var(--color-border)' }}>
+                <button
+                  onClick={() => dispatch(togglePdf())}
+                  className="p-0.5 rounded transition-colors hover:bg-[var(--color-accent-soft)]"
+                  style={{ color: 'var(--color-text-muted)' }}
+                  title="Collapse PDF"
+                  aria-label="Collapse PDF"
+                >
+                  <ChevronRight size={12} />
+                </button>
+                <div
+                  ref={pdfResizeRef}
+                  className="flex-1 w-full cursor-col-resize"
+                  style={{ background: 'transparent' }}
+                  onPointerDown={handlePdfResize}
+                />
+                <button
+                  onClick={() => dispatch(togglePdf())}
+                  className="p-0.5 rounded transition-colors hover:bg-[var(--color-accent-soft)]"
+                  style={{ color: 'var(--color-text-muted)' }}
+                  title="Expand PDF"
+                  aria-label="Expand PDF"
+                >
+                  <ChevronLeft size={12} />
+                </button>
+              </div>
+            )}
+
+            {/* PDF not open - show expand button */}
+            {!pdfOpen && (
+              <div className="flex-shrink-0 flex flex-col items-center justify-center" style={{ width: 24, background: 'var(--color-background)', borderLeft: '1px solid var(--color-border)' }}>
+                <button
+                  onClick={() => dispatch(togglePdf())}
+                  className="p-1 rounded transition-colors hover:bg-[var(--color-accent-soft)]"
+                  style={{ color: 'var(--color-accent)' }}
+                  title="Show PDF"
+                  aria-label="Show PDF"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+              </div>
             )}
 
             {pdfOpen && (
@@ -461,13 +521,13 @@ export default function Editor() {
         </div>
 
         {showComments && (
-          <aside className="flex-shrink-0 border-l border-[var(--color-border)]" style={{ width: 320 }}>
+          <aside className="flex-shrink-0 border-l" style={{ width: 320, borderColor: 'var(--color-border)' }}>
             <CommentsPanel projectId={projectId!} onClose={() => setShowComments(false)} />
           </aside>
         )}
 
         {showHistory && (
-          <aside className="flex-shrink-0 border-l border-[var(--color-border)]" style={{ width: 320 }}>
+          <aside className="flex-shrink-0 border-l" style={{ width: 320, borderColor: 'var(--color-border)' }}>
             <HistoryPanel onClose={() => setShowHistory(false)} />
           </aside>
         )}

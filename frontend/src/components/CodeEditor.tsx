@@ -6,7 +6,7 @@ import { bracketMatching, foldGutter, indentOnInput, StreamLanguage } from '@cod
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import { lintKeymap } from '@codemirror/lint';
 import { tags } from '@lezer/highlight';
-import { FileText, X, FileCode2, BookOpen, File, FileType } from 'lucide-react';
+import { FileText, X, FileCode2, BookOpen, File, FileType, Undo2, Redo2, Bold, Italic, Strikethrough, Code, List, ListOrdered, Link2, Image as ImageIcon, Table2, Superscript, Subscript, AlignLeft } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { closeTab, setActiveTab, openTab, setContent, CompileStatus } from '../store/editorSlice';
 import type { FileNode } from '../types';
@@ -96,6 +96,100 @@ interface CodeEditorProps {
   compileStatus?: CompileStatus;
   saving?: boolean;
   isStale?: boolean;
+}
+
+function EditorToolbar() {
+  const [editMode, setEditMode] = useState<'code' | 'visual'>('code');
+  const [editingAs, setEditingAs] = useState<'editing' | 'suggesting' | 'viewing'>('editing');
+
+  return (
+    <div className="flex items-center gap-0.5 px-2 py-1 border-b overflow-x-auto" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
+      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Undo" aria-label="Undo">
+        <Undo2 size={14} />
+      </button>
+      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Redo" aria-label="Redo">
+        <Redo2 size={14} />
+      </button>
+
+      <div className="w-px h-4 mx-1" style={{ background: 'var(--color-border)' }} />
+
+      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Bold" aria-label="Bold">
+        <Bold size={14} />
+      </button>
+      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Italic" aria-label="Italic">
+        <Italic size={14} />
+      </button>
+      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Strikethrough" aria-label="Strikethrough">
+        <Strikethrough size={14} />
+      </button>
+
+      <div className="w-px h-4 mx-1" style={{ background: 'var(--color-border)' }} />
+
+      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Insert symbol" aria-label="Insert symbol">
+        <Code size={14} />
+      </button>
+      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Image" aria-label="Insert image">
+        <ImageIcon size={14} />
+      </button>
+      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Table" aria-label="Insert table">
+        <Table2 size={14} />
+      </button>
+      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Link" aria-label="Insert link">
+        <Link2 size={14} />
+      </button>
+      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="List" aria-label="Insert list">
+        <List size={14} />
+      </button>
+      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Ordered list" aria-label="Insert ordered list">
+        <ListOrdered size={14} />
+      </button>
+      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Superscript" aria-label="Superscript">
+        <Superscript size={14} />
+      </button>
+      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Subscript" aria-label="Subscript">
+        <Subscript size={14} />
+      </button>
+      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Align" aria-label="Align">
+        <AlignLeft size={14} />
+      </button>
+
+      <div className="flex-1" />
+
+      {/* Code / Visual toggle */}
+      <div className="flex items-center rounded overflow-hidden" style={{ border: '1px solid var(--color-border)' }}>
+        <button
+          onClick={() => setEditMode('code')}
+          className="px-2.5 py-1 text-[11px] font-medium transition-colors"
+          style={{
+            background: editMode === 'code' ? 'var(--color-accent)' : 'transparent',
+            color: editMode === 'code' ? '#fff' : 'var(--color-text-muted)',
+          }}
+        >
+          Code
+        </button>
+        <button
+          onClick={() => setEditMode('visual')}
+          className="px-2.5 py-1 text-[11px] font-medium transition-colors"
+          style={{
+            background: editMode === 'visual' ? 'var(--color-accent)' : 'transparent',
+            color: editMode === 'visual' ? '#fff' : 'var(--color-text-muted)',
+          }}
+        >
+          Visual
+        </button>
+      </div>
+
+      <div className="w-px h-4 mx-1" style={{ background: 'var(--color-border)' }} />
+
+      {/* Editing mode */}
+      <div className="relative group">
+        <button className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }}>
+          {editingAs.charAt(0).toUpperCase() + editingAs.slice(1)}
+          <span className="text-[9px]">▼</span>
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export default function CodeEditor({ content, onChange, onSave, file, allFiles, compileStatus = 'idle', saving = false, isStale = false }: CodeEditorProps) {
@@ -204,6 +298,7 @@ export default function CodeEditor({ content, onChange, onSave, file, allFiles, 
   return (
     <div className="h-full flex flex-col">
       <TabBar activeTabId={activeTabId} tabs={openTabs} onTabClick={handleTabClick} onTabClose={handleTabClose} />
+      <EditorToolbar />
       <div ref={editorRef} className="flex-1 overflow-hidden" />
       <div className="h-6 flex items-center justify-between px-3 border-t border-[var(--color-border)] text-[11px] select-none" style={{ background: 'var(--color-background)', color: 'var(--color-text-muted)' }}>
         <div className="flex items-center gap-3">

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, Download, ZoomIn, ZoomOut, Maximize2, Loader2, FileText } from 'lucide-react';
+import { RefreshCw, Download, ZoomIn, ZoomOut, Maximize2, Loader2, FileText, ChevronDown, MoreHorizontal } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { compileProject } from '../store/editorSlice';
 import toast from 'react-hot-toast';
@@ -46,64 +46,49 @@ export default function PDFViewer({ projectId }: PDFViewerProps) {
     }
   }, [compileResult, lastValidPdfUrl]);
 
-  const formatTimeSince = (timestamp: number | null) => {
-    if (!timestamp) return '';
-    const seconds = Math.floor((Date.now() - timestamp) / 1000);
-    if (seconds < 5) return 'just now';
-    if (seconds < 60) return `${seconds}s ago`;
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m ago`;
-    return `${Math.floor(minutes / 60)}h ago`;
-  };
-
   return (
     <div className="h-full flex flex-col" style={{ background: 'var(--color-background)' }}>
-      <div className="flex items-center justify-between px-3 py-1.5 border-b border-[var(--color-border)]" style={{ background: 'var(--color-surface)' }}>
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium" style={{ color: 'var(--color-text-secondary)' }}>PDF Preview</span>
-          {compiling && (
-            <span className="flex items-center gap-1 text-[10px] font-medium" style={{ color: 'var(--color-accent)' }}>
-              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--color-accent)' }} />
-              Compiling...
-            </span>
-          )}
-          {!compiling && isStale && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ background: 'var(--color-accent-soft)', color: 'var(--color-accent)' }}>
-              Changes not compiled
-            </span>
-          )}
-          {!compiling && !isStale && compileResult?.success && lastCompiledAt && (
-            <span className="text-[10px]" style={{ color: 'var(--color-success)' }}>
-              ✓ Compiled {formatTimeSince(lastCompiledAt)}
-            </span>
-          )}
-          {!compiling && compileResult && !compileResult.success && (
-            <span className="text-[10px] font-medium" style={{ color: 'var(--color-error)' }}>
-              ✕ Compilation failed
-            </span>
-          )}
-        </div>
+      {/* PDF Toolbar - matches Overleaf style */}
+      <div className="flex items-center gap-2 px-3 py-1.5 border-b" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
         <div className="flex items-center gap-0.5">
-          <button onClick={() => setZoom(p => Math.max(p - 10, 50))} className="p-1 rounded transition-colors hover:bg-[var(--color-surface-secondary)]" style={{ color: 'var(--color-text-muted)' }} title="Zoom out">
-            <ZoomOut size={13} />
-          </button>
-          <span className="text-[11px] min-w-[36px] text-center font-medium" style={{ color: 'var(--color-text-secondary)' }}>{zoom}%</span>
-          <button onClick={() => setZoom(p => Math.min(p + 10, 200))} className="p-1 rounded transition-colors hover:bg-[var(--color-surface-secondary)]" style={{ color: 'var(--color-text-muted)' }} title="Zoom in">
-            <ZoomIn size={13} />
-          </button>
-          <button onClick={() => setZoom(100)} className="p-1 rounded transition-colors hover:bg-[var(--color-surface-secondary)]" style={{ color: 'var(--color-text-muted)' }} title="Fit to 100%">
-            <Maximize2 size={13} />
-          </button>
-          <div className="w-px h-4 mx-1" style={{ background: 'var(--color-border)' }} />
-          <button onClick={handleRefresh} disabled={compiling} className="p-1 rounded transition-colors hover:bg-[var(--color-surface-secondary)] disabled:opacity-50" style={{ color: 'var(--color-text-muted)' }} title="Recompile">
-            {compiling ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
-          </button>
-          <button onClick={handleDownload} disabled={!previewUrl} className="p-1 rounded transition-colors hover:bg-[var(--color-surface-secondary)] disabled:opacity-50" style={{ color: 'var(--color-text-muted)' }} title="Download PDF">
-            <Download size={13} />
+          <button
+            onClick={handleRefresh}
+            disabled={compiling}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded transition-all disabled:opacity-50"
+            style={{ background: compiling ? 'var(--color-border)' : 'var(--color-accent)' }}
+            onMouseEnter={e => { if (!compiling) e.currentTarget.style.background = 'var(--color-accent-hover)'; }}
+            onMouseLeave={e => { if (!compiling) e.currentTarget.style.background = 'var(--color-accent)'; }}
+            title="Recompile"
+          >
+            {compiling ? <Loader2 size={11} className="animate-spin" /> : <RefreshCw size={11} />}
+            Recompile
           </button>
         </div>
+
+        <div className="flex-1" />
+
+        <button onClick={handleDownload} disabled={!previewUrl} className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)] disabled:opacity-50" style={{ color: 'var(--color-text-muted)' }} title="Download PDF">
+          <Download size={14} />
+        </button>
+
+        <div className="w-px h-4" style={{ background: 'var(--color-border)' }} />
+
+        <button onClick={() => setZoom(p => Math.max(p - 10, 50))} className="p-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Zoom out">
+          <ZoomOut size={13} />
+        </button>
+        <span className="text-[11px] min-w-[36px] text-center font-medium" style={{ color: 'var(--color-text-secondary)' }}>{zoom}%</span>
+        <button onClick={() => setZoom(p => Math.min(p + 10, 200))} className="p-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Zoom in">
+          <ZoomIn size={13} />
+        </button>
+
+        <div className="w-px h-4" style={{ background: 'var(--color-border)' }} />
+
+        <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="More options">
+          <MoreHorizontal size={14} />
+        </button>
       </div>
 
+      {/* PDF content */}
       <div className="flex-1 overflow-auto flex items-start justify-center p-4" style={{ background: 'var(--color-surface)' }}>
         {previewUrl ? (
           <div className="relative w-full h-full flex justify-center">
@@ -135,7 +120,7 @@ export default function PDFViewer({ projectId }: PDFViewerProps) {
       </div>
 
       {compileResult?.errors && compileResult.errors.length > 0 && (
-        <div className="border-t border-[var(--color-border)] px-3 py-2 max-h-28 overflow-auto" style={{ background: 'rgba(220,38,38,0.06)' }}>
+        <div className="border-t px-3 py-2 max-h-28 overflow-auto" style={{ background: 'rgba(220,38,38,0.06)', borderColor: 'var(--color-border)' }}>
           <p className="text-xs font-medium mb-1" style={{ color: 'var(--color-error)' }}>Compilation Errors:</p>
           {compileResult.errors.map((error, i) => (
             <p key={i} className="text-xs" style={{ color: 'var(--color-error)' }}>

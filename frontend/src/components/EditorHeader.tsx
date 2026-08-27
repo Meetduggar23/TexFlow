@@ -166,22 +166,7 @@ export default function EditorHeader({
 
   return (
     <header className="h-11 flex items-center px-3 gap-1" style={{ background: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)' }}>
-      <button onClick={onBack} className="p-1.5 rounded transition-colors" style={{ color: 'var(--color-text-muted)' }} title="Back to Dashboard"
-        onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-elevated)'; e.currentTarget.style.color = 'var(--color-text-primary)'; }}
-        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)'; }}
-      >
-        <ArrowLeft size={15} />
-      </button>
-      <button onClick={() => dispatch(toggleSidebar())} className="p-1.5 rounded transition-colors" style={{ color: sidebarOpen ? 'var(--color-accent)' : 'var(--color-text-muted)' }} title="Toggle file explorer (Ctrl+Shift+B)"
-        onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-elevated)'; }}
-        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
-      >
-        {sidebarOpen ? <PanelLeftClose size={15} /> : <PanelLeftOpen size={15} />}
-      </button>
-
-      <div className="w-px h-5 mx-1" style={{ background: 'var(--color-border)' }} />
-
-      <div className="flex items-center gap-1.5 mr-2">
+      <div className="flex items-center gap-1.5 mr-3">
         <BrandLogo alt="TexFlow" className="w-5 h-5 object-contain" />
         <span className="text-sm font-bold" style={{ color: 'var(--color-accent)' }}>TexFlow</span>
       </div>
@@ -208,6 +193,14 @@ export default function EditorHeader({
       </nav>
 
       <div className="ml-auto flex items-center gap-1">
+        {/* Project name */}
+        <div className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded cursor-pointer transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-primary)' }}>
+          {project.name}
+          <ChevronDown size={12} style={{ color: 'var(--color-text-muted)' }} />
+        </div>
+
+        <div className="w-px h-5 mx-1" style={{ background: 'var(--color-border)' }} />
+
         <button onClick={onOpenSearch} className="p-1.5 rounded transition-colors" style={{ color: 'var(--color-text-muted)' }} title="Search (Ctrl+Shift+F)"
           onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-elevated)'; e.currentTarget.style.color = 'var(--color-text-primary)'; }}
           onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)'; }}
@@ -223,26 +216,7 @@ export default function EditorHeader({
 
         <div className="w-px h-5 mx-1" style={{ background: 'var(--color-border)' }} />
 
-        <button onClick={onToggleComments} className="p-1.5 rounded transition-colors" style={{ color: 'var(--color-text-muted)' }} title="Comments"
-          onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-elevated)'; e.currentTarget.style.color = 'var(--color-text-primary)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)'; }}
-        >
-          <MessageSquare size={14} />
-        </button>
-        <button onClick={onToggleHistory} className="p-1.5 rounded transition-colors" style={{ color: 'var(--color-text-muted)' }} title="History"
-          onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-elevated)'; e.currentTarget.style.color = 'var(--color-text-primary)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)'; }}
-        >
-          <History size={14} />
-        </button>
-
-        <div className="flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors" style={{ color: 'var(--color-text-muted)' }} title="Collaborators"
-          onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-elevated)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
-        >
-          <Users size={13} />
-          <span>{project.collaborators?.length || 1}</span>
-        </div>
+        <div className="w-px h-5 mx-1" style={{ background: 'var(--color-border)' }} />
 
         <button onClick={onToggleShare} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded transition-all" style={{ background: 'var(--color-accent)' }}
           onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-accent-hover)'; }}
@@ -251,19 +225,6 @@ export default function EditorHeader({
         >
           <Share2 size={12} />
           Share
-        </button>
-
-        <div className="w-px h-5 mx-1" style={{ background: 'var(--color-border)' }} />
-
-        <button onClick={() => dispatch(togglePdf())} className="px-2.5 py-1.5 text-xs font-medium rounded transition-colors"
-          style={{
-            background: pdfVisible ? 'var(--color-accent-soft)' : 'transparent',
-            color: pdfVisible ? 'var(--color-accent)' : 'var(--color-text-muted)',
-          }}
-          onMouseEnter={e => { if (!pdfVisible) e.currentTarget.style.background = 'var(--color-surface-elevated)'; }}
-          onMouseLeave={e => { if (!pdfVisible) e.currentTarget.style.background = 'transparent'; }}
-        >
-          PDF
         </button>
 
         <div className="relative" ref={compileDropdownRef}>

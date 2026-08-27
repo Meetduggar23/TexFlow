@@ -2,10 +2,11 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   ChevronRight, ChevronDown, File, Folder, FolderOpen, Plus, Trash2,
   FilePlus, FolderPlus, MoreHorizontal, Pencil, Download, Copy,
+  Upload, X, ChevronDown as ChevronDownIcon,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setCurrentFile, createFile, deleteFile, updateFileContent } from '../store/projectSlice';
-import { toggleFileNode } from '../store/uiSlice';
+import { setCurrentFile, createFile, deleteFile, updateFileContent, updateFileInTree } from '../store/projectSlice';
+import { toggleFileNode, toggleSidebar } from '../store/uiSlice';
 import type { FileNode } from '../types';
 import toast from 'react-hot-toast';
 import clsx from 'clsx';
@@ -242,6 +243,8 @@ function FileTreeItem({ node, projectId, level = 0 }: FileTreeItemProps) {
 export default function FileTree({ files, projectId }: FileTreeProps) {
   const dispatch = useAppDispatch();
   const [showNewMenu, setShowNewMenu] = useState(false);
+  const [outlineOpen, setOutlineOpen] = useState(true);
+  const { currentFile } = useAppSelector(state => state.project);
 
   const handleCreateRootFile = async (type: 'file' | 'folder') => {
     setShowNewMenu(false);
@@ -255,34 +258,86 @@ export default function FileTree({ files, projectId }: FileTreeProps) {
     }
   };
 
+  const handleUpload = async () => {
+    setShowNewMenu(false);
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.accept = '.tex,.cls,.sty,.bib,.png,.jpg,.jpeg,.gif,.pdf';
+    input.onchange = async (e) => {
+      const filesList = (e.target as HTMLInputElement).files;
+      if (!filesList) return;
+      for (const f of Array.from(filesList)) {
+        try {
+          const result = await dispatch(createFile({ projectId, name: f.name, parentId: null, type: 'file' })).unwrap();
+          if (result && f.type !== 'application/octet-stream') {
+            const content = await f.text();
+            await dispatch(updateFileInTree({ fileId: result.id, content }));
+          }
+        } catch {}
+      }
+      toast.success(`${filesList.length} file(s) uploaded`);
+    };
+    input.click();
+  };
+
+  const sections = currentFile?.content
+    ? (() => {
+        const matches = currentFile.content.match(/\\(section|subsection|subsubsection)\{([^}]+)\}/g);
+        if (!matches) return [];
+        return matches.map((m) => {
+          const levelMatch = m.match(/\\(section|subsection|subsubsection)\{([^}]+)\}/);
+          return { level: levelMatch?.[1] || 'section', name: levelMatch?.[2] || '' };
+        });
+      })()
+    : [];
+
   return (
     <div className="h-full flex flex-col" style={{ background: 'var(--color-background)' }}>
-      <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--color-border)]">
-        <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>Files</span>
-        <div className="relative">
-          <button
-            onClick={() => setShowNewMenu(!showNewMenu)}
-            className="p-1 rounded transition-colors hover:bg-[var(--color-surface-secondary)]"
-            style={{ color: 'var(--color-text-muted)' }}
-            title="New file or folder"
-          >
-            <Plus size={14} />
-          </button>
-          {showNewMenu && (
-            <>
-              <div className="fixed inset-0 z-10" onClick={() => setShowNewMenu(false)} />
-              <div className="absolute right-0 top-full mt-1 z-20 border border-[var(--color-border)] rounded-lg shadow-xl py-1 min-w-[150px]" style={{ background: 'var(--color-surface)' }}>
-                <button onClick={() => handleCreateRootFile('file')} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-secondary)]">
-                  <FilePlus size={14} /> New File
-                </button>
-                <button onClick={() => handleCreateRootFile('folder')} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-secondary)]">
-                  <FolderPlus size={14} /> New Folder
-                </button>
-              </div>
-            </>
-          )}
-        </div>
+      {/* Header matching Overleaf style */}
+      <div className="flex items-center gap-1 px-2 py-1.5 border-b" style={{ borderColor: 'var(--color-border)' }}>
+        <ChevronDownIcon size={12} style={{ color: 'var(--color-text-muted)' }} />
+        <span className="text-[11px] font-semibold" style={{ color: 'var(--color-text-secondary)' }}>File tree</span>
+        <div className="flex-1" />
+        <button
+          onClick={() => handleCreateRootFile('file')}
+          className="p-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
+          style={{ color: 'var(--color-text-muted)' }}
+          title="New file"
+          aria-label="New file"
+        >
+          <FilePlus size={13} />
+        </button>
+        <button
+          onClick={() => handleCreateRootFile('folder')}
+          className="p-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
+          style={{ color: 'var(--color-text-muted)' }}
+          title="New folder"
+          aria-label="New folder"
+        >
+          <FolderPlus size={13} />
+        </button>
+        <button
+          onClick={handleUpload}
+          className="p-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
+          style={{ color: 'var(--color-text-muted)' }}
+          title="Upload files"
+          aria-label="Upload files"
+        >
+          <Upload size={13} />
+        </button>
+        <button
+          onClick={() => dispatch(toggleSidebar())}
+          className="p-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
+          style={{ color: 'var(--color-text-muted)' }}
+          title="Close file tree"
+          aria-label="Close file tree"
+        >
+          <X size={13} />
+        </button>
       </div>
+
+      {/* File list */}
       <div className="flex-1 overflow-auto py-1">
         {files
           .sort((a, b) => {
@@ -292,6 +347,41 @@ export default function FileTree({ files, projectId }: FileTreeProps) {
           .map(node => (
             <FileTreeItem key={node.id} node={node} projectId={projectId} />
           ))}
+      </div>
+
+      {/* File outline section */}
+      <div className="border-t" style={{ borderColor: 'var(--color-border)' }}>
+        <button
+          onClick={() => setOutlineOpen(p => !p)}
+          className="w-full flex items-center gap-1.5 px-3 py-2 transition-colors hover:bg-[var(--color-surface-elevated)]"
+        >
+          {outlineOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+          <span className="text-[11px] font-semibold" style={{ color: 'var(--color-text-secondary)' }}>File outline</span>
+        </button>
+        {outlineOpen && (
+          <div className="px-3 pb-3">
+            {sections.length === 0 ? (
+              <p className="text-[11px] py-2" style={{ color: 'var(--color-text-muted)' }}>
+                We can't find any sections or subsections in this file.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-0.5">
+                {sections.map((s, i) => (
+                  <button
+                    key={i}
+                    className="text-left text-[11px] py-0.5 px-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
+                    style={{
+                      color: 'var(--color-text-secondary)',
+                      paddingLeft: s.level === 'subsection' ? 16 : s.level === 'subsubsection' ? 32 : 4,
+                    }}
+                  >
+                    {s.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
