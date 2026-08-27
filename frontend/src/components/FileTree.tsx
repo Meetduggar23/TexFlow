@@ -57,7 +57,7 @@ function FileTreeItem({ node, projectId, level = 0, startCreation }: FileTreeIte
   const dispatch = useAppDispatch();
   const { currentFile } = useAppSelector(state => state.project);
   const { fileTreeExpanded } = useAppSelector(state => state.ui);
-  const [showMenu, setShowMenu] = useState(false);
+  const [showMenu, setShowMenu] = useState<{ x: number; y: number } | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState(node.name);
@@ -116,11 +116,11 @@ function FileTreeItem({ node, projectId, level = 0, startCreation }: FileTreeIte
   }, [dispatch, node, renameValue]);
 
   const handleCreateFile = useCallback(async () => {
-    setCreating('file'); setCreateValue(''); setCreateError(''); setShowMenu(false);
+    setCreating('file'); setCreateValue(''); setCreateError(''); setShowMenu(null);
   }, []);
 
   const handleCreateFolder = useCallback(async () => {
-    setCreating('folder'); setCreateValue(''); setCreateError(''); setShowMenu(false);
+    setCreating('folder'); setCreateValue(''); setCreateError(''); setShowMenu(null);
   }, []);
 
   useEffect(() => {
@@ -228,7 +228,7 @@ function FileTreeItem({ node, projectId, level = 0, startCreation }: FileTreeIte
 
         {isFolder && !renaming && (
           <button
-            onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
+            onClick={(e) => { e.stopPropagation(); const rect = e.currentTarget.getBoundingClientRect(); setShowMenu(prev => prev ? null : { x: rect.left, y: rect.bottom + 2 }); }}
             className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-[var(--color-border)] rounded transition-all flex-shrink-0"
           >
             <MoreHorizontal size={13} style={{ color: 'var(--color-text-muted)' }} />
@@ -254,7 +254,7 @@ function FileTreeItem({ node, projectId, level = 0, startCreation }: FileTreeIte
       )}
 
       {showMenu && (
-        <ContextMenu x={0} y={0} items={contextMenuItems} onClose={() => setShowMenu(false)} />
+        <ContextMenu x={showMenu.x} y={showMenu.y} items={contextMenuItems} onClose={() => setShowMenu(null)} />
       )}
       {contextMenu && (
         <ContextMenu x={contextMenu.x} y={contextMenu.y} items={contextMenuItems} onClose={() => setContextMenu(null)} />

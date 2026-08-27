@@ -16,10 +16,15 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string; name?: string }>({});
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
+    const newErrors: typeof errors = {};
+    if (!email) newErrors.email = 'Email is required';
+    if (!password) newErrors.password = 'Password is required';
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
+    setErrors({});
     setLoading(true);
     try {
       const res = await fetch('/api/auth/login', {
@@ -43,7 +48,13 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password || !name) return;
+    const newErrors: typeof errors = {};
+    if (!name) newErrors.name = 'Name is required';
+    if (!email) newErrors.email = 'Email is required';
+    if (!password) newErrors.password = 'Password is required';
+    else if (password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
+    setErrors({});
     setLoading(true);
     try {
       const res = await fetch('/api/auth/register', {
@@ -103,15 +114,17 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
                 <label className="block text-sm font-medium text-texflow-700 mb-1.5">Email</label>
                 <div className="relative">
                   <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-texflow-500" />
-                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="input-field w-full pl-10" autoFocus required />
+                  <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); setErrors(p => ({ ...p, email: undefined })); }} placeholder="you@example.com" className="input-field w-full pl-10" autoFocus required />
                 </div>
+                {errors.email && <p className="text-xs mt-1" style={{ color: 'var(--color-error)' }}>{errors.email}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-texflow-700 mb-1.5">Password</label>
                 <div className="relative">
                   <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-texflow-500" />
-                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Your password" className="input-field w-full pl-10" required />
+                  <input type="password" value={password} onChange={(e) => { setPassword(e.target.value); setErrors(p => ({ ...p, password: undefined })); }} placeholder="Your password" className="input-field w-full pl-10" required />
                 </div>
+                {errors.password && <p className="text-xs mt-1" style={{ color: 'var(--color-error)' }}>{errors.password}</p>}
               </div>
               <button type="submit" disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2">
                 {loading ? <><Loader2 size={16} className="animate-spin" /> Logging in...</> : 'Log in'}
@@ -123,22 +136,25 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
                 <label className="block text-sm font-medium text-texflow-700 mb-1.5">Name</label>
                 <div className="relative">
                   <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-texflow-500" />
-                  <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" className="input-field w-full pl-10" autoFocus required />
+                  <input type="text" value={name} onChange={(e) => { setName(e.target.value); setErrors(p => ({ ...p, name: undefined })); }} placeholder="Your name" className="input-field w-full pl-10" autoFocus required />
                 </div>
+                {errors.name && <p className="text-xs mt-1" style={{ color: 'var(--color-error)' }}>{errors.name}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-texflow-700 mb-1.5">Email</label>
                 <div className="relative">
                   <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-texflow-500" />
-                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="input-field w-full pl-10" required />
+                  <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); setErrors(p => ({ ...p, email: undefined })); }} placeholder="you@example.com" className="input-field w-full pl-10" required />
                 </div>
+                {errors.email && <p className="text-xs mt-1" style={{ color: 'var(--color-error)' }}>{errors.email}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-texflow-700 mb-1.5">Password</label>
                 <div className="relative">
                   <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-texflow-500" />
-                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Create a password" className="input-field w-full pl-10" required minLength={6} />
+                  <input type="password" value={password} onChange={(e) => { setPassword(e.target.value); setErrors(p => ({ ...p, password: undefined })); }} placeholder="Create a password" className="input-field w-full pl-10" required minLength={6} />
                 </div>
+                {errors.password && <p className="text-xs mt-1" style={{ color: 'var(--color-error)' }}>{errors.password}</p>}
               </div>
               <button type="submit" disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2">
                 {loading ? <><Loader2 size={16} className="animate-spin" /> Creating account...</> : 'Create account'}

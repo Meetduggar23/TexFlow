@@ -8,6 +8,7 @@ interface ProjectState {
   currentFile: FileNode | null;
   loading: boolean;
   error: string | null;
+  trashCount: number;
 }
 
 const initialState: ProjectState = {
@@ -17,15 +18,19 @@ const initialState: ProjectState = {
   currentFile: null,
   loading: false,
   error: null,
+  trashCount: 0,
 };
 
 const API = '/api';
 
 export const fetchProjects = createAsyncThunk(
   'project/fetchProjects',
-  async () => {
+  async (filter?: { archived?: boolean }) => {
     const token = localStorage.getItem('token');
-    const response = await fetch(`${API}/projects`, {
+    const params = new URLSearchParams();
+    if (filter?.archived) params.set('archived', 'true');
+    const url = params.toString() ? `${API}/projects?${params}` : `${API}/projects`;
+    const response = await fetch(url, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     if (!response.ok) throw new Error('Failed to fetch projects');
@@ -72,6 +77,20 @@ export const deleteProject = createAsyncThunk(
     });
     if (!response.ok) throw new Error('Failed to delete project');
     return projectId;
+  }
+);
+
+export const archiveProject = createAsyncThunk(
+  'project/archiveProject',
+  async (projectId: string) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API}/projects/${projectId}/archive`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!response.ok) throw new Error('Failed to archive project');
+    const data = await response.json();
+    return data.project || data;
   }
 );
 
@@ -149,6 +168,34 @@ export const deleteFile = createAsyncThunk(
   }
 );
 
+export const fetchTrashCount = createAsyncThunk(
+  'project/fetchTrashCount',
+  async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return 0;
+    const response = await fetch(`${API}/projects?trashed=true`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) return 0;
+    const data = await response.json();
+    return (data.projects || []).length;
+  }
+);
+
+export const emptyTrash = createAsyncThunk(
+  'project/emptyTrash',
+  async () => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API}/projects/trash/empty`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!response.ok) throw new Error('Failed to empty trash');
+    const data = await response.json();
+    return data.deleted || 0;
+  }
+);
+
 const projectSlice = createSlice({
   name: 'project',
   initialState,
@@ -202,6 +249,15 @@ const projectSlice = createSlice({
       })
       .addCase(deleteProject.fulfilled, (state, action) => {
         state.projects = state.projects.filter(p => p.id !== action.payload);
+      })
+      .addCase(archiveProject.fulfilled, (state, action) => {
+        const updated = action.payload;
+        const idx = state.projects.findIndex(p => p.id === updated.id);
+        if (idx >= 0) {
+          state.projects[idx] = updated;
+        } else {
+          state.projects.unshift(updated);
+        }
       })
       .addCase(fetchFiles.fulfilled, (state, action) => {
         const payload = action.payload;
@@ -283,6 +339,12 @@ const projectSlice = createSlice({
         if (state.currentFile?.id === fileId) {
           state.currentFile = null;
         }
+      })
+      .addCase(fetchTrashCount.fulfilled, (state, action) => {
+        state.trashCount = action.payload;
+      })
+      .addCase(emptyTrash.fulfilled, (state) => {
+        state.trashCount = 0;
       });
   },
 });

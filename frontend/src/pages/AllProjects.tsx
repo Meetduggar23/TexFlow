@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Plus, FileText, Trash2, Download, Search, File, Image, MoreHorizontal, Pencil, Copy, FolderOpen, X } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Plus, FileText, Trash2, Download, Search, MoreHorizontal, Pencil, Copy, FolderOpen, X, Archive, ArchiveRestore } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { fetchProjects, deleteProject } from '../store/projectSlice';
+import { fetchProjects, deleteProject, archiveProject, fetchTrashCount } from '../store/projectSlice';
 import CreateProjectModal from '../components/CreateProjectModal';
 import AuthModal from '../components/AuthModal';
 import toast from 'react-hot-toast';
@@ -86,9 +86,9 @@ function RenameModal({ projectId, currentName, onClose, onRenamed }: { projectId
 }
 
 /* ────── Three-dot Action Menu ────── */
-function ActionMenu({ x, y, project, onClose, onOpen, onRename, onDuplicate, onDownload, onDelete }: {
+function ActionMenu({ x, y, project, onClose, onOpen, onRename, onDuplicate, onDownload, onArchive, onDelete }: {
   x: number; y: number; project: any; onClose: () => void;
-  onOpen: () => void; onRename: () => void; onDuplicate: () => void; onDownload: () => void; onDelete: () => void;
+  onOpen: () => void; onRename: () => void; onDuplicate: () => void; onDownload: () => void; onArchive: () => void; onDelete: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -100,12 +100,14 @@ function ActionMenu({ x, y, project, onClose, onOpen, onRename, onDuplicate, onD
     return () => { document.removeEventListener('mousedown', handleClick); document.removeEventListener('keydown', handleEscape); };
   }, [onClose]);
 
+  const isArchived = project?.isArchived;
   const items = [
     { icon: <FolderOpen size={14} />, label: 'Open', action: onOpen },
     { icon: <Pencil size={14} />, label: 'Rename', action: onRename },
     { icon: <Copy size={14} />, label: 'Duplicate', action: onDuplicate },
     { icon: <Download size={14} />, label: 'Download', action: onDownload },
     { divider: true },
+    { icon: isArchived ? <ArchiveRestore size={14} /> : <Archive size={14} />, label: isArchived ? 'Unarchive' : 'Archive', action: onArchive },
     { icon: <Trash2 size={14} />, label: 'Delete', action: onDelete, danger: true },
   ];
 
@@ -135,6 +137,7 @@ function ActionMenu({ x, y, project, onClose, onOpen, onRename, onDuplicate, onD
 export default function AllProjects() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { projects, loading } = useAppSelector(state => state.project);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -155,19 +158,76 @@ export default function AllProjects() {
 
   const token = localStorage.getItem('token');
 
+  // Determine current view from route
+  const currentView = (() => {
+    if (location.pathname.includes('/trash')) return 'trash';
+    if (location.pathname.includes('/shared')) return 'shared';
+    if (location.pathname.includes('/archived')) return 'archived';
+    return 'all';
+  })();
+
+  const isArchivedView = currentView === 'archived';
+  const isSharedView = currentView === 'shared';
+
   useEffect(() => {
-    dispatch(fetchProjects());
-  }, [dispatch]);
+    dispatch(fetchProjects(isArchivedView ? { archived: true } : undefined));
+  }, [dispatch, isArchivedView]);
 
   const handleDelete = async (e: React.MouseEvent, projectId: string) => {
     e.stopPropagation();
     if (!token) { setShowAuthModal(true); return; }
     const project = projects.find(p => p.id === projectId);
-    if (await confirm({ title: 'Delete Project?', message: `Are you sure you want to delete "${project?.name || 'this project'}"? This action cannot be undone.`, confirmText: 'Delete', danger: true })) {
+    if (await confirm({ title: 'Move to Trash?', message: `Are you sure you want to delete "${project?.name || 'this project'}"? It will be moved to Trash and can be restored later.`, confirmText: 'Delete', danger: true })) {
       try {
         await dispatch(deleteProject(projectId)).unwrap();
-        toast.success('Project deleted');
+        dispatch(fetchTrashCount());
+        const undoToast = toast(
+          (t) => (
+            <div className="flex items-center gap-3">
+              <span style={{ color: 'var(--color-text-primary)' }}>Project moved to Trash.</span>
+              <button
+                onClick={async () => {
+                  try {
+                    const token = localStorage.getItem('token');
+                    await fetch(`/api/projects/${projectId}/restore`, {
+                      method: 'POST',
+                      headers: token ? { Authorization: `Bearer ${token}` } : {},
+                    });
+                    dispatch(fetchProjects());
+                    dispatch(fetchTrashCount());
+                    toast.dismiss(t.id);
+                    toast.success('Project restored');
+                  } catch { toast.error('Failed to restore'); }
+                }}
+                className="text-xs font-semibold px-2 py-1 rounded transition-colors"
+                style={{ color: 'var(--color-accent)' }}
+              >
+                Undo
+              </button>
+            </div>
+          ),
+          { duration: 8000 }
+        );
       } catch { toast.error('Failed to delete project'); }
+    }
+  };
+
+  const handleArchive = async (projectId: string) => {
+    if (!token) { setShowAuthModal(true); return; }
+    try {
+      await dispatch(archiveProject(projectId)).unwrap();
+      const p = projects.find(pr => pr.id === projectId);
+      const wasArchived = p?.isArchived;
+      toast.success(wasArchived ? 'Project unarchived' : 'Project archived');
+      if (isArchivedView) {
+        // If viewing archived, refetch to remove unarchived ones
+        dispatch(fetchProjects({ archived: true }));
+      } else {
+        // If viewing non-archived, refetch to remove archived ones
+        dispatch(fetchProjects());
+      }
+    } catch {
+      toast.error('Failed to archive project');
     }
   };
 
@@ -205,7 +265,6 @@ export default function AllProjects() {
         body: JSON.stringify({ name: `${project.name} Copy` }),
       });
       if (!res.ok) throw new Error('Failed to duplicate');
-      const data = await res.json();
       dispatch(fetchProjects());
       toast.success('Project duplicated');
     } catch { toast.error('Failed to duplicate project'); }
@@ -240,8 +299,28 @@ export default function AllProjects() {
     setMenuOpen(projectId);
   };
 
+  // Filter projects based on view
   const filteredProjects = projects
-    .filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    .filter(p => {
+      // Always filter out trashed projects
+      if (p.deletedAt) return false;
+      if (searchQuery && !p.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      if (isSharedView) {
+        // Shared projects: user is a member but not the owner
+        try {
+          const user = JSON.parse(localStorage.getItem('user') || '{}');
+          if (!user.id) return true; // Can't determine ownership, include it
+          return p.ownerId !== user.id;
+        } catch {
+          return true; // If localStorage is corrupted, show all projects
+        }
+      }
+      if (!isArchivedView) {
+        // Non-archived view: exclude archived
+        return !p.isArchived;
+      }
+      return true;
+    });
 
   const formatTimeAgo = (date: string) => {
     const now = new Date();
@@ -258,24 +337,34 @@ export default function AllProjects() {
     return d.toLocaleDateString();
   };
 
+  const getViewTitle = () => {
+    switch (currentView) {
+      case 'archived': return 'Archived projects';
+      case 'shared': return 'Shared with you';
+      default: return 'All projects';
+    }
+  };
+
   return (
     <div className="h-full flex flex-col" style={{ background: 'var(--color-background)' }}>
       <div className="px-6 pt-6 pb-4">
         <div className="flex items-center justify-between mb-5">
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>All projects</h1>
-          <button onClick={handleNewProject} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-all"
-            style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-accent-hover))' }}
-          >
-            <Plus size={16} />
-            New project
-          </button>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{getViewTitle()}</h1>
+          {!isArchivedView && (
+            <button onClick={handleNewProject} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-all"
+              style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-accent-hover))' }}
+            >
+              <Plus size={16} />
+              New project
+            </button>
+          )}
         </div>
 
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2" size={16} style={{ color: 'var(--color-text-muted)' }} />
           <input
             type="text"
-            placeholder="Search in all projects..."
+            placeholder="Search projects..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 text-sm rounded-lg transition-all focus:outline-none focus:ring-2"
@@ -292,15 +381,19 @@ export default function AllProjects() {
         ) : filteredProjects.length === 0 ? (
           <div className="text-center py-20">
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ background: 'var(--color-accent-soft)' }}>
-              <FileText size={28} style={{ color: 'var(--color-accent)' }} />
+              {isArchivedView ? (
+                <Archive size={28} style={{ color: 'var(--color-accent)' }} />
+              ) : (
+                <FileText size={28} style={{ color: 'var(--color-accent)' }} />
+              )}
             </div>
             <h3 className="text-lg font-medium mb-2" style={{ color: 'var(--color-text-primary)' }}>
-              {searchQuery ? 'No projects found' : 'No projects yet'}
+              {searchQuery ? 'No projects found' : isArchivedView ? 'No archived projects' : isSharedView ? 'No shared projects' : 'No projects yet'}
             </h3>
             <p className="mb-6" style={{ color: 'var(--color-text-muted)' }}>
-              {searchQuery ? 'Try a different search term' : 'Create your first LaTeX project to get started'}
+              {searchQuery ? 'Try a different search term' : isArchivedView ? 'Archived projects will appear here' : isSharedView ? 'Projects shared with you will appear here' : 'Create your first LaTeX project to get started'}
             </p>
-            {!searchQuery && <button onClick={handleNewProject} className="btn-primary">Create Project</button>}
+            {!searchQuery && !isArchivedView && !isSharedView && <button onClick={handleNewProject} className="btn-primary">Create Project</button>}
           </div>
         ) : (
           <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--color-border)' }}>
@@ -346,9 +439,16 @@ export default function AllProjects() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
                         <FileText size={16} style={{ color: 'var(--color-accent)' }} className="flex-shrink-0" />
-                        <span className="text-sm font-medium transition-colors truncate" style={{ color: 'var(--color-text-primary)' }}>
-                          {nameOverrides[project.id] || project.name}
-                        </span>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-sm font-medium transition-colors truncate" style={{ color: 'var(--color-text-primary)' }}>
+                            {nameOverrides[project.id] || project.name}
+                          </span>
+                          {project.isArchived && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded" style={{ background: 'var(--color-accent-soft)', color: 'var(--color-accent)' }}>
+                              <Archive size={10} /> Archived
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-3">
@@ -406,6 +506,7 @@ export default function AllProjects() {
           onRename={() => { const p = projects.find(pr => pr.id === menuOpen); if (p) setRenameTarget({ id: p.id, name: nameOverrides[p.id] || p.name }); }}
           onDuplicate={() => { const p = projects.find(pr => pr.id === menuOpen); if (p) handleDuplicate(p); }}
           onDownload={() => handleDownload(menuOpen)}
+          onArchive={() => handleArchive(menuOpen)}
           onDelete={() => { const p = projects.find(pr => pr.id === menuOpen); if (p) { confirm({ title: 'Delete Project?', message: `Are you sure you want to delete "${p.name}"? This action cannot be undone.`, confirmText: 'Delete', danger: true }).then(ok => { if (ok) { dispatch(deleteProject(p.id)).unwrap().then(() => toast.success('Project deleted')).catch(() => toast.error('Failed to delete')); } }); } setMenuOpen(null); }}
         />
       )}

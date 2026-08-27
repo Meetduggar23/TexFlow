@@ -53,15 +53,16 @@ export default function App() {
           <Route path="projects" element={<AllProjects />} />
           <Route path="recent" element={<AllProjects />} />
           <Route path="shared" element={<AllProjects />} />
+          <Route path="archived" element={<AllProjects />} />
           <Route path="trash" element={<TrashPage />} />
         </Route>
-        <Route path="/help" element={<DashboardLayout />}>  
+        <Route path="/help" element={<DashboardLayout />}>
           <Route index element={<HelpPage />} />
-          <Route path="documentation" element={<DocumentationPage />} />
-          <Route path="contact" element={<ContactPage />} />
-          <Route path="blog" element={<BlogPage />} />
-          <Route path="blog/:slug" element={<BlogArticlePage />} />
         </Route>
+        <Route path="/documentation" element={<DashboardLayout />}><Route index element={<DocumentationPage />} /></Route>
+        <Route path="/contact" element={<DashboardLayout />}><Route index element={<ContactPage />} /></Route>
+        <Route path="/blog" element={<DashboardLayout />}><Route index element={<BlogPage />} /></Route>
+        <Route path="/blog/:slug" element={<DashboardLayout />}><Route index element={<BlogArticlePage />} /></Route>
         <Route path="/project/:projectId" element={<RequireAuth><Editor /></RequireAuth>} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>

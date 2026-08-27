@@ -7,6 +7,17 @@ export interface AuthRequest extends Request {
   user?: any;
 }
 
+const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? '' : 'dev-secret-change-me');
+
+if (!process.env.JWT_SECRET) {
+  console.warn('⚠️  JWT_SECRET not set. Using development fallback. Set JWT_SECRET in production!');
+}
+
+function getJwtSecret(): string {
+  if (!JWT_SECRET) throw new Error('JWT_SECRET must be set in production');
+  return JWT_SECRET;
+}
+
 export function authenticate(req: AuthRequest, res: Response, next: NextFunction) {
   const token = req.cookies.token || req.headers.authorization?.replace('Bearer ', '');
   
@@ -15,7 +26,7 @@ export function authenticate(req: AuthRequest, res: Response, next: NextFunction
   }
   
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { userId: string };
+    const decoded = jwt.verify(token, getJwtSecret()) as { userId: string };
     req.userId = decoded.userId;
     next();
   } catch (error) {
@@ -28,7 +39,7 @@ export function optionalAuthenticate(req: AuthRequest, _res: Response, next: Nex
 
   if (token) {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { userId: string };
+      const decoded = jwt.verify(token, getJwtSecret()) as { userId: string };
       req.userId = decoded.userId;
     } catch {
       // Public routes continue as anonymous when an optional token is invalid.
@@ -39,7 +50,7 @@ export function optionalAuthenticate(req: AuthRequest, _res: Response, next: Nex
 }
 
 export function generateToken(userId: string): string {
-  return jwt.sign({ userId }, process.env.JWT_SECRET || 'secret', {
+  return jwt.sign({ userId }, getJwtSecret(), {
     expiresIn: '7d' as any
   });
 }

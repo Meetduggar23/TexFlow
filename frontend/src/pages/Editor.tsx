@@ -37,6 +37,7 @@ import { saveAs } from 'file-saver';
 import {
   ChevronRight, ChevronLeft, FileText, FolderPlus, Search,
   FolderTree, MessageSquare, History, Settings, HelpCircle,
+  BookOpen, Mail,
 } from 'lucide-react';
 
 const AUTO_COMPILE_DELAY = 1000;
@@ -65,6 +66,8 @@ export default function Editor() {
   const [showLink, setShowLink] = useState(false);
   const [showThemeSelector, setShowThemeSelector] = useState(false);
   const [isPdfResizing, setIsPdfResizing] = useState(false);
+  const [showHelpRailMenu, setShowHelpRailMenu] = useState(false);
+  const helpRailMenuRef = useRef<HTMLDivElement>(null);
 
   const socket = useSocket(projectId);
 
@@ -135,6 +138,25 @@ export default function Editor() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeTabId, dispatch]);
+
+  // Close help rail menu on outside click
+  useEffect(() => {
+    if (!showHelpRailMenu) return;
+    const handleClick = (e: MouseEvent) => {
+      if (helpRailMenuRef.current && !helpRailMenuRef.current.contains(e.target as Node)) {
+        setShowHelpRailMenu(false);
+      }
+    };
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowHelpRailMenu(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [showHelpRailMenu]);
 
   const doSave = useCallback(async (): Promise<boolean> => {
     const file = currentFileRef.current;
@@ -449,14 +471,45 @@ export default function Editor() {
             <History size={16} />
           </button>
           <div className="flex-1" />
-          <button
-            className="p-2 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
-            style={{ color: 'var(--color-text-muted)' }}
-            title="Help"
-            aria-label="Help"
-          >
-            <HelpCircle size={16} />
-          </button>
+          <div className="relative" ref={helpRailMenuRef}>
+            <button
+              onClick={() => setShowHelpRailMenu(p => !p)}
+              className="p-2 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
+              style={{ color: showHelpRailMenu ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
+              title="Help"
+              aria-label="Help"
+              aria-haspopup="menu"
+              aria-expanded={showHelpRailMenu}
+            >
+              <HelpCircle size={16} />
+            </button>
+            {showHelpRailMenu && (
+              <div
+                role="menu"
+                className="absolute left-full ml-2 bottom-0 z-50 w-52 rounded-lg border py-1 shadow-xl"
+                style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border-strong)' }}
+              >
+                {[
+                  { icon: <BookOpen size={14} />, label: 'Documentation', path: '/documentation' },
+                  { icon: <Mail size={14} />, label: 'Contact Us', path: '/contact' },
+                  { icon: <FileText size={14} />, label: 'Blog', path: '/blog' },
+                ].map((item) => (
+                  <button
+                    key={item.path}
+                    role="menuitem"
+                    onClick={() => { setShowHelpRailMenu(false); navigate(item.path); }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors"
+                    style={{ color: 'var(--color-text-secondary)' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--color-surface-elevated)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <span className="w-4 h-4 flex items-center justify-center">{item.icon}</span>
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <button
             className="p-2 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
             style={{ color: 'var(--color-text-muted)' }}

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { v4 as uuid } from 'uuid';
 import fs from 'fs';
 import path from 'path';
+const archiver = require('archiver') as (type: string, options?: any) => import('archiver').Archiver;
 
 const router = Router();
 
@@ -61,13 +62,15 @@ router.get('/', optionalAuthenticate, async (req: AuthRequest, res: Response) =>
       return res.json({ projects: [] });
     }
     const showTrashed = req.query.trashed === 'true';
+    const showArchived = req.query.archived === 'true';
     const projects = await prisma.project.findMany({
       where: {
         OR: [
           { ownerId: req.userId },
           { members: { some: { userId: req.userId } } }
         ],
-        deletedAt: showTrashed ? { not: null } : null
+        deletedAt: showTrashed ? { not: null } : null,
+        isArchived: showArchived ? true : false,
       },
       include: {
         owner: { select: { id: true, name: true, email: true, avatarUrl: true } },
@@ -127,6 +130,99 @@ router.post('/', requireAuth, async (req: AuthRequest, res: Response) => {
   }
 });
 
+router.post('/trash/empty', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const trashedProjects = await prisma.project.findMany({
+      where: {
+        deletedAt: { not: null },
+        OR: [
+          { ownerId: req.userId },
+          { members: { some: { userId: req.userId } } }
+        ]
+      },
+      select: { id: true }
+    });
+
+    for (const p of trashedProjects) {
+      try {
+        const projectDir = path.join(process.cwd(), 'projects', p.id);
+        if (fs.existsSync(projectDir)) fs.rmSync(projectDir, { recursive: true, force: true });
+      } catch {}
+    }
+
+    const ids = trashedProjects.map(p => p.id);
+    if (ids.length > 0) {
+      await prisma.documentVersion.deleteMany({ where: { projectId: { in: ids } } });
+      await prisma.file.deleteMany({ where: { projectId: { in: ids } } });
+      await prisma.folder.deleteMany({ where: { projectId: { in: ids } } });
+      await prisma.project.deleteMany({ where: { id: { in: ids } } });
+    }
+
+    res.json({ success: true, deleted: ids.length });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.post('/bulk/restore', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const { ids } = req.body as { ids: string[] };
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'No project IDs provided' });
+    }
+    const results: { id: string; renamed?: boolean; originalName?: string }[] = [];
+    for (const id of ids) {
+      const project = await prisma.project.findUnique({ where: { id } });
+      if (!project || project.ownerId !== req.userId || !project.deletedAt) continue;
+      const conflicting = await prisma.project.findFirst({
+        where: {
+          name: project.name, deletedAt: null, id: { not: id },
+          OR: [{ ownerId: req.userId }, { members: { some: { userId: req.userId } } }]
+        }, select: { id: true }
+      });
+      if (conflicting) {
+        const restoredName = `${project.name} (Restored)`;
+        await prisma.project.update({ where: { id }, data: { deletedAt: null, name: restoredName, isArchived: false } });
+        results.push({ id, renamed: true, originalName: project.name });
+      } else {
+        await prisma.project.update({ where: { id }, data: { deletedAt: null, isArchived: false } });
+        results.push({ id });
+      }
+    }
+    res.json({ success: true, restored: results });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.post('/bulk/permanent-delete', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const { ids } = req.body as { ids: string[] };
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'No project IDs provided' });
+    }
+    const projects = await prisma.project.findMany({
+      where: { id: { in: ids }, ownerId: req.userId }
+    });
+    for (const p of projects) {
+      try {
+        const projectDir = path.join(process.cwd(), 'projects', p.id);
+        if (fs.existsSync(projectDir)) fs.rmSync(projectDir, { recursive: true, force: true });
+      } catch {}
+    }
+    const projectIds = projects.map(p => p.id);
+    if (projectIds.length > 0) {
+      await prisma.documentVersion.deleteMany({ where: { projectId: { in: projectIds } } });
+      await prisma.file.deleteMany({ where: { projectId: { in: projectIds } } });
+      await prisma.folder.deleteMany({ where: { projectId: { in: projectIds } } });
+      await prisma.project.deleteMany({ where: { id: { in: projectIds } } });
+    }
+    res.json({ success: true, deleted: projectIds.length });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 router.get('/:id', optionalAuthenticate, async (req: AuthRequest, res: Response) => {
   try {
     const project = await prisma.project.findUnique({
@@ -165,7 +261,7 @@ router.patch('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
     if (!project) return res.status(404).json({ error: 'Project not found' });
     if (project.ownerId !== req.userId) return res.status(403).json({ error: 'Access denied' });
     
-    const { name, description, compiler, isPublic, isFavorite } = req.body;
+    const { name, description, compiler, isPublic, isFavorite, isArchived } = req.body;
     const updated = await prisma.project.update({
       where: { id: req.params.id },
       data: {
@@ -173,7 +269,8 @@ router.patch('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
         ...(description !== undefined && { description }),
         ...(compiler !== undefined && { compiler }),
         ...(isPublic !== undefined && { isPublic }),
-        ...(isFavorite !== undefined && { isFavorite })
+        ...(isFavorite !== undefined && { isFavorite }),
+        ...(isArchived !== undefined && { isArchived })
       },
       include: {
         owner: { select: { id: true, name: true, email: true, avatarUrl: true } },
@@ -197,12 +294,8 @@ router.delete('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
     if (permanent) {
       // Permanent delete — remove files from disk and DB
       try {
-        const files = await prisma.file.findMany({ where: { projectId: req.params.id } });
         const projectDir = path.join(process.cwd(), 'projects', req.params.id);
         if (fs.existsSync(projectDir)) fs.rmSync(projectDir, { recursive: true, force: true });
-        for (const file of files) {
-          if (file.diskPath && fs.existsSync(file.diskPath)) fs.unlinkSync(file.diskPath);
-        }
       } catch {}
       await prisma.documentVersion.deleteMany({ where: { projectId: req.params.id } });
       await prisma.file.deleteMany({ where: { projectId: req.params.id } });
@@ -233,6 +326,25 @@ router.post('/:id/restore', requireAuth, async (req: AuthRequest, res: Response)
     });
     
     res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.post('/:id/archive', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const project = await prisma.project.findUnique({ where: { id: req.params.id } });
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    if (project.ownerId !== req.userId) return res.status(403).json({ error: 'Access denied' });
+    const updated = await prisma.project.update({
+      where: { id: req.params.id },
+      data: { isArchived: !project.isArchived },
+      include: {
+        owner: { select: { id: true, name: true, email: true, avatarUrl: true } },
+        _count: { select: { files: true } }
+      }
+    });
+    res.json({ project: updated });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -318,8 +430,8 @@ router.get('/:id/download', requireAuth, async (req: AuthRequest, res: Response)
       include: { files: true }
     });
     if (!project) return res.status(404).json({ error: 'Project not found' });
+    if (project.ownerId !== req.userId) return res.status(403).json({ error: 'Access denied' });
     
-    const archiver = require('archiver');
     const archive = archiver('zip', { zlib: { level: 9 } });
     
     res.attachment(`${project.name.replace(/[^a-zA-Z0-9]/g, '_')}.zip`);
@@ -334,5 +446,7 @@ router.get('/:id/download', requireAuth, async (req: AuthRequest, res: Response)
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+
 
 export default router;

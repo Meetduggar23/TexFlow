@@ -5,8 +5,9 @@ import {
   Undo, Redo, Scissors, Copy, ClipboardPaste, Replace, Type, Bold, Italic,
   List, ListOrdered, Table2, Link2, Image as ImageIcon, FileCode2,
   Eye, EyeOff, Terminal, LayoutTemplate,
-  Puzzle, HelpCircle, BookOpen, Bug,
+  BookOpen, Bug, Mail,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import BrandLogo from './BrandLogo';
 import { toggleSidebar, togglePdf, toggleTerminal, resetLayout } from '../store/uiSlice';
@@ -78,6 +79,7 @@ export default function EditorHeader({
   onOpenSearch, onOpenCommandPalette,
 }: EditorHeaderProps) {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { compiling, compileStatus } = useAppSelector(state => state.editor);
   const { filesOpen: sidebarOpen, pdfOpen: pdfVisible } = useAppSelector(state => state.ui);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -154,11 +156,9 @@ export default function EditorHeader({
   ];
 
   const helpMenu: MenuItem[] = [
-    { label: 'Documentation', icon: <BookOpen size={14} /> },
-    { label: 'LaTeX Help', icon: <HelpCircle size={14} /> },
-    { divider: true },
-    { label: 'Keyboard Shortcuts', icon: <Puzzle size={14} /> },
-    { label: 'Report Issue', icon: <Bug size={14} /> },
+    { label: 'Documentation', icon: <BookOpen size={14} />, action: () => navigate('/documentation') },
+    { label: 'Contact Us', icon: <Mail size={14} />, action: () => navigate('/contact') },
+    { label: 'Blog', icon: <FileText size={14} />, action: () => navigate('/blog') },
   ];
 
   const menus: Record<string, MenuItem[]> = {
@@ -219,8 +219,6 @@ export default function EditorHeader({
         >
           <Command size={14} />
         </button>
-
-        <div className="w-px h-5 mx-1" style={{ background: 'var(--color-border)' }} />
 
         <div className="w-px h-5 mx-1" style={{ background: 'var(--color-border)' }} />
 

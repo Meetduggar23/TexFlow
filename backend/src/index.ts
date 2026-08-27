@@ -28,7 +28,8 @@ io.use((socket, next) => {
   const token = socket.handshake.auth?.token || socket.handshake.headers.authorization?.replace(/^Bearer\s+/i, '');
   if (!token) return next(new Error('Authentication required'));
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { userId: string };
+    const jwtSecret = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? '' : 'dev-secret-change-me');
+    const decoded = jwt.verify(token, jwtSecret) as { userId: string };
     socket.data.userId = decoded.userId;
     next();
   } catch {

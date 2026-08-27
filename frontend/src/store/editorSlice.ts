@@ -34,6 +34,8 @@ interface EditorState {
   compileStatus: CompileStatus;
   lastValidPdfUrl: string | null;
   compileSettings: CompileSettings;
+  compileRequestId: number;
+  currentProjectId: string | null;
 }
 
 function loadCompileSettings(projectId?: string): CompileSettings {
@@ -60,8 +62,6 @@ function saveCompileSettings(settings: CompileSettings, projectId?: string) {
   } catch {}
 }
 
-let currentProjectId: string | undefined;
-
 const initialState: EditorState = {
   content: '',
   compiling: false,
@@ -77,9 +77,9 @@ const initialState: EditorState = {
   compileStatus: 'idle',
   lastValidPdfUrl: null,
   compileSettings: loadCompileSettings(),
+  compileRequestId: 0,
+  currentProjectId: null,
 };
-
-let compileRequestId = 0;
 
 export const saveFile = createAsyncThunk(
   'editor/saveFile',
@@ -98,8 +98,8 @@ export const saveFile = createAsyncThunk(
 export const compileProject = createAsyncThunk(
   'editor/compileProject',
   async (projectId: string, { getState }) => {
-    const requestId = ++compileRequestId;
     const state = getState() as { editor: EditorState; settings?: { compilation?: { compiler?: string; mainDocument?: string; timeout?: number } } };
+    const requestId = state.editor.compileRequestId + 1;
     const sourceRevision = state.editor.sourceRevision;
     const settings = state.editor.compileSettings;
     const token = localStorage.getItem('token');
@@ -167,8 +167,8 @@ export const compileProject = createAsyncThunk(
 export const cleanBuild = createAsyncThunk(
   'editor/cleanBuild',
   async (projectId: string, { getState }) => {
-    const requestId = ++compileRequestId;
     const state = getState() as { editor: EditorState; settings?: { compilation?: { compiler?: string; mainDocument?: string; timeout?: number } } };
+    const requestId = state.editor.compileRequestId + 1;
     const sourceRevision = state.editor.sourceRevision;
     const settings = state.editor.compileSettings;
     const token = localStorage.getItem('token');
@@ -316,22 +316,22 @@ const editorSlice = createSlice({
     },
     setAutoCompile(state, action) {
       state.compileSettings.autoCompile = action.payload;
-      saveCompileSettings(state.compileSettings, currentProjectId);
+      saveCompileSettings(state.compileSettings, state.currentProjectId || undefined);
     },
     setCompileMode(state, action) {
       state.compileSettings.compileMode = action.payload;
-      saveCompileSettings(state.compileSettings, currentProjectId);
+      saveCompileSettings(state.compileSettings, state.currentProjectId || undefined);
     },
     setSyntaxCheck(state, action) {
       state.compileSettings.syntaxCheck = action.payload;
-      saveCompileSettings(state.compileSettings, currentProjectId);
+      saveCompileSettings(state.compileSettings, state.currentProjectId || undefined);
     },
     setErrorHandling(state, action) {
       state.compileSettings.errorHandling = action.payload;
-      saveCompileSettings(state.compileSettings, currentProjectId);
+      saveCompileSettings(state.compileSettings, state.currentProjectId || undefined);
     },
     initCompileSettings(state, action) {
-      currentProjectId = action.payload;
+      state.currentProjectId = action.payload;
       state.compileSettings = loadCompileSettings(action.payload);
     },
     setCompileStatus(state, action) {
@@ -358,12 +358,13 @@ const editorSlice = createSlice({
       .addCase(compileProject.pending, (state) => {
         state.compiling = true;
         state.compileStatus = 'compiling';
+        state.compileRequestId += 1;
       })
       .addCase(compileProject.fulfilled, (state, action) => {
         state.compiling = false;
         const result = action.payload;
 
-        if (result.requestId < compileRequestId) {
+        if (result.requestId < state.compileRequestId) {
           state.compileStatus = 'idle';
           return;
         }
@@ -396,12 +397,13 @@ const editorSlice = createSlice({
       .addCase(cleanBuild.pending, (state) => {
         state.compiling = true;
         state.compileStatus = 'compiling';
+        state.compileRequestId += 1;
       })
       .addCase(cleanBuild.fulfilled, (state, action) => {
         state.compiling = false;
         const result = action.payload;
 
-        if (result.requestId < compileRequestId) {
+        if (result.requestId < state.compileRequestId) {
           state.compileStatus = 'idle';
           return;
         }

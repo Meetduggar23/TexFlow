@@ -19,15 +19,17 @@ export interface Project {
   compiler?: string;
   isPublic?: boolean;
   isFavorite?: boolean;
+  isArchived?: boolean;
   owner?: User;
   collaborators?: Collaborator[];
-  files?: File[];
+  files?: ProjectFile[];
   _count?: { files: number };
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string;
 }
 
-export interface File {
+export interface ProjectFile {
   id: string;
   name: string;
   path: string;
