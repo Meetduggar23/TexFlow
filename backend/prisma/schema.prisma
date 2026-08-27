@@ -1,0 +1,187 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  name          String
+  passwordHash  String
+  avatarUrl     String?
+  role          String    @default("user")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  projects      Project[]
+  ownedProjects Project[] @relation("ProjectOwner")
+  memberships   ProjectMember[]
+  comments      Comment[]
+  versions      DocumentVersion[]
+  compilations  Compilation[]
+  notifications Notification[]
+  sessions      UserSession[]
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  ownerId     String
+  isPublic    Boolean  @default(false)
+  isFavorite  Boolean  @default(false)
+  compiler    String   @default("pdflatex")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  owner       User              @relation("ProjectOwner", fields: [ownerId], references: [id])
+  files       File[]
+  folders     Folder[]
+  members     ProjectMember[]
+  versions    DocumentVersion[]
+  compilations Compilation[]
+  comments    Comment[]
+  shareLinks  ShareLink[]
+}
+
+model ProjectMember {
+  id        String   @id @default(uuid())
+  projectId String
+  userId    String
+  role      String   @default("editor")
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+}
+
+model Folder {
+  id        String   @id @default(uuid())
+  projectId String
+  name      String
+  parentId  String?
+  path      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parent  Folder? @relation("FolderTree", fields: [parentId], references: [id])
+  files   File[]
+  children Folder[] @relation("FolderTree")
+}
+
+model File {
+  id        String   @id @default(uuid())
+  projectId String
+  folderId  String?
+  name      String
+  path      String
+  mimeType  String
+  size      Int
+  content   String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  folder  Folder? @relation(fields: [folderId], references: [id])
+}
+
+model DocumentVersion {
+  id        String   @id @default(uuid())
+  projectId String
+  userId    String
+  label     String?
+  snapshot  String
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  projectId String
+  userId    String
+  content   String
+  filePath  String?
+  lineStart Int?
+  lineEnd   Int?
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User            @relation(fields: [userId], references: [id])
+  replies CommentReply[]
+}
+
+model CommentReply {
+  id        String   @id @default(uuid())
+  commentId String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+}
+
+model Compilation {
+  id        String   @id @default(uuid())
+  projectId String
+  userId    String
+  compiler  String
+  status    String   @default("queued")
+  logs      String   @default("")
+  pdfUrl    String?
+  startedAt DateTime?
+  completedAt DateTime?
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+}
+
+model ShareLink {
+  id        String   @id @default(uuid())
+  projectId String
+  token     String   @unique
+  role      String   @default("viewer")
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String
+  title     String
+  message   String
+  projectId String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserSession {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  userAgent String?
+  ip        String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
