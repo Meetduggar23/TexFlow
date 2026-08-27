@@ -12,7 +12,7 @@ export default function BlogArticlePage() {
       <div className="h-full flex flex-col items-center justify-center" style={{ background: 'var(--color-background)' }}>
         <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>Article Not Found</h1>
         <p className="text-sm mb-6" style={{ color: 'var(--color-text-muted)' }}>The article you're looking for doesn't exist.</p>
-        <button onClick={() => navigate('/blog')} className="btn-primary">Back to Blog</button>
+        <button onClick={() => navigate('/help/blog')} className="btn-primary">Back to Blog</button>
       </div>
     );
   }
@@ -97,7 +97,7 @@ export default function BlogArticlePage() {
         </div>
 
         <div className="max-w-3xl mx-auto px-6 py-8">
-          <button onClick={() => navigate('/blog')} className="flex items-center gap-2 text-sm mb-6 transition-colors" style={{ color: 'var(--color-text-muted)' }}
+          <button onClick={() => navigate('/help/blog')} className="flex items-center gap-2 text-sm mb-6 transition-colors" style={{ color: 'var(--color-text-muted)' }}
             onMouseEnter={e => e.currentTarget.style.color = 'var(--color-text-primary)'}
             onMouseLeave={e => e.currentTarget.style.color = 'var(--color-text-muted)'}
           ><ArrowLeft size={14} /> Back to Blog</button>
