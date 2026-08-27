@@ -233,7 +233,10 @@ export default function AllProjects() {
     e.stopPropagation();
     if (menuOpen === projectId) { setMenuOpen(null); return; }
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    setMenuPos({ x: rect.left, y: rect.bottom + 4 });
+    const menuWidth = 180;
+    const spaceRight = window.innerWidth - rect.right;
+    const x = spaceRight < menuWidth + 16 ? rect.right - menuWidth : rect.left;
+    setMenuPos({ x: Math.max(8, x), y: rect.bottom + 4 });
     setMenuOpen(projectId);
   };
 
