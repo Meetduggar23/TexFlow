@@ -6,9 +6,9 @@ import { bracketMatching, foldGutter, indentOnInput, StreamLanguage } from '@cod
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import { lintKeymap } from '@codemirror/lint';
 import { tags } from '@lezer/highlight';
-import { FileText, X, MoreHorizontal, FileCode2, BookOpen, File, FileType } from 'lucide-react';
+import { FileText, X, FileCode2, BookOpen, File, FileType } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { closeTab, setActiveTab, openTab, setContent } from '../store/editorSlice';
+import { closeTab, setActiveTab, openTab, setContent, CompileStatus } from '../store/editorSlice';
 import type { FileNode } from '../types';
 
 const latexStreamParser = {
@@ -93,9 +93,12 @@ interface CodeEditorProps {
   onSave: () => void;
   file: FileNode | null;
   allFiles: FileNode[];
+  compileStatus?: CompileStatus;
+  saving?: boolean;
+  isStale?: boolean;
 }
 
-export default function CodeEditor({ content, onChange, onSave, file, allFiles }: CodeEditorProps) {
+export default function CodeEditor({ content, onChange, onSave, file, allFiles, compileStatus = 'idle', saving = false, isStale = false }: CodeEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
@@ -210,6 +213,21 @@ export default function CodeEditor({ content, onChange, onSave, file, allFiles }
           <span className="font-medium uppercase">{file.name.split('.').pop()}</span>
           <span>UTF-8</span>
           <span>LaTeX</span>
+          <span className="w-px h-3" style={{ background: 'var(--color-border)' }} />
+          <span className="flex items-center gap-1">
+            {saving && <span style={{ color: 'var(--color-text-muted)' }}>Saving...</span>}
+            {!saving && compileStatus === 'saved' && <span style={{ color: 'var(--color-success)' }}>✓ Saved</span>}
+            {!saving && compileStatus === 'compiling' && (
+              <span className="flex items-center gap-1" style={{ color: 'var(--color-accent)' }}>
+                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--color-accent)' }} />
+                Compiling...
+              </span>
+            )}
+            {!saving && compileStatus === 'compiled' && <span style={{ color: 'var(--color-success)' }}>✓ Compiled</span>}
+            {!saving && compileStatus === 'error' && <span style={{ color: 'var(--color-error)' }}>✕ Errors</span>}
+            {!saving && compileStatus === 'idle' && isStale && <span style={{ color: 'var(--color-warning)' }}>● Unsaved changes</span>}
+            {!saving && compileStatus === 'idle' && !isStale && <span>Ready</span>}
+          </span>
         </div>
       </div>
     </div>

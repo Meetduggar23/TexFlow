@@ -7,6 +7,8 @@ export interface EditorTab {
   dirty: boolean;
 }
 
+export type CompileStatus = 'idle' | 'saving' | 'saved' | 'compiling' | 'compiled' | 'error';
+
 interface EditorState {
   content: string;
   compiling: boolean;
@@ -24,6 +26,9 @@ interface EditorState {
   lastSavedAt: number | null;
   lastCompiledAt: number | null;
   saving: boolean;
+  autoCompile: boolean;
+  compileStatus: CompileStatus;
+  lastValidPdfUrl: string | null;
 }
 
 const initialState: EditorState = {
@@ -43,14 +48,34 @@ const initialState: EditorState = {
   lastSavedAt: null,
   lastCompiledAt: null,
   saving: false,
+  autoCompile: true,
+  compileStatus: 'idle',
+  lastValidPdfUrl: null,
 };
+
+let compileRequestId = 0;
+
+export const saveFile = createAsyncThunk(
+  'editor/saveFile',
+  async ({ fileId, content }: { fileId: string; content: string }) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`/api/files/${fileId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ content }),
+    });
+    if (!response.ok) throw new Error('Save failed');
+    return { fileId, savedAt: Date.now() };
+  }
+);
 
 export const compileProject = createAsyncThunk(
   'editor/compileProject',
   async (projectId: string, { getState }) => {
-    const token = localStorage.getItem('token');
+    const requestId = ++compileRequestId;
     const state = getState() as { editor: EditorState };
     const sourceRevision = state.editor.sourceRevision;
+    const token = localStorage.getItem('token');
 
     const response = await fetch(`/api/compile/${projectId}`, {
       method: 'POST',
@@ -72,22 +97,20 @@ export const compileProject = createAsyncThunk(
       const line = lines[i];
       const errorMatch = line.match(/^!\s+(.+)\.$/);
       if (errorMatch) {
-        const err: { line: number; column: number; message: string; file?: string } = { line: 0, column: 0, message: errorMatch[1] };
-        const fileMatch = line.match(/^l\.(\d+)/);
-        if (fileMatch) err.line = parseInt(fileMatch[1]);
+        const err: { line: number; column: number; message: string; file?: string } = {
+          line: 0, column: 0, message: errorMatch[1],
+        };
         const nextLine = lines[i + 1];
         if (nextLine) {
-          const nextFileMatch = nextLine.match(/^<\*?>\s*(.*)/);
-          if (nextFileMatch) err.file = nextFileMatch[1].trim();
+          const fileMatch = nextLine.match(/^<\*?>\s*(.*)/);
+          if (fileMatch) err.file = fileMatch[1].trim();
         }
         errors.push(err);
       }
-      const fileLineMatch = line.match(/^l\.(\d+)\s+(.*)$/);
+      const fileLineMatch = line.match(/^l\.(\d+)/);
       if (fileLineMatch && errors.length > 0) {
         const lastErr = errors[errors.length - 1];
-        if (lastErr.line === 0) {
-          lastErr.line = parseInt(fileLineMatch[1]);
-        }
+        if (lastErr.line === 0) lastErr.line = parseInt(fileLineMatch[1]);
       }
       const warningMatch = line.match(/Warning/i);
       if (warningMatch && !errorMatch) {
@@ -97,11 +120,12 @@ export const compileProject = createAsyncThunk(
 
     return {
       success: data.status === 'success',
-      pdfUrl: data.pdfUrl,
+      pdfUrl: data.pdfUrl as string | undefined,
       errors: errors.length > 0 ? errors : undefined,
       warnings: warnings.length > 0 ? warnings : undefined,
       logs,
-      compiledRevision: sourceRevision,
+      sourceRevision,
+      requestId,
     };
   }
 );
@@ -113,6 +137,7 @@ const editorSlice = createSlice({
     setContent(state, action) {
       state.content = action.payload;
       state.sourceRevision += 1;
+      state.compileStatus = 'idle';
       if (state.activeTabId) {
         const tab = state.openTabs.find(t => t.fileId === state.activeTabId);
         if (tab) tab.dirty = true;
@@ -184,25 +209,67 @@ const editorSlice = createSlice({
       const tab = state.openTabs.find(t => t.fileId === action.payload);
       if (tab) tab.dirty = false;
       state.lastSavedAt = Date.now();
+      state.saving = false;
+      state.compileStatus = 'saved';
     },
     setSaving(state, action) {
       state.saving = action.payload;
+      if (action.payload) state.compileStatus = 'saving';
     },
-    setSidebarOpen(state, action) {
-      // handled by uiSlice
+    setAutoCompile(state, action) {
+      state.autoCompile = action.payload;
+    },
+    setCompileStatus(state, action) {
+      state.compileStatus = action.payload;
     },
   },
   extraReducers: (builder) => {
     builder
+      .addCase(saveFile.pending, (state) => {
+        state.saving = true;
+        state.compileStatus = 'saving';
+      })
+      .addCase(saveFile.fulfilled, (state, action) => {
+        state.saving = false;
+        state.lastSavedAt = action.payload.savedAt;
+        state.compileStatus = 'saved';
+        const tab = state.openTabs.find(t => t.fileId === action.payload.fileId);
+        if (tab) tab.dirty = false;
+      })
+      .addCase(saveFile.rejected, (state) => {
+        state.saving = false;
+        state.compileStatus = 'idle';
+      })
       .addCase(compileProject.pending, (state) => {
         state.compiling = true;
+        state.compileStatus = 'compiling';
       })
       .addCase(compileProject.fulfilled, (state, action) => {
         state.compiling = false;
-        state.compileResult = action.payload;
-        state.compiledRevision = action.payload.compiledRevision;
+        const result = action.payload;
+
+        if (result.requestId < compileRequestId) {
+          state.compileStatus = 'idle';
+          return;
+        }
+
+        state.compileResult = {
+          success: result.success,
+          pdfUrl: result.pdfUrl,
+          errors: result.errors,
+          warnings: result.warnings,
+          logs: result.logs,
+        };
+        state.compiledRevision = result.sourceRevision;
         state.lastCompiledAt = Date.now();
-        state.terminalOpen = !action.payload.success;
+
+        if (result.success && result.pdfUrl) {
+          state.lastValidPdfUrl = result.pdfUrl;
+          state.compileStatus = 'compiled';
+        } else {
+          state.compileStatus = 'error';
+          state.terminalOpen = true;
+        }
       })
       .addCase(compileProject.rejected, (state) => {
         state.compiling = false;
@@ -210,6 +277,7 @@ const editorSlice = createSlice({
           success: false,
           errors: [{ line: 0, column: 0, message: 'Compilation failed. Please try again.' }],
         };
+        state.compileStatus = 'error';
         state.terminalOpen = true;
       });
   },
@@ -221,5 +289,6 @@ export const {
   setTerminalHeight, toggleTerminal, setTerminalOpen,
   clearCompileResult, openTab, closeTab, setActiveTab,
   closeAllTabs, closeOtherTabs, markTabSaved, setSaving,
+  setAutoCompile, setCompileStatus,
 } = editorSlice.actions;
 export default editorSlice.reducer;

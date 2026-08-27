@@ -8,6 +8,7 @@ import {
 import {
   setContent, compileProject, togglePdf, setSplitRatio, openTab,
   setSaving, markTabSaved, setTerminalOpen, setTerminalHeight,
+  saveFile, setAutoCompile, CompileStatus,
 } from '../store/editorSlice';
 import { setSidebarOpen } from '../store/uiSlice';
 import EditorHeader from '../components/EditorHeader';
@@ -29,12 +30,18 @@ import toast from 'react-hot-toast';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 
+const AUTO_COMPILE_DELAY = 1000;
+const SAVE_COMPILE_DELAY = 500;
+
 export default function Editor() {
   const { projectId } = useParams<{ projectId: string }>();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { currentProject, files, currentFile } = useAppSelector(state => state.project);
-  const { content, compiling, pdfVisible, splitRatio, openTabs, activeTabId, saving } = useAppSelector(state => state.editor);
+  const {
+    content, compiling, pdfVisible, splitRatio, openTabs, activeTabId,
+    saving, autoCompile, compileStatus, sourceRevision, compiledRevision, lastValidPdfUrl,
+  } = useAppSelector(state => state.editor);
   const { sidebarOpen } = useAppSelector(state => state.ui);
 
   const [showComments, setShowComments] = useState(false);
@@ -47,26 +54,41 @@ export default function Editor() {
   const [showBib, setShowBib] = useState(false);
   const [showImage, setShowImage] = useState(false);
   const workspaceRef = useRef<HTMLDivElement>(null);
-  const editorPanelRef = useRef<HTMLDivElement>(null);
-  const pdfPanelRef = useRef<HTMLDivElement>(null);
-  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [editorWidth, setEditorWidth] = useState<number | null>(null);
-  const [pdfWidth, setPdfWidth] = useState<number | null>(null);
 
   const socket = useSocket(projectId);
+
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const compileTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSavedContentRef = useRef<string>('');
+  const isSavingRef = useRef(false);
+  const isCompilingRef = useRef(false);
+  const contentRef = useRef(content);
+  const currentFileRef = useRef(currentFile);
+  const autoCompileRef = useRef(autoCompile);
+  const projectIdRef = useRef(projectId);
+
+  contentRef.current = content;
+  currentFileRef.current = currentFile;
+  autoCompileRef.current = autoCompile;
+  projectIdRef.current = projectId;
 
   useEffect(() => {
     if (projectId) {
       dispatch(fetchProject(projectId));
       dispatch(fetchFiles(projectId));
     }
-    return () => { dispatch(clearCurrentProject()); };
+    return () => {
+      dispatch(clearCurrentProject());
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      if (compileTimerRef.current) clearTimeout(compileTimerRef.current);
+    };
   }, [projectId, dispatch]);
 
   useEffect(() => {
     if (currentFile?.content !== undefined) {
       dispatch(setContent(currentFile.content));
       dispatch(openTab({ fileId: currentFile.id, name: currentFile.name, content: currentFile.content }));
+      lastSavedContentRef.current = currentFile.content;
     }
   }, [currentFile?.id, dispatch]);
 
@@ -82,21 +104,72 @@ export default function Editor() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); setShowCommandPalette(p => !p); }
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'F') { e.preventDefault(); setShowSearch(p => !p); }
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); handleSave(); }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); handleCompile(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); doSave(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); doCompile(); }
       if ((e.ctrlKey || e.metaKey) && e.key === 'b') { e.preventDefault(); dispatch(togglePdf()); }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentFile, content, projectId, compiling, dispatch]);
 
-  const handleCompile = useCallback(async () => {
-    if (!projectId || compiling) return;
+  const doSave = useCallback(async () => {
+    const file = currentFileRef.current;
+    const currentContent = contentRef.current;
+    if (!file || isSavingRef.current) return;
+    if (currentContent === lastSavedContentRef.current) return;
+
+    isSavingRef.current = true;
+    dispatch(setSaving(true));
     try {
-      await dispatch(compileProject(projectId)).unwrap();
-      toast.success('Compiled successfully');
-    } catch { toast.error('Compilation failed'); }
-  }, [projectId, compiling, dispatch]);
+      await dispatch(saveFile({ fileId: file.id, content: currentContent })).unwrap();
+      lastSavedContentRef.current = currentContent;
+      dispatch(markTabSaved(file.id));
+    } catch {
+      // silent
+    } finally {
+      isSavingRef.current = false;
+    }
+  }, [dispatch]);
+
+  const doCompile = useCallback(async () => {
+    const pid = projectIdRef.current;
+    if (!pid || isCompilingRef.current) return;
+    isCompilingRef.current = true;
+    try {
+      await dispatch(compileProject(pid)).unwrap();
+    } catch {
+      // error handled by slice
+    } finally {
+      isCompilingRef.current = false;
+    }
+  }, [dispatch]);
+
+  const doSaveThenCompile = useCallback(async () => {
+    await doSave();
+    await doCompile();
+  }, [doSave, doCompile]);
+
+  useEffect(() => {
+    if (!currentFile) return;
+
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    if (compileTimerRef.current) clearTimeout(compileTimerRef.current);
+
+    saveTimerRef.current = setTimeout(() => {
+      doSave().then(() => {
+        if (autoCompileRef.current) {
+          compileTimerRef.current = setTimeout(() => {
+            doCompile();
+          }, SAVE_COMPILE_DELAY);
+        }
+      });
+    }, AUTO_COMPILE_DELAY);
+
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      if (compileTimerRef.current) clearTimeout(compileTimerRef.current);
+    };
+  }, [content, currentFile?.id, doSave, doCompile]);
 
   const handleContentChange = useCallback((newContent: string) => {
     dispatch(setContent(newContent));
@@ -104,35 +177,33 @@ export default function Editor() {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       socket.emit('file-update', { projectId, fileId: currentFile.id, content: newContent, userId: user.id });
     }
-    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
-    autosaveTimerRef.current = setTimeout(() => {
-      handleSave();
-    }, 2000);
   }, [dispatch, socket, currentFile, projectId]);
 
+  const handleCompile = useCallback(async () => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    if (compileTimerRef.current) clearTimeout(compileTimerRef.current);
+    await doSaveThenCompile();
+  }, [doSaveThenCompile]);
+
   const handleSave = useCallback(async () => {
-    if (!currentFile) return;
-    dispatch(setSaving(true));
-    try {
-      await dispatch(updateFileContent({ fileId: currentFile.id, content })).unwrap();
-      dispatch(markTabSaved(currentFile.id));
-    } catch {
-      // silent
-    } finally {
-      dispatch(setSaving(false));
-    }
-  }, [currentFile, dispatch, content]);
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    if (compileTimerRef.current) clearTimeout(compileTimerRef.current);
+    await doSave();
+    toast.success('Saved');
+  }, [doSave]);
 
   const handleDownloadPdf = useCallback(async () => {
     if (!projectId) return;
     try {
-      await dispatch(compileProject(projectId)).unwrap();
-      const link = document.createElement('a');
-      link.href = `/api/compile/${projectId}/pdf`;
-      link.download = 'document.pdf';
-      link.click();
+      await doSaveThenCompile();
+      setTimeout(() => {
+        const link = document.createElement('a');
+        link.href = `/api/compile/${projectId}/pdf`;
+        link.download = 'document.pdf';
+        link.click();
+      }, 500);
     } catch { toast.error('Failed'); }
-  }, [projectId, dispatch]);
+  }, [projectId, doSaveThenCompile]);
 
   const handleDownloadProject = useCallback(async () => {
     if (!currentProject || !projectId) return;
@@ -144,12 +215,10 @@ export default function Editor() {
       const data = await res.json();
       const zip = new JSZip();
       for (const file of (data.files || [])) {
-        const path = file.path || file.name;
-        zip.file(path, file.content || '');
+        zip.file(file.path || file.name, file.content || '');
       }
       for (const folder of (data.folders || [])) {
-        const path = folder.path || folder.name;
-        zip.folder(path);
+        zip.folder(folder.path || folder.name);
       }
       const blob = await zip.generateAsync({ type: 'blob' });
       saveAs(blob, `${currentProject.name.replace(/[^a-zA-Z0-9]/g, '_')}.zip`);
@@ -185,8 +254,8 @@ export default function Editor() {
     } catch { toast.error('Failed to create folder'); }
   }, [dispatch, projectId]);
 
-  const handleNavigateToLine = useCallback((line: number) => {
-    toast.success(`Navigate to line ${line}`);
+  const handleNavigateToLine = useCallback((_line: number) => {
+    // TODO: implement editor line navigation via CodeMirror
   }, []);
 
   const handleSplitPointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
@@ -194,17 +263,12 @@ export default function Editor() {
     const workspace = workspaceRef.current;
     if (!workspace) return;
     const bounds = workspace.getBoundingClientRect();
-
     const handlePointerMove = (moveEvent: PointerEvent) => {
-      const offset = moveEvent.clientX - bounds.left;
-      const width = bounds.width;
-      const ratio = (offset / width) * 100;
-      const clamped = Math.min(75, Math.max(25, ratio));
-      dispatch(setSplitRatio(clamped));
+      const ratio = ((moveEvent.clientX - bounds.left) / bounds.width) * 100;
+      dispatch(setSplitRatio(Math.min(75, Math.max(25, ratio))));
     };
     const handlePointerUp = () => {
       window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
     };
@@ -213,6 +277,8 @@ export default function Editor() {
     window.addEventListener('pointermove', handlePointerMove);
     window.addEventListener('pointerup', handlePointerUp, { once: true });
   }, [dispatch]);
+
+  const isStale = sourceRevision > compiledRevision;
 
   if (!currentProject) {
     return (
@@ -248,8 +314,17 @@ export default function Editor() {
         )}
 
         <div ref={workspaceRef} className="flex-1 flex overflow-hidden">
-          <div ref={editorPanelRef} className="flex flex-col min-w-0 overflow-hidden" style={{ width: pdfVisible ? `${splitRatio}%` : '100%' }}>
-            <CodeEditor content={content} onChange={handleContentChange} onSave={handleSave} file={currentFile} allFiles={files} />
+          <div className="flex flex-col min-w-0 overflow-hidden" style={{ width: pdfVisible ? `${splitRatio}%` : '100%' }}>
+            <CodeEditor
+              content={content}
+              onChange={handleContentChange}
+              onSave={handleSave}
+              file={currentFile}
+              allFiles={files}
+              compileStatus={compileStatus}
+              saving={saving}
+              isStale={isStale}
+            />
           </div>
 
           {pdfVisible && (
@@ -263,7 +338,7 @@ export default function Editor() {
           )}
 
           {pdfVisible && (
-            <div ref={pdfPanelRef} className="flex flex-col min-w-0 overflow-hidden" style={{ width: `calc(${100 - splitRatio}% - 6px)` }}>
+            <div className="flex flex-col min-w-0 overflow-hidden" style={{ width: `calc(${100 - splitRatio}% - 5px)` }}>
               <PDFViewer projectId={projectId!} />
             </div>
           )}
