@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="frontend/react/public/logo.png" width="98" alt="Flow logo" />
+</p>
+
 # TexFlow — Collaborative LaTeX Writing Platform
 
 Write. Compile. Collaborate. Publish.
