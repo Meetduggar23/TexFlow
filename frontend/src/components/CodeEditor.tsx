@@ -37,21 +37,22 @@ function applySelectionFormatting(view: EditorView, before: string, after: strin
 }
 
 function makeTexflowTheme(isDark: boolean) {
+  const fg = isDark ? '#FFFFFF' : '#0F172A';
+  const gutterFg = isDark ? '#9AA8B2' : '#64748B';
+  const commentFg = isDark ? '#6B7D8A' : '#94A3B8';
   return EditorView.theme({
     '&': { height: '100%', background: 'var(--color-surface)' },
     '.cm-scroller': { overflow: 'auto', fontFamily: '"JetBrains Mono", monospace', fontSize: '13.5px', lineHeight: '1.6' },
-    '.cm-gutters': { background: 'var(--color-background)', borderRight: '1px solid var(--color-border)', color: 'var(--color-text-disabled)' },
+    '.cm-gutters': { background: 'var(--color-background)', borderRight: '1px solid var(--color-border)', color: gutterFg },
+    '.cm-lineNumbers .cm-gutterElement': { color: gutterFg, minWidth: '3em', paddingRight: '8px' },
     '.cm-activeLineGutter': { background: 'var(--color-accent-soft)' },
     '.cm-activeLine': { background: 'var(--color-surface-secondary)' },
     '.cm-cursor': { borderLeftColor: 'var(--color-accent)' },
     '.cm-selectionBackground': { background: 'var(--tf-editor-selection) !important' },
     '&.cm-focused .cm-selectionBackground': { background: 'var(--tf-editor-selection) !important' },
     '.cm-matchingBracket': { background: 'var(--tf-editor-selection)', outline: '1px solid var(--color-accent)' },
-    '.cm-content': { caretColor: 'var(--tf-editor-cursor)', color: 'var(--tf-editor-foreground)' },
-    '.cm-line': { padding: '0 6px' },
-    '.ͼ5': { color: 'var(--color-accent)' },
-    '.ͼ6': { color: 'var(--tf-editor-foreground)' },
-    '.ͼ7': { color: 'var(--color-text-disabled)', fontStyle: 'italic' },
+    '.cm-content': { caretColor: 'var(--color-accent)', color: fg },
+    '.cm-line': { padding: '0 6px', color: fg },
   }, { dark: isDark });
 }
 

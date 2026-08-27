@@ -123,11 +123,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .cm-editor .cm-gutters {
   background-color: var(--color-background);
   border-right: 1px solid var(--color-border);
-  color: var(--color-text-disabled);
+  color: var(--color-text-muted);
 }
 
-.cm-editor .cm-content { caret-color: var(--color-accent); }
-.cm-editor .cm-activeLine { background-color: var(--color-surface-secondary); }
+.cm-editor .cm-content { caret-color: var(--color-accent); color: var(--color-text-primary) !important; }
+.cm-editor .cm-activeLine { background-color: var(--color-surface-secondary); color: var(--color-text-primary); }
 .cm-editor .cm-activeLineGutter { background-color: var(--color-accent-soft); }
 .cm-editor .cm-selectionBackground { background-color: rgba(255, 76, 41, 0.20) !important; }
 .cm-editor.cm-focused .cm-selectionBackground { background-color: rgba(255, 76, 41, 0.24) !important; }
