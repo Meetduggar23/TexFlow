@@ -60,13 +60,14 @@ router.get('/', optionalAuthenticate, async (req: AuthRequest, res: Response) =>
     if (!req.userId) {
       return res.json({ projects: [] });
     }
+    const showTrashed = req.query.trashed === 'true';
     const projects = await prisma.project.findMany({
       where: {
         OR: [
           { ownerId: req.userId },
           { members: { some: { userId: req.userId } } }
         ],
-        deletedAt: null
+        deletedAt: showTrashed ? { not: null } : null
       },
       include: {
         owner: { select: { id: true, name: true, email: true, avatarUrl: true } },
@@ -190,12 +191,30 @@ router.delete('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
     const project = await prisma.project.findUnique({ where: { id: req.params.id } });
     if (!project) return res.status(404).json({ error: 'Project not found' });
     if (project.ownerId !== req.userId) return res.status(403).json({ error: 'Access denied' });
-    
-    await prisma.project.update({
-      where: { id: req.params.id },
-      data: { deletedAt: new Date() }
-    });
-    
+
+    const permanent = req.query.permanent === 'true';
+
+    if (permanent) {
+      // Permanent delete — remove files from disk and DB
+      try {
+        const files = await prisma.file.findMany({ where: { projectId: req.params.id } });
+        const projectDir = path.join(process.cwd(), 'projects', req.params.id);
+        if (fs.existsSync(projectDir)) fs.rmSync(projectDir, { recursive: true, force: true });
+        for (const file of files) {
+          if (file.diskPath && fs.existsSync(file.diskPath)) fs.unlinkSync(file.diskPath);
+        }
+      } catch {}
+      await prisma.documentVersion.deleteMany({ where: { projectId: req.params.id } });
+      await prisma.file.deleteMany({ where: { projectId: req.params.id } });
+      await prisma.project.delete({ where: { id: req.params.id } });
+    } else {
+      // Soft delete — move to trash
+      await prisma.project.update({
+        where: { id: req.params.id },
+        data: { deletedAt: new Date() }
+      });
+    }
+
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
