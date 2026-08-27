@@ -126,6 +126,8 @@ interface EditorToolbarProps {
 function EditorToolbar({ view, readOnly, onOpenImage, onOpenTable, onOpenLink, editingAs, onEditingAsChange }: EditorToolbarProps) {
   const [editMode, setEditMode] = useState<'code' | 'visual'>('code');
   const [editingMenuOpen, setEditingMenuOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const editingBtnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') setEditingMenuOpen(false); };
@@ -233,12 +235,12 @@ function EditorToolbar({ view, readOnly, onOpenImage, onOpenTable, onOpenLink, e
 
       {/* Editing mode */}
       <div className="relative" data-editing-menu>
-        {editingMenuOpen && <div role="menu" className="absolute right-0 top-full z-50 mt-1 min-w-[150px] rounded-md border py-1 shadow-xl" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border-strong)' }}>
+        {editingMenuOpen && <div role="menu" className="fixed z-[100] min-w-[150px] rounded-md border py-1 shadow-xl" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border-strong)', top: menuPos.top, left: menuPos.left }}>
           {(['editing', 'suggesting', 'viewing'] as const).map(mode => <button key={mode} role="menuitem" onClick={() => { onEditingAsChange(mode); setEditingMenuOpen(false); }} className="flex w-full items-center justify-between px-3 py-2 text-xs text-left hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-primary)' }}>
             <span>{mode === 'viewing' ? 'Read Only' : mode.charAt(0).toUpperCase() + mode.slice(1)}</span>{editingAs === mode && <span style={{ color: 'var(--color-accent)' }}>✓</span>}
           </button>)}
         </div>}
-        <button onClick={() => setEditingMenuOpen(open => !open)} aria-haspopup="menu" aria-expanded={editingMenuOpen} className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }}>
+        <button ref={editingBtnRef} onClick={() => { if (!editingMenuOpen && editingBtnRef.current) { const r = editingBtnRef.current.getBoundingClientRect(); setMenuPos({ top: r.bottom + 4, left: r.left }); } setEditingMenuOpen(open => !open); }} aria-haspopup="menu" aria-expanded={editingMenuOpen} className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }}>
           {editingAs.charAt(0).toUpperCase() + editingAs.slice(1)}
           <span className="text-[9px]">▼</span>
         </button>
