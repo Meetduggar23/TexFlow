@@ -2,12 +2,18 @@ import { Router, Response, Request } from 'express';
 import { prisma } from '../index';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import { v4 as uuid } from 'uuid';
+import { z } from 'zod';
+import { userCanAccessProject } from '../middleware/projectAccess';
 
 const router = Router();
+const roleSchema = z.enum(['viewer', 'commenter', 'editor']);
+const inviteSchema = z.object({ email: z.string().email(), role: roleSchema });
+const linkSchema = z.object({ role: roleSchema.optional().default('viewer') });
 
 router.post('/project/:projectId/invite', authenticate, async (req: AuthRequest, res: Response) => {
   try {
-    const { email, role } = req.body;
+    if (!(await userCanAccessProject(req.params.projectId, req.userId!, true))) return res.status(403).json({ error: 'Project access denied' });
+    const { email, role } = inviteSchema.parse(req.body);
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) return res.status(404).json({ error: 'User not found' });
     
@@ -38,13 +44,15 @@ router.post('/project/:projectId/invite', authenticate, async (req: AuthRequest,
     
     res.json({ success: true });
   } catch (error) {
+    if (error instanceof z.ZodError) return res.status(400).json({ error: error.errors[0].message });
     res.status(500).json({ error: 'Server error' });
   }
 });
 
 router.post('/project/:projectId/link', authenticate, async (req: AuthRequest, res: Response) => {
   try {
-    const { role } = req.body;
+    if (!(await userCanAccessProject(req.params.projectId, req.userId!, true))) return res.status(403).json({ error: 'Project access denied' });
+    const { role } = linkSchema.parse(req.body);
     const link = await prisma.shareLink.create({
       data: {
         projectId: req.params.projectId,
@@ -54,6 +62,7 @@ router.post('/project/:projectId/link', authenticate, async (req: AuthRequest, r
     });
     res.json({ link });
   } catch (error) {
+    if (error instanceof z.ZodError) return res.status(400).json({ error: error.errors[0].message });
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -78,6 +87,7 @@ router.get('/join/:token', async (req: Request, res: Response) => {
 
 router.get('/project/:projectId/members', authenticate, async (req: AuthRequest, res: Response) => {
   try {
+    if (!(await userCanAccessProject(req.params.projectId, req.userId!, true))) return res.status(403).json({ error: 'Project access denied' });
     const members = await prisma.projectMember.findMany({
       where: { projectId: req.params.projectId },
       include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } }
@@ -90,6 +100,7 @@ router.get('/project/:projectId/members', authenticate, async (req: AuthRequest,
 
 router.delete('/project/:projectId/members/:userId', authenticate, async (req: AuthRequest, res: Response) => {
   try {
+    if (!(await userCanAccessProject(req.params.projectId, req.userId!, true))) return res.status(403).json({ error: 'Project access denied' });
     await prisma.projectMember.deleteMany({
       where: { projectId: req.params.projectId, userId: req.params.userId }
     });

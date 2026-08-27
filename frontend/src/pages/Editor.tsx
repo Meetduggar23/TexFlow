@@ -77,6 +77,8 @@ export default function Editor() {
   const terminalResizeRef = useRef<HTMLDivElement>(null);
   const pdfResizeRef = useRef<HTMLDivElement>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
+  const doSaveRef = useRef<() => void>(() => undefined);
+  const handleCompileRef = useRef<() => void>(() => undefined);
 
   contentRef.current = content;
   currentFileRef.current = currentFile;
@@ -114,28 +116,32 @@ export default function Editor() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); setShowCommandPalette(p => !p); }
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'F') { e.preventDefault(); setShowSearch(p => !p); }
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); doSave(); }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); handleCompile(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); doSaveRef.current(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); handleCompileRef.current(); }
       if ((e.ctrlKey || e.metaKey) && e.key === 'b') { e.preventDefault(); dispatch(togglePdf()); }
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'B') { e.preventDefault(); dispatch(toggleSidebar()); }
       if ((e.ctrlKey || e.metaKey) && e.key === '`') { e.preventDefault(); dispatch(toggleTerminal()); }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentFile, content, projectId, compiling, dispatch]);
+  }, [dispatch]);
 
-  const doSave = useCallback(async () => {
+  const doSave = useCallback(async (): Promise<boolean> => {
     const file = currentFileRef.current;
     const currentContent = contentRef.current;
-    if (!file || isSavingRef.current) return;
-    if (currentContent === lastSavedContentRef.current) return;
+    if (!file || isSavingRef.current) return false;
+    if (currentContent === lastSavedContentRef.current) return true;
     isSavingRef.current = true;
     dispatch(setSaving(true));
     try {
       await dispatch(saveFile({ fileId: file.id, content: currentContent })).unwrap();
       lastSavedContentRef.current = currentContent;
       dispatch(markTabSaved(file.id));
-    } catch {} finally {
+      return true;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to save changes');
+      return false;
+    } finally {
       isSavingRef.current = false;
     }
   }, [dispatch]);
@@ -145,12 +151,13 @@ export default function Editor() {
     if (!pid) return;
     try {
       await dispatch(compileProject(pid)).unwrap();
-    } catch {}
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Compilation failed');
+    }
   }, [dispatch]);
 
   const doSaveThenCompile = useCallback(async () => {
-    await doSave();
-    await doCompile();
+    if (await doSave()) await doCompile();
   }, [doSave, doCompile]);
 
   useEffect(() => {
@@ -158,8 +165,8 @@ export default function Editor() {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     if (compileTimerRef.current) clearTimeout(compileTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
-      doSave().then(() => {
-        if (autoCompileRef.current) {
+      doSave().then(saved => {
+        if (saved && autoCompileRef.current) {
           compileTimerRef.current = setTimeout(() => { doCompile(); }, SAVE_COMPILE_DELAY);
         }
       });
@@ -184,15 +191,20 @@ export default function Editor() {
     await doSaveThenCompile();
   }, [doSaveThenCompile]);
 
+  doSaveRef.current = doSave;
+  handleCompileRef.current = handleCompile;
+
   const handleCleanBuild = useCallback(async () => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     if (compileTimerRef.current) clearTimeout(compileTimerRef.current);
-    await doSave();
+    if (!(await doSave())) return;
     const pid = projectIdRef.current;
     if (!pid) return;
     try {
       await dispatch(cleanBuild(pid)).unwrap();
-    } catch {}
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Clean build failed');
+    }
   }, [doSave, dispatch]);
 
   const handleStopCompilation = useCallback(async () => {
@@ -212,13 +224,11 @@ export default function Editor() {
     if (!projectId) return;
     try {
       await doSaveThenCompile();
-      setTimeout(() => {
-        const link = document.createElement('a');
-        link.href = `/api/compile/${projectId}/pdf`;
-        link.download = 'document.pdf';
-        link.click();
-      }, 500);
-    } catch { toast.error('Failed'); }
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/compile/${projectId}/pdf`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      if (!response.ok) throw new Error('PDF is not available');
+      saveAs(await response.blob(), 'document.pdf');
+    } catch (error) { toast.error(error instanceof Error ? error.message : 'Failed to download PDF'); }
   }, [projectId, doSaveThenCompile]);
 
   const handleDownloadProject = useCallback(async () => {
@@ -226,7 +236,7 @@ export default function Editor() {
     try {
       const token = localStorage.getItem('token');
       const res = await fetch(`/api/files/project/${projectId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const data = await res.json();
       const zip = new JSZip();
@@ -372,8 +382,8 @@ export default function Editor() {
               background: filesOpen ? 'var(--color-accent)' : 'transparent',
               color: filesOpen ? '#fff' : 'var(--color-text-muted)',
             }}
-            title="FileFlow"
-            aria-label="Toggle FileFlow"
+            title="TexFlow files"
+            aria-label="Toggle TexFlow files"
           >
             <FolderTree size={16} />
           </button>

@@ -25,7 +25,8 @@ export default function Login() {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       toast.success('Welcome back!');
-      navigate('/');
+      const returnTo = new URLSearchParams(window.location.search).get('returnTo');
+      navigate(returnTo?.startsWith('/') ? returnTo : '/dashboard', { replace: true });
     } catch (err: any) {
       toast.error(err.message || 'Login failed');
     } finally {

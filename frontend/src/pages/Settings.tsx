@@ -137,6 +137,7 @@ function ProfilePanel() {
 }
 
 function SecurityPanel() {
+  const dispatch = useAppDispatch();
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [currentPw, setCurrentPw] = useState('');
@@ -173,8 +174,16 @@ function SecurityPanel() {
             </div>
           </div>
         </div>
-        <button type="button" className="mt-3 px-5 py-2 rounded-md text-sm font-semibold text-white cursor-pointer border-none" style={{ background: 'var(--color-accent)' }}
-          onClick={() => { setCurrentPw(''); setNewPw(''); toast.success('Password updated'); }}>Update Password</button>
+        <button type="button" disabled={!currentPw || newPw.length < 8} className="mt-3 px-5 py-2 rounded-md text-sm font-semibold text-white cursor-pointer border-none disabled:opacity-50" style={{ background: 'var(--color-accent)' }}
+          onClick={async () => {
+            try {
+              const token = localStorage.getItem('token');
+              const response = await fetch('/api/auth/password', { method: 'PUT', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ currentPassword: currentPw, newPassword: newPw }) });
+              const data = await response.json();
+              if (!response.ok) throw new Error(data.error || 'Unable to update password');
+              setCurrentPw(''); setNewPw(''); toast.success('Password updated');
+            } catch (error) { toast.error(error instanceof Error ? error.message : 'Unable to update password'); }
+          }}>Update Password</button>
       </div>
 
       <div className="mb-6">
@@ -209,7 +218,16 @@ function SecurityPanel() {
             <button type="button" className="px-4 py-1.5 rounded-md text-sm font-semibold border cursor-pointer" style={{ borderColor: 'var(--color-error)', background: 'transparent', color: 'var(--color-error)' }} onClick={() => setShowDeleteConfirm(true)}>Delete Account</button>
           ) : (
             <div className="flex gap-2">
-              <button type="button" className="px-4 py-1.5 rounded-md text-sm font-semibold border cursor-pointer" style={{ borderColor: 'var(--color-error)', background: 'var(--color-error)', color: '#fff' }} onClick={() => { setShowDeleteConfirm(false); toast.error('Account deleted'); }}>Confirm</button>
+              <button type="button" className="px-4 py-1.5 rounded-md text-sm font-semibold border cursor-pointer" style={{ borderColor: 'var(--color-error)', background: 'var(--color-error)', color: '#fff' }} onClick={async () => {
+                try {
+                  const token = localStorage.getItem('token');
+                  const response = await fetch('/api/auth/me', { method: 'DELETE', headers: token ? { Authorization: `Bearer ${token}` } : {} });
+                  if (!response.ok) throw new Error('Unable to delete account');
+                  localStorage.removeItem('token'); localStorage.removeItem('user');
+                  toast.success('Account deleted');
+                  window.location.assign('/dashboard');
+                } catch (error) { toast.error(error instanceof Error ? error.message : 'Unable to delete account'); }
+              }}>Confirm</button>
               <button type="button" className="px-4 py-1.5 rounded-md text-sm border cursor-pointer" style={{ borderColor: 'var(--color-border)', background: 'transparent', color: 'var(--color-text-secondary)' }} onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
             </div>
           )}
@@ -365,6 +383,7 @@ function EditorPanel() {
 }
 
 function ShortcutsPanel() {
+  const dispatch = useAppDispatch();
   const shortcuts = [
     { action: 'Compile', key: 'Ctrl+Enter' },
     { action: 'Toggle Files', key: 'Ctrl+Shift+B' },
@@ -390,7 +409,7 @@ function ShortcutsPanel() {
         ))}
       </div>
       <button type="button" className="mt-4 px-4 py-2 rounded-md text-sm border cursor-pointer flex items-center gap-1.5" style={{ borderColor: 'var(--color-border)', background: 'transparent', color: 'var(--color-text-secondary)' }}
-        onClick={() => toast.success('Shortcuts reset to defaults')}>
+        onClick={() => { dispatch(resetSettings()); toast.success('Settings reset to defaults'); }}>
         <RotateCcw size={14} /> Reset to Default
       </button>
     </div>

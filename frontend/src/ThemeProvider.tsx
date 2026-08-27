@@ -7,6 +7,7 @@ export function ThemeProvider({children}:{children:ReactNode}) {
   useEffect(() => {
     const root = document.documentElement;
     root.dataset.theme = theme.id;
+    root.style.colorScheme = theme.type === 'light' ? 'light' : 'dark';
     Object.entries(theme.colors).forEach(([key,value]) => { root.style.setProperty(`--tf-${key.replace(/[A-Z]/g,m=>`-${m.toLowerCase()}`)}`, value); });
     const aliases:Record<string,string> = {background:'background',surface:'surface',surfaceElevated:'surface-elevated',surfaceSecondary:'surface-elevated',accent:'accent',accentHover:'accent-hover',accentSoft:'accent-soft',textPrimary:'text-primary',textSecondary:'text-secondary',textMuted:'text-muted',textDisabled:'text-disabled',border:'border',borderStrong:'border-strong',success:'success',warning:'warning',error:'error',info:'info'};
     Object.entries(aliases).forEach(([old,key]) => root.style.setProperty(`--color-${key}`, old === 'accentSoft' ? `${theme.colors.accent}26` : (theme.colors as any)[old]));

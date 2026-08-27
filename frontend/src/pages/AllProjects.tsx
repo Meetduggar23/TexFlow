@@ -107,7 +107,7 @@ export default function AllProjects() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 text-sm rounded-lg transition-all focus:outline-none focus:ring-2"
-            style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: '#FFFFFF' }}
+            style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
           />
         </div>
       </div>
@@ -140,7 +140,7 @@ export default function AllProjects() {
                       type="checkbox"
                       checked={selectedIds.size === filteredProjects.length && filteredProjects.length > 0}
                       onChange={handleSelectAll}
-                      className="w-4 h-4 rounded accent-texflow-500 cursor-pointer"
+                      className="w-4 h-4 rounded accent-[var(--color-accent)] cursor-pointer"
                     />
                   </th>
                   <th className="text-left px-4 py-3 text-[13px] font-semibold text-texflow-600">Title</th>
@@ -163,7 +163,7 @@ export default function AllProjects() {
                         checked={selectedIds.has(project.id)}
                         onClick={(e) => handleSelectOne(e, project.id)}
                         onChange={() => {}}
-                        className="w-4 h-4 rounded accent-texflow-500 cursor-pointer"
+                        className="w-4 h-4 rounded accent-[var(--color-accent)] cursor-pointer"
                       />
                     </td>
                     <td className="px-4 py-3">

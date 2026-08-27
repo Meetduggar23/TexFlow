@@ -201,14 +201,17 @@ const settingsSlice = createSlice({
     },
     setAppearanceFontFamily(state, action: PayloadAction<string>) {
       state.appearance.fontFamily = action.payload;
+      state.editor.fontFamily = action.payload;
       persist(state);
     },
     setAppearanceFontSize(state, action: PayloadAction<number>) {
       state.appearance.fontSize = action.payload;
+      state.editor.fontSize = action.payload;
       persist(state);
     },
     setAppearanceLineHeight(state, action: PayloadAction<number>) {
       state.appearance.lineHeight = action.payload;
+      state.editor.lineHeight = action.payload;
       persist(state);
     },
     setUiDensity(state, action: PayloadAction<'comfortable' | 'compact'>) {
@@ -226,14 +229,17 @@ const settingsSlice = createSlice({
     // Editor
     setEditorFontFamily(state, action: PayloadAction<string>) {
       state.editor.fontFamily = action.payload;
+      state.appearance.fontFamily = action.payload;
       persist(state);
     },
     setEditorFontSize(state, action: PayloadAction<number>) {
       state.editor.fontSize = action.payload;
+      state.appearance.fontSize = action.payload;
       persist(state);
     },
     setEditorLineHeight(state, action: PayloadAction<number>) {
       state.editor.lineHeight = action.payload;
+      state.appearance.lineHeight = action.payload;
       persist(state);
     },
     setTabSize(state, action: PayloadAction<number>) {

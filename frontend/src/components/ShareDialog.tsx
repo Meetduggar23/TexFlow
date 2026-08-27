@@ -15,27 +15,31 @@ export default function ShareDialog({ onClose }: ShareDialogProps) {
   const [members, setMembers] = useState<any[]>([]);
   const [shareLink, setShareLink] = useState('');
   const [copied, setCopied] = useState(false);
+  const authHeaders = (): Record<string, string> => {
+    const token = localStorage.getItem('token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
 
   useEffect(() => {
     if (!projectId) return;
-    fetch(`/api/shares/project/${projectId}/members`).then(r => r.json()).then(data => setMembers(data.members || [])).catch(() => {});
+    fetch(`/api/shares/project/${projectId}/members`, { headers: authHeaders() }).then(r => r.json()).then(data => setMembers(data.members || [])).catch(() => {});
   }, [projectId]);
 
   const handleInvite = async () => {
     if (!email.trim()) return;
     setLoading(true);
     try {
-      await fetch(`/api/shares/project/${projectId}/invite`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, role }) });
+      await fetch(`/api/shares/project/${projectId}/invite`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify({ email, role }) });
       toast.success('Invitation sent');
       setEmail('');
-      fetch(`/api/shares/project/${projectId}/members`).then(r => r.json()).then(data => setMembers(data.members || []));
+      fetch(`/api/shares/project/${projectId}/members`, { headers: authHeaders() }).then(r => r.json()).then(data => setMembers(data.members || []));
     } catch { toast.error('Failed to send invitation'); }
     setLoading(false);
   };
 
   const handleGenerateLink = async () => {
     try {
-      const res = await fetch(`/api/shares/project/${projectId}/link`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role: 'viewer' }) });
+      const res = await fetch(`/api/shares/project/${projectId}/link`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify({ role: 'viewer' }) });
       const data = await res.json();
       setShareLink(`${window.location.origin}/share/${data.link.token}`);
     } catch { toast.error('Failed to generate link'); }
@@ -49,7 +53,7 @@ export default function ShareDialog({ onClose }: ShareDialogProps) {
 
   const handleRemoveMember = async (userId: string) => {
     try {
-      await fetch(`/api/shares/project/${projectId}/members/${userId}`, { method: 'DELETE' });
+      await fetch(`/api/shares/project/${projectId}/members/${userId}`, { method: 'DELETE', headers: authHeaders() });
       setMembers(m => m.filter(member => member.userId !== userId));
       toast.success('Member removed');
     } catch { toast.error('Failed'); }
@@ -85,7 +89,7 @@ export default function ShareDialog({ onClose }: ShareDialogProps) {
               <h3 className="text-sm font-medium text-texflow-700 mb-2">Members</h3>
               <div className="space-y-2">
                 {members.map(member => (
-                  <div key={member.id} className="flex items-center justify-between p-2 rounded-lg border border-texflow-800" style={{ background: 'rgba(44,57,75,0.65)' }}>
+                  <div key={member.id} className="flex items-center justify-between p-2 rounded-lg border border-texflow-800" style={{ background: 'color-mix(in srgb, var(--color-surface) 65%, transparent)' }}>
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs text-texflow-900" style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-accent-hover))' }}>{member.user?.name?.[0] || 'U'}</div>
                       <div><p className="text-sm text-texflow-900">{member.user?.name || member.user?.email}</p><p className="text-xs text-texflow-500">{member.role}</p></div>

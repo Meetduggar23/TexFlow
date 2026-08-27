@@ -26,7 +26,7 @@ export const fetchProjects = createAsyncThunk(
   async () => {
     const token = localStorage.getItem('token');
     const response = await fetch(`${API}/projects`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     if (!response.ok) throw new Error('Failed to fetch projects');
     const data = await response.json();
@@ -39,7 +39,7 @@ export const fetchProject = createAsyncThunk(
   async (projectId: string) => {
     const token = localStorage.getItem('token');
     const response = await fetch(`${API}/projects/${projectId}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     if (!response.ok) throw new Error('Failed to fetch project');
     const data = await response.json();
@@ -53,7 +53,7 @@ export const createProject = createAsyncThunk(
     const token = localStorage.getItem('token');
     const response = await fetch(`${API}/projects`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: JSON.stringify(data),
     });
     if (!response.ok) throw new Error('Failed to create project');
@@ -68,7 +68,7 @@ export const deleteProject = createAsyncThunk(
     const token = localStorage.getItem('token');
     const response = await fetch(`${API}/projects/${projectId}`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     if (!response.ok) throw new Error('Failed to delete project');
     return projectId;
@@ -95,7 +95,7 @@ export const updateFileContent = createAsyncThunk(
     const token = localStorage.getItem('token');
     const response = await fetch(`${API}/files/${fileId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: JSON.stringify({ ...(content !== undefined ? { content } : {}), ...(name !== undefined ? { name } : {}) }),
     });
     if (!response.ok) throw new Error('Failed to update file');
@@ -114,7 +114,7 @@ export const createFile = createAsyncThunk(
       : { projectId: data.projectId, name: data.name, ...(data.parentId ? { folderId: data.parentId } : {}) };
     const response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: JSON.stringify(body),
     });
     if (!response.ok) {
@@ -142,7 +142,7 @@ export const deleteFile = createAsyncThunk(
     const token = localStorage.getItem('token');
     const response = await fetch(`${API}/files/${fileId}`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     if (!response.ok) throw new Error('Failed to delete file');
     return fileId;

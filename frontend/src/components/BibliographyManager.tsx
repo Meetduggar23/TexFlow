@@ -22,7 +22,8 @@ export default function BibliographyManager({ onInsert, onClose }: BibliographyM
 
   useEffect(() => {
     if (!projectId) return;
-    fetch(`/api/files/project/${projectId}`).then(r => r.json()).then(data => {
+    const token = localStorage.getItem('token');
+    fetch(`/api/files/project/${projectId}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} }).then(r => r.json()).then(data => {
       const bibFile = (data.files || []).find((f: any) => f.name.endsWith('.bib'));
       if (bibFile?.content) {
         const parsed = parseBibTeX(bibFile.content);
@@ -71,7 +72,7 @@ export default function BibliographyManager({ onInsert, onClose }: BibliographyM
           </div>
 
           {showAdd && (
-            <div className="p-3 rounded-lg border border-texflow-800 space-y-2" style={{ background: 'rgba(44,57,75,0.65)' }}>
+            <div className="p-3 rounded-lg border border-texflow-800 space-y-2" style={{ background: 'color-mix(in srgb, var(--color-surface) 65%, transparent)' }}>
               <div className="flex gap-2"><input value={newKey} onChange={e => setNewKey(e.target.value)} placeholder="Citation key" className="input-field flex-1 text-sm" /><select value={newType} onChange={e => setNewType(e.target.value)} className="input-field text-sm"><option value="article">Article</option><option value="book">Book</option><option value="inproceedings">Conference</option><option value="misc">Misc</option></select></div>
               <input value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="Title" className="input-field w-full text-sm" />
               <div className="flex gap-2"><input value={newAuthor} onChange={e => setNewAuthor(e.target.value)} placeholder="Author" className="input-field flex-1 text-sm" /><input value={newYear} onChange={e => setNewYear(e.target.value)} placeholder="Year" className="input-field w-24 text-sm" /></div>

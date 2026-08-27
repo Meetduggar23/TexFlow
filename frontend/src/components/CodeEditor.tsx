@@ -39,8 +39,8 @@ const texflowTheme = EditorView.theme({
   '.cm-matchingBracket': { background: 'var(--tf-editor-selection)', outline: '1px solid var(--color-accent)' },
   '.cm-content': { caretColor: 'var(--tf-editor-cursor)', color: 'var(--tf-editor-foreground)' },
   '.cm-line': { padding: '0 6px' },
-  '.ͼ5': { color: '#FF4C29' },
-  '.ͼ6': { color: '#FFFFFF' },
+  '.ͼ5': { color: 'var(--color-accent)' },
+  '.ͼ6': { color: 'var(--tf-editor-foreground)' },
   '.ͼ7': { color: 'var(--color-text-disabled)', fontStyle: 'italic' },
 }, { dark: false });
 

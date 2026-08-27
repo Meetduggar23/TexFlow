@@ -28,9 +28,10 @@ export default function TemplateBrowser() {
 
   const handleUseTemplate = async (template: Template) => {
     try {
+      const token = localStorage.getItem('token');
       const res = await fetch('/api/projects', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ name: template.name }),
       });
       const data = await res.json();
@@ -38,7 +39,7 @@ export default function TemplateBrowser() {
       if (project?.files?.[0]) {
         await fetch(`/api/files/${project.files[0].id}`, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
           body: JSON.stringify({ content: template.content }),
         });
       }

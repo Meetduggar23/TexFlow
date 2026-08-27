@@ -8,7 +8,6 @@ interface LayoutState {
   pdfWidth: number;
   terminalOpen: boolean;
   terminalHeight: number;
-  darkMode: boolean;
   fileTreeExpanded: Record<string, boolean>;
   isResizingFilesSidebar: boolean;
   selectedFolderId: string | null;
@@ -26,6 +25,15 @@ function loadLayout(projectId?: string): Partial<LayoutState> {
     if (saved) return JSON.parse(saved);
   } catch {}
   return {};
+}
+
+function loadDefaultFilesWidth() {
+  try {
+    const settings = JSON.parse(localStorage.getItem('texflow-settings') || '{}');
+    const width = Number(settings.files?.sidebarWidth);
+    if (Number.isFinite(width)) return Math.max(180, Math.min(420, width));
+  } catch { /* use application default */ }
+  return DEFAULT_FILES_WIDTH;
 }
 
 function saveLayout(state: LayoutState, projectId?: string) {
@@ -47,15 +55,15 @@ let currentProjectId: string | undefined;
 function getInitialState(projectId?: string): LayoutState {
   currentProjectId = projectId;
   const saved = loadLayout(projectId);
+  const defaultWidth = loadDefaultFilesWidth();
   return {
     filesOpen: saved.filesOpen ?? true,
-    filesWidth: saved.filesWidth ?? DEFAULT_FILES_WIDTH,
-    filesPrevWidth: saved.filesWidth ?? DEFAULT_FILES_WIDTH,
+    filesWidth: saved.filesWidth ?? defaultWidth,
+    filesPrevWidth: saved.filesWidth ?? defaultWidth,
     pdfOpen: saved.pdfOpen ?? true,
     pdfWidth: saved.pdfWidth ?? DEFAULT_PDF_WIDTH,
     terminalOpen: saved.terminalOpen ?? false,
     terminalHeight: saved.terminalHeight ?? DEFAULT_TERMINAL_HEIGHT,
-    darkMode: false,
     fileTreeExpanded: {},
     isResizingFilesSidebar: false,
     selectedFolderId: null,
@@ -72,6 +80,7 @@ const uiSlice = createSlice({
       const saved = loadLayout(projectId);
       if (saved.filesOpen !== undefined) state.filesOpen = saved.filesOpen;
       if (saved.filesWidth !== undefined) state.filesWidth = saved.filesWidth;
+      else state.filesWidth = loadDefaultFilesWidth();
       if (saved.pdfOpen !== undefined) state.pdfOpen = saved.pdfOpen;
       if (saved.pdfWidth !== undefined) state.pdfWidth = saved.pdfWidth;
       if (saved.terminalOpen !== undefined) state.terminalOpen = saved.terminalOpen;
@@ -148,27 +157,9 @@ const uiSlice = createSlice({
       state.terminalHeight = DEFAULT_TERMINAL_HEIGHT;
       saveLayout(state, currentProjectId);
     },
-    toggleDarkMode(state) {
-      state.darkMode = !state.darkMode;
-    },
     toggleFileNode(state, action) {
       const nodeId = action.payload;
       state.fileTreeExpanded[nodeId] = !state.fileTreeExpanded[nodeId];
-    },
-    expandAll(state, action) {
-      const nodes = action.payload;
-      const expand = (nodeList: any[]) => {
-        for (const node of nodeList) {
-          if (node.type === 'folder') {
-            state.fileTreeExpanded[node.id] = true;
-            if (node.children) expand(node.children);
-          }
-        }
-      };
-      expand(nodes);
-    },
-    collapseAll(state) {
-      state.fileTreeExpanded = {};
     },
   },
 });
@@ -176,7 +167,7 @@ const uiSlice = createSlice({
 export const {
   initLayout, toggleSidebar, setSidebarOpen, setFilesWidth, setFilesWidthTransient, setFilesSidebarResizing, setSelectedFolderId,
   togglePdf, setPdfOpen, setPdfWidth, toggleTerminal, setTerminalOpen, setTerminalHeight,
-  resetLayout, toggleDarkMode, toggleFileNode, expandAll, collapseAll,
+  resetLayout, toggleFileNode,
 } = uiSlice.actions;
 export default uiSlice.reducer;
 export { COLLAPSED_RAIL_WIDTH, DEFAULT_FILES_WIDTH, DEFAULT_PDF_WIDTH, DEFAULT_TERMINAL_HEIGHT };

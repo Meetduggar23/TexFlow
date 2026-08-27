@@ -42,7 +42,7 @@ export default function EquationEditor({ onInsert, onClose }: EquationEditorProp
             <textarea value={equation} onChange={e => setEquation(e.target.value)} className="input-field w-full h-20 font-mono text-sm resize-none" placeholder="E = mc^2" />
           </div>
           <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 text-sm text-texflow-700"><input type="checkbox" checked={displayMode} onChange={e => setDisplayMode(e.target.checked)} className="accent-texflow-500" /> Display mode (\\[ \\])</label>
+            <label className="flex items-center gap-2 text-sm text-texflow-700"><input type="checkbox" checked={displayMode} onChange={e => setDisplayMode(e.target.checked)} className="accent-[var(--color-accent)]" /> Display mode (\\[ \\])</label>
           </div>
           <div>
             <p className="text-xs text-texflow-500 mb-2">Greek Letters</p>

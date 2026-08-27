@@ -47,6 +47,8 @@ function loadCompileSettings(projectId?: string): CompileSettings {
     const key = projectId ? `texflow-compile-${projectId}` : 'texflow-compile';
     const saved = localStorage.getItem(key);
     if (saved) return { ...defaults, ...JSON.parse(saved) };
+    const globalSettings = JSON.parse(localStorage.getItem('texflow-settings') || '{}');
+    if (globalSettings.compilation) return { ...defaults, ...globalSettings.compilation };
   } catch {}
   return defaults;
 }
@@ -85,7 +87,7 @@ export const saveFile = createAsyncThunk(
     const token = localStorage.getItem('token');
     const response = await fetch(`/api/files/${fileId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: JSON.stringify({ content }),
     });
     if (!response.ok) throw new Error('Save failed');
@@ -97,7 +99,7 @@ export const compileProject = createAsyncThunk(
   'editor/compileProject',
   async (projectId: string, { getState }) => {
     const requestId = ++compileRequestId;
-    const state = getState() as { editor: EditorState };
+    const state = getState() as { editor: EditorState; settings?: { compilation?: { compiler?: string; mainDocument?: string; timeout?: number } } };
     const sourceRevision = state.editor.sourceRevision;
     const settings = state.editor.compileSettings;
     const token = localStorage.getItem('token');
@@ -106,10 +108,12 @@ export const compileProject = createAsyncThunk(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify({
-        compiler: 'pdflatex',
+        compiler: state.settings?.compilation?.compiler || 'pdflatex',
+        mainDocument: state.settings?.compilation?.mainDocument || 'main.tex',
+        timeout: state.settings?.compilation?.timeout,
         draft: settings.compileMode === 'draft',
         syntaxCheck: settings.syntaxCheck === 'check',
         errorHandling: settings.errorHandling,
@@ -164,7 +168,7 @@ export const cleanBuild = createAsyncThunk(
   'editor/cleanBuild',
   async (projectId: string, { getState }) => {
     const requestId = ++compileRequestId;
-    const state = getState() as { editor: EditorState };
+    const state = getState() as { editor: EditorState; settings?: { compilation?: { compiler?: string; mainDocument?: string; timeout?: number } } };
     const sourceRevision = state.editor.sourceRevision;
     const settings = state.editor.compileSettings;
     const token = localStorage.getItem('token');
@@ -173,10 +177,12 @@ export const cleanBuild = createAsyncThunk(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify({
-        compiler: 'pdflatex',
+        compiler: state.settings?.compilation?.compiler || 'pdflatex',
+        mainDocument: state.settings?.compilation?.mainDocument || 'main.tex',
+        timeout: state.settings?.compilation?.timeout,
         draft: settings.compileMode === 'draft',
         syntaxCheck: settings.syntaxCheck === 'check',
         errorHandling: settings.errorHandling,
@@ -233,7 +239,7 @@ export const stopCompilation = createAsyncThunk(
     const token = localStorage.getItem('token');
     const response = await fetch(`/api/compile/${projectId}/running`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     if (!response.ok) throw new Error('Unable to stop compilation');
     return response.json() as Promise<{ cancelled: number }>;

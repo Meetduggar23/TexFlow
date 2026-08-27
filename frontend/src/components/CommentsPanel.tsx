@@ -15,15 +15,19 @@ export default function CommentsPanel({ projectId, onClose }: CommentsPanelProps
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState('');
   const { content } = useAppSelector(state => state.editor);
+  const authHeaders = (): Record<string, string> => {
+    const token = localStorage.getItem('token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
 
   useEffect(() => {
-    fetch(`/api/comments/project/${projectId}`).then(r => r.json()).then(data => setComments(data.comments || [])).catch(() => {});
+    fetch(`/api/comments/project/${projectId}`, { headers: authHeaders() }).then(r => r.json()).then(data => setComments(data.comments || [])).catch(() => {});
   }, [projectId]);
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
     try {
-      const res = await fetch('/api/comments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId, content: newComment }) });
+      const res = await fetch('/api/comments', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify({ projectId, content: newComment }) });
       const data = await res.json();
       setComments(prev => [data.comment, ...prev]);
       setNewComment('');
@@ -34,7 +38,7 @@ export default function CommentsPanel({ projectId, onClose }: CommentsPanelProps
   const handleReply = async (commentId: string) => {
     if (!replyContent.trim()) return;
     try {
-      const res = await fetch(`/api/comments/${commentId}/reply`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: replyContent }) });
+      const res = await fetch(`/api/comments/${commentId}/reply`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify({ content: replyContent }) });
       const data = await res.json();
       setComments(prev => prev.map(c => c.id === commentId ? { ...c, replies: [...c.replies, data.reply] } : c));
       setReplyContent(''); setReplyTo(null);
@@ -44,7 +48,7 @@ export default function CommentsPanel({ projectId, onClose }: CommentsPanelProps
 
   const handleResolve = async (commentId: string) => {
     try {
-      await fetch(`/api/comments/${commentId}/resolve`, { method: 'PATCH' });
+      await fetch(`/api/comments/${commentId}/resolve`, { method: 'PATCH', headers: authHeaders() });
       setComments(prev => prev.map(c => c.id === commentId ? { ...c, resolved: true } : c));
       toast.success('Comment resolved');
     } catch { toast.error('Failed'); }
@@ -74,7 +78,7 @@ export default function CommentsPanel({ projectId, onClose }: CommentsPanelProps
         {comments.length === 0 ? (
           <div className="text-center py-8"><MessageSquare className="mx-auto h-8 w-8 text-texflow-600 mb-2" /><p className="text-sm text-texflow-500">No comments yet</p></div>
         ) : comments.map(comment => (
-          <div key={comment.id} className={`rounded-lg p-3 border ${comment.resolved ? 'border-green-800/30 bg-green-900/10' : 'border-texflow-800'}`} style={{ background: comment.resolved ? undefined : 'rgba(44,57,75,0.65)' }}>
+          <div key={comment.id} className={`rounded-lg p-3 border ${comment.resolved ? 'border-green-800/30 bg-green-900/10' : 'border-texflow-800'}`} style={{ background: comment.resolved ? undefined : 'color-mix(in srgb, var(--color-surface) 65%, transparent)' }}>
             <div className="flex items-center gap-2 mb-1">
               <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs text-white" style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-accent-hover))' }}>{comment.user?.name?.[0] || 'U'}</div>
               <span className="text-xs font-medium text-texflow-900">{comment.user?.name || 'User'}</span>

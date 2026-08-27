@@ -43,7 +43,7 @@ export default function DashboardSidebar() {
         <div className="p-4 pb-3">
           <button className="flex items-center gap-2 cursor-pointer rounded px-1 py-0.5 hover:bg-[var(--color-surface-elevated)]" onClick={() => navigate('/dashboard')} aria-label="Go to dashboard">
             <BrandLogo className="w-7 h-7 object-contain" />
-            <span className="text-lg font-bold" style={{ color: '#FFFFFF' }}>Tex<span className="gradient-text">Flow</span></span>
+            <span className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>Tex<span className="gradient-text">Flow</span></span>
           </button>
         </div>
 
@@ -59,7 +59,7 @@ export default function DashboardSidebar() {
               )}
               style={location.pathname === '/dashboard' || location.pathname === '/dashboard/projects'
                 ? { background: 'linear-gradient(135deg, var(--color-accent), var(--color-accent-hover))', color: '#fff' }
-                : { color: '#5a3a3a' }}
+                : { color: 'var(--color-text-secondary)' }}
             >
               <FolderOpen size={18} />
               Projects
@@ -76,7 +76,7 @@ export default function DashboardSidebar() {
                       'w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[13px] transition-all',
                       isActive ? 'font-medium' : 'hover:bg-texflow-200/30'
                     )}
-                    style={{ color: isActive ? '#FFFFFF' : '#8a4040' }}
+                    style={{ color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}
                   >
                     {item.label}
                   </button>
@@ -87,9 +87,9 @@ export default function DashboardSidebar() {
 
           <div className="pt-3 pb-3" style={{ borderTop: '1px solid var(--color-border)' }}>
             <div className="flex items-center justify-between px-3 py-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#b85c5c' }}>Organize Tags</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>Organize Tags</span>
             </div>
-            <button className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] hover:bg-texflow-200/30 transition-all" style={{ color: '#8a4040' }}>
+            <button className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] hover:bg-texflow-200/30 transition-all" style={{ color: 'var(--color-text-secondary)' }}>
               <Plus size={14} />
               New tag
             </button>
@@ -107,7 +107,7 @@ export default function DashboardSidebar() {
                   'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all',
                   isActive ? 'font-medium' : 'hover:bg-texflow-200/30'
                 )}
-                style={{ color: isActive ? '#FFFFFF' : '#8a4040' }}
+                style={{ color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}
               >
                 <item.icon size={18} />
                 <span className="flex-1 text-left">{item.label}</span>
@@ -132,10 +132,10 @@ export default function DashboardSidebar() {
                   {getUserInitial()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate" style={{ color: '#FFFFFF' }}>{user?.name || 'User'}</p>
-                  <p className="text-[11px] truncate" style={{ color: '#b85c5c' }}>{user?.email || ''}</p>
+                  <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>{user?.name || 'User'}</p>
+                  <p className="text-[11px] truncate" style={{ color: 'var(--color-text-muted)' }}>{user?.email || ''}</p>
                 </div>
-                <button onClick={handleLogout} className="p-1 hover:text-red-400 transition-colors" style={{ color: '#8a4040' }} title="Log out">
+                <button onClick={handleLogout} className="p-1 hover:text-red-400 transition-colors" style={{ color: 'var(--color-text-secondary)' }} title="Log out">
                   <LogOut size={14} />
                 </button>
               </div>
@@ -143,7 +143,7 @@ export default function DashboardSidebar() {
               <button
                 onClick={() => setShowAuthModal(true)}
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-texflow-200/30 transition-all"
-                style={{ color: '#8a4040' }}
+                style={{ color: 'var(--color-text-secondary)' }}
               >
                 <User size={18} />
                 Log in / Sign up

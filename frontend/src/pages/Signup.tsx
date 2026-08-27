@@ -14,8 +14,8 @@ export default function Signup() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 6) {
-      toast.error('Password must be at least 6 characters');
+    if (password.length < 8) {
+      toast.error('Password must be at least 8 characters');
       return;
     }
     setLoading(true);
@@ -30,7 +30,8 @@ export default function Signup() {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       toast.success('Account created!');
-      navigate('/');
+      const returnTo = new URLSearchParams(window.location.search).get('returnTo');
+      navigate(returnTo?.startsWith('/') ? returnTo : '/dashboard', { replace: true });
     } catch (err: any) {
       toast.error(err.message || 'Signup failed');
     } finally {

@@ -8,9 +8,11 @@ export default function useSocket(projectId: string | undefined) {
   useEffect(() => {
     if (!projectId) return;
 
+    const token = localStorage.getItem('token');
     const newSocket = io({
       path: '/socket.io',
       transports: ['websocket', 'polling'],
+      auth: token ? { token } : undefined,
     });
 
     newSocket.on('connect', () => {

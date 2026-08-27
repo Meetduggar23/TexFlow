@@ -23,13 +23,15 @@ export default function HistoryPanel({ onClose }: HistoryPanelProps) {
 
   useEffect(() => {
     if (!projectId) return;
-    fetch(`/api/projects/${projectId}/history`).then(r => r.json()).then(data => { setVersions(data.versions || []); setLoading(false); }).catch(() => setLoading(false));
+    const token = localStorage.getItem('token');
+    fetch(`/api/projects/${projectId}/history`, { headers: token ? { Authorization: `Bearer ${token}` } : {} }).then(r => r.json()).then(data => { setVersions(data.versions || []); setLoading(false); }).catch(() => setLoading(false));
   }, [projectId]);
 
   const handleRestore = async (versionId: string) => {
     if (!(await confirm({ title: 'Restore this version?', message: 'Current changes will be saved as a new version.', confirmText: 'Restore' }))) return;
     try {
-      await fetch(`/api/projects/${projectId}/restore/${versionId}`, { method: 'POST' });
+      const token = localStorage.getItem('token');
+      await fetch(`/api/projects/${projectId}/restore/${versionId}`, { method: 'POST', headers: token ? { Authorization: `Bearer ${token}` } : {} });
       toast.success('Version restored. Reload to see changes.');
     } catch { toast.error('Failed to restore'); }
   };
@@ -50,7 +52,7 @@ export default function HistoryPanel({ onClose }: HistoryPanelProps) {
         ) : versions.length === 0 ? (
           <div className="text-center py-8"><History className="mx-auto h-8 w-8 text-texflow-600 mb-2" /><p className="text-sm text-texflow-500">No version history yet</p></div>
         ) : versions.map(version => (
-          <div key={version.id} className="rounded-lg p-3 border border-texflow-800 hover:border-texflow-700 transition-colors" style={{ background: 'rgba(44,57,75,0.65)' }}>
+          <div key={version.id} className="rounded-lg p-3 border border-texflow-800 hover:border-texflow-700 transition-colors" style={{ background: 'color-mix(in srgb, var(--color-surface) 65%, transparent)' }}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-texflow-900 font-medium">{version.label || 'Unnamed version'}</p>

@@ -357,7 +357,7 @@ export default function FileTree({ files, projectId }: FileTreeProps) {
       {/* Header matching Overleaf style */}
       <div className="relative flex items-center gap-1 px-2 py-1.5 border-b" style={{ borderColor: 'var(--color-border)' }}>
         <ChevronDownIcon size={12} style={{ color: 'var(--color-text-muted)' }} />
-        <span className="text-[11px] font-semibold" style={{ color: 'var(--color-text-secondary)' }}>FileFlow</span>
+        <span className="text-[11px] font-semibold" style={{ color: 'var(--color-text-secondary)' }}>TexFlow</span>
         <div className="flex-1" />
         <button
           onClick={() => setShowNewMenu(p => !p)}
@@ -387,8 +387,8 @@ export default function FileTree({ files, projectId }: FileTreeProps) {
           onClick={() => dispatch(toggleSidebar())}
           className="p-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
           style={{ color: 'var(--color-text-muted)' }}
-          title="Close FileFlow"
-          aria-label="Close FileFlow"
+          title="Close TexFlow"
+          aria-label="Close TexFlow"
         >
           <X size={13} />
         </button>
