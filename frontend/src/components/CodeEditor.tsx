@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter } from '@codemirror/view';
-import { EditorState } from '@codemirror/state';
-import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
+import { EditorState, Compartment } from '@codemirror/state';
+import { defaultKeymap, history, historyKeymap, indentWithTab, undo, redo, undoDepth, redoDepth } from '@codemirror/commands';
 import { bracketMatching, foldGutter, indentOnInput, StreamLanguage } from '@codemirror/language';
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import { lintKeymap } from '@codemirror/lint';
@@ -26,6 +26,14 @@ const latexStreamParser = {
 };
 
 const latexLanguage = StreamLanguage.define(latexStreamParser);
+
+function applySelectionFormatting(view: EditorView, before: string, after: string) {
+  const selection = view.state.selection.main;
+  const selected = view.state.sliceDoc(selection.from, selection.to);
+  const insert = `${before}${selected}${after}`;
+  view.dispatch({ changes: { from: selection.from, to: selection.to, insert }, selection: { anchor: selection.from + insert.length } });
+  view.focus();
+}
 
 const texflowTheme = EditorView.theme({
   '&': { height: '100%', background: 'var(--color-surface)' },
@@ -96,60 +104,99 @@ interface CodeEditorProps {
   compileStatus?: CompileStatus;
   saving?: boolean;
   isStale?: boolean;
+  onOpenImage?: () => void;
+  onOpenTable?: () => void;
+  onOpenLink?: () => void;
+  onSelectionChange?: (selection: { from: number; to: number }) => void;
 }
 
-function EditorToolbar() {
+interface EditorToolbarProps {
+  view: EditorView | null;
+  readOnly: boolean;
+  onOpenImage: () => void;
+  onOpenTable: () => void;
+  onOpenLink: () => void;
+  editingAs: 'editing' | 'suggesting' | 'viewing';
+  onEditingAsChange: (mode: 'editing' | 'suggesting' | 'viewing') => void;
+}
+
+function EditorToolbar({ view, readOnly, onOpenImage, onOpenTable, onOpenLink, editingAs, onEditingAsChange }: EditorToolbarProps) {
   const [editMode, setEditMode] = useState<'code' | 'visual'>('code');
-  const [editingAs, setEditingAs] = useState<'editing' | 'suggesting' | 'viewing'>('editing');
+  const [editingMenuOpen, setEditingMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') setEditingMenuOpen(false); };
+    const handleOutside = (event: MouseEvent) => { if (!(event.target as HTMLElement).closest('[data-editing-menu]')) setEditingMenuOpen(false); };
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handleOutside);
+    return () => { document.removeEventListener('keydown', handleKeyDown); document.removeEventListener('mousedown', handleOutside); };
+  }, []);
+
+  const formatSelection = (before: string, after = before) => {
+    if (!view || readOnly) return;
+    const selection = view.state.selection.main;
+    const selected = view.state.sliceDoc(selection.from, selection.to);
+    applySelectionFormatting(view, before, after);
+  };
+
+  const formatLines = (environment: 'itemize' | 'enumerate') => {
+    if (!view || readOnly) return;
+    const selection = view.state.selection.main;
+    const selected = view.state.sliceDoc(selection.from, selection.to);
+    const lines = (selected || '').split(/\r?\n/).map(line => line.trim() ? `\\item ${line}` : line).join('\n');
+    const insert = `\\begin{${environment}}\n${lines || '\\item '}\n\\end{${environment}}`;
+    view.dispatch({ changes: { from: selection.from, to: selection.to, insert }, selection: { anchor: selection.from + insert.length } });
+    view.focus();
+  };
 
   return (
     <div className="flex items-center gap-0.5 px-2 py-1 border-b overflow-x-auto" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
-      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Undo" aria-label="Undo">
+      <button disabled={!view || readOnly || !view || !undoDepth(view.state)} onClick={() => { if (view) undo(view); }} className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)] disabled:opacity-40" style={{ color: 'var(--color-text-muted)' }} title="Undo (Ctrl/Cmd+Z)" aria-label="Undo">
         <Undo2 size={14} />
       </button>
-      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Redo" aria-label="Redo">
+      <button disabled={!view || readOnly || !view || !redoDepth(view.state)} onClick={() => { if (view) redo(view); }} className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)] disabled:opacity-40" style={{ color: 'var(--color-text-muted)' }} title="Redo (Ctrl/Cmd+Shift+Z)" aria-label="Redo">
         <Redo2 size={14} />
       </button>
 
       <div className="w-px h-4 mx-1" style={{ background: 'var(--color-border)' }} />
 
-      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Bold" aria-label="Bold">
+      <button disabled={readOnly} onClick={() => formatSelection('\\textbf{', '}')} className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)] disabled:opacity-40" style={{ color: 'var(--color-text-muted)' }} title="Bold (Ctrl/Cmd+B)" aria-label="Bold">
         <Bold size={14} />
       </button>
-      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Italic" aria-label="Italic">
+      <button disabled={readOnly} onClick={() => formatSelection('\\textit{', '}')} className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)] disabled:opacity-40" style={{ color: 'var(--color-text-muted)' }} title="Italic (Ctrl/Cmd+I)" aria-label="Italic">
         <Italic size={14} />
       </button>
-      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Strikethrough" aria-label="Strikethrough">
+      <button disabled={readOnly} onClick={() => formatSelection('\\sout{', '}')} className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)] disabled:opacity-40" style={{ color: 'var(--color-text-muted)' }} title="Strikethrough (requires ulem)" aria-label="Strikethrough">
         <Strikethrough size={14} />
       </button>
 
       <div className="w-px h-4 mx-1" style={{ background: 'var(--color-border)' }} />
 
-      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Insert symbol" aria-label="Insert symbol">
+      <button disabled={readOnly} onClick={() => formatSelection('\\texttt{', '}')} className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)] disabled:opacity-40" style={{ color: 'var(--color-text-muted)' }} title="Inline code" aria-label="Inline code">
         <Code size={14} />
       </button>
-      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Image" aria-label="Insert image">
+      <button disabled={readOnly} onClick={onOpenImage} className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)] disabled:opacity-40" style={{ color: 'var(--color-text-muted)' }} title="Insert image" aria-label="Insert image">
         <ImageIcon size={14} />
       </button>
-      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Table" aria-label="Insert table">
+      <button disabled={readOnly} onClick={onOpenTable} className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)] disabled:opacity-40" style={{ color: 'var(--color-text-muted)' }} title="Insert table" aria-label="Insert table">
         <Table2 size={14} />
       </button>
-      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Link" aria-label="Insert link">
+      <button disabled={readOnly} onClick={onOpenLink} className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)] disabled:opacity-40" style={{ color: 'var(--color-text-muted)' }} title="Insert link" aria-label="Insert link">
         <Link2 size={14} />
       </button>
-      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="List" aria-label="Insert list">
+      <button disabled={readOnly} onClick={() => formatLines('itemize')} className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)] disabled:opacity-40" style={{ color: 'var(--color-text-muted)' }} title="Bulleted list" aria-label="Bulleted list">
         <List size={14} />
       </button>
-      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Ordered list" aria-label="Insert ordered list">
+      <button disabled={readOnly} onClick={() => formatLines('enumerate')} className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)] disabled:opacity-40" style={{ color: 'var(--color-text-muted)' }} title="Numbered list" aria-label="Numbered list">
         <ListOrdered size={14} />
       </button>
-      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Superscript" aria-label="Superscript">
+      <button disabled={readOnly} onClick={() => formatSelection('^{', '}')} className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)] disabled:opacity-40" style={{ color: 'var(--color-text-muted)' }} title="Superscript" aria-label="Superscript">
         <Superscript size={14} />
       </button>
-      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Subscript" aria-label="Subscript">
+      <button disabled={readOnly} onClick={() => formatSelection('_{', '}')} className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)] disabled:opacity-40" style={{ color: 'var(--color-text-muted)' }} title="Subscript" aria-label="Subscript">
         <Subscript size={14} />
       </button>
-      <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Align" aria-label="Align">
+      <button disabled={readOnly} onClick={() => formatSelection('\\begin{center}\n', '\n\\end{center}')} className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)] disabled:opacity-40" style={{ color: 'var(--color-text-muted)' }} title="Center alignment" aria-label="Center alignment">
         <AlignLeft size={14} />
       </button>
 
@@ -182,8 +229,13 @@ function EditorToolbar() {
       <div className="w-px h-4 mx-1" style={{ background: 'var(--color-border)' }} />
 
       {/* Editing mode */}
-      <div className="relative group">
-        <button className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }}>
+      <div className="relative" data-editing-menu>
+        {editingMenuOpen && <div role="menu" className="absolute right-0 top-full z-50 mt-1 min-w-[150px] rounded-md border py-1 shadow-xl" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border-strong)' }}>
+          {(['editing', 'suggesting', 'viewing'] as const).map(mode => <button key={mode} role="menuitem" onClick={() => { onEditingAsChange(mode); setEditingMenuOpen(false); }} className="flex w-full items-center justify-between px-3 py-2 text-xs text-left hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-primary)' }}>
+            <span>{mode === 'viewing' ? 'Read Only' : mode.charAt(0).toUpperCase() + mode.slice(1)}</span>{editingAs === mode && <span style={{ color: 'var(--color-accent)' }}>✓</span>}
+          </button>)}
+        </div>}
+        <button onClick={() => setEditingMenuOpen(open => !open)} aria-haspopup="menu" aria-expanded={editingMenuOpen} className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }}>
           {editingAs.charAt(0).toUpperCase() + editingAs.slice(1)}
           <span className="text-[9px]">▼</span>
         </button>
@@ -192,14 +244,17 @@ function EditorToolbar() {
   );
 }
 
-export default function CodeEditor({ content, onChange, onSave, file, allFiles, compileStatus = 'idle', saving = false, isStale = false }: CodeEditorProps) {
+export default function CodeEditor({ content, onChange, onSave, file, allFiles, compileStatus = 'idle', saving = false, isStale = false, onOpenImage = () => undefined, onOpenTable = () => undefined, onOpenLink = () => undefined, onSelectionChange }: CodeEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
+  const editableCompartment = useRef(new Compartment());
+  const [editorView, setEditorView] = useState<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
   const onSaveRef = useRef(onSave);
   const dispatch = useAppDispatch();
   const { openTabs, activeTabId } = useAppSelector(state => state.editor);
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
+  const [editingAs, setEditingAs] = useState<'editing' | 'suggesting' | 'viewing'>('editing');
 
   onChangeRef.current = onChange;
   onSaveRef.current = onSave;
@@ -229,6 +284,8 @@ export default function CodeEditor({ content, onChange, onSave, file, allFiles, 
       ...lintKeymap,
       indentWithTab,
       { key: 'Mod-s', run: () => { onSaveRef.current(); return true; } },
+      { key: 'Mod-b', run: (view: EditorView) => { applySelectionFormatting(view, '\\textbf{', '}'); return true; } },
+      { key: 'Mod-i', run: (view: EditorView) => { applySelectionFormatting(view, '\\textit{', '}'); return true; } },
     ];
 
     const state = EditorState.create({
@@ -243,6 +300,7 @@ export default function CodeEditor({ content, onChange, onSave, file, allFiles, 
         bracketMatching(),
         highlightSelectionMatches(),
         keymap.of(customKeymap),
+        editableCompartment.current.of(EditorView.editable.of(true)),
         latexLanguage,
         texflowTheme,
         EditorView.updateListener.of((update) => {
@@ -253,6 +311,8 @@ export default function CodeEditor({ content, onChange, onSave, file, allFiles, 
             const pos = update.state.selection.main.head;
             const line = update.state.doc.lineAt(pos);
             setCursorPos({ line: line.number, col: pos - line.from + 1 });
+            const selection = update.state.selection.main;
+            onSelectionChange?.({ from: selection.from, to: selection.to });
           }
         }),
       ],
@@ -260,12 +320,21 @@ export default function CodeEditor({ content, onChange, onSave, file, allFiles, 
 
     const view = new EditorView({ state, parent: editorRef.current });
     viewRef.current = view;
+    setEditorView(view);
 
     return () => {
       view.destroy();
       viewRef.current = null;
+      setEditorView(null);
     };
   }, [file?.id]);
+
+  useEffect(() => {
+    if (editorView) {
+      editorView.dispatch({ effects: editableCompartment.current.reconfigure(EditorView.editable.of(editingAs !== 'viewing')) });
+      editorView.dom.contentEditable = editingAs === 'viewing' ? 'false' : 'true';
+    }
+  }, [editorView, editingAs]);
 
   useEffect(() => {
     if (viewRef.current && file) {
@@ -298,7 +367,7 @@ export default function CodeEditor({ content, onChange, onSave, file, allFiles, 
   return (
     <div className="h-full flex flex-col">
       <TabBar activeTabId={activeTabId} tabs={openTabs} onTabClick={handleTabClick} onTabClose={handleTabClose} />
-      <EditorToolbar />
+      <EditorToolbar view={editorView} readOnly={editingAs === 'viewing'} onOpenImage={onOpenImage} onOpenTable={onOpenTable} onOpenLink={onOpenLink} editingAs={editingAs} onEditingAsChange={setEditingAs} />
       <div ref={editorRef} className="flex-1 overflow-hidden" />
       <div className="h-6 flex items-center justify-between px-3 border-t border-[var(--color-border)] text-[11px] select-none" style={{ background: 'var(--color-background)', color: 'var(--color-text-muted)' }}>
         <div className="flex items-center gap-3">

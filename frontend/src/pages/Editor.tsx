@@ -7,11 +7,12 @@ import {
 } from '../store/projectSlice';
 import {
   setContent, compileProject, cleanBuild, openTab,
+  closeTab,
   setSaving, markTabSaved,
   saveFile, setAutoCompile, initCompileSettings,
   stopCompilation,
 } from '../store/editorSlice';
-import { initLayout, toggleSidebar, togglePdf, toggleTerminal, setFilesWidth, setFilesWidthTransient, setFilesSidebarResizing, setPdfWidth, setTerminalHeight } from '../store/uiSlice';
+import { initLayout, toggleSidebar, togglePdf, toggleTerminal, setFilesWidth, setFilesWidthTransient, setFilesSidebarResizing, setPdfWidth, setPdfWidthTransient, setTerminalHeight } from '../store/uiSlice';
 import { COLLAPSED_RAIL_WIDTH } from '../store/uiSlice';
 import EditorHeader from '../components/EditorHeader';
 import FileTree from '../components/FileTree';
@@ -27,6 +28,7 @@ import EquationEditor from '../components/EquationEditor';
 import TableBuilder from '../components/TableBuilder';
 import BibliographyManager from '../components/BibliographyManager';
 import ImageUploader from '../components/ImageUploader';
+import LinkDialog from '../components/LinkDialog';
 import ThemeSelector from '../components/ThemeSelector';
 import useSocket from '../hooks/useSocket';
 import toast from 'react-hot-toast';
@@ -60,7 +62,9 @@ export default function Editor() {
   const [showTable, setShowTable] = useState(false);
   const [showBib, setShowBib] = useState(false);
   const [showImage, setShowImage] = useState(false);
+  const [showLink, setShowLink] = useState(false);
   const [showThemeSelector, setShowThemeSelector] = useState(false);
+  const [isPdfResizing, setIsPdfResizing] = useState(false);
 
   const socket = useSocket(projectId);
 
@@ -70,6 +74,7 @@ export default function Editor() {
   const isSavingRef = useRef(false);
   const contentRef = useRef(content);
   const currentFileRef = useRef(currentFile);
+  const insertSelectionRef = useRef<{ from: number; to: number } | null>(null);
   const autoCompileRef = useRef(compileSettings.autoCompile);
   const projectIdRef = useRef(projectId);
   const filesResizeRef = useRef<HTMLDivElement>(null);
@@ -115,16 +120,21 @@ export default function Editor() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); setShowCommandPalette(p => !p); }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'p') { e.preventDefault(); setShowCommandPalette(p => !p); }
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'f') { e.preventDefault(); setShowSearch(p => !p); }
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'F') { e.preventDefault(); setShowSearch(p => !p); }
       if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); doSaveRef.current(); }
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); handleCompileRef.current(); }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'b') { e.preventDefault(); dispatch(togglePdf()); }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b' && !(e.target as HTMLElement).closest('.cm-editor')) { e.preventDefault(); dispatch(togglePdf()); }
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'B') { e.preventDefault(); dispatch(toggleSidebar()); }
       if ((e.ctrlKey || e.metaKey) && e.key === '`') { e.preventDefault(); dispatch(toggleTerminal()); }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') { e.preventDefault(); window.dispatchEvent(new CustomEvent('texflow:start-file-creation', { detail: 'file' })); }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'w') { e.preventDefault(); if (activeTabId) dispatch(closeTab(activeTabId)); }
+      if (e.key === 'F11') { e.preventDefault(); if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.(); }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [dispatch]);
+  }, [activeTabId, dispatch]);
 
   const doSave = useCallback(async (): Promise<boolean> => {
     const file = currentFileRef.current;
@@ -250,9 +260,14 @@ export default function Editor() {
 
   const handleInsertLatex = useCallback((latex: string) => {
     if (!currentFile) return;
-    const newContent = content + '\n' + latex;
+    const selection = insertSelectionRef.current;
+    const from = selection ? Math.min(selection.from, content.length) : content.length;
+    const to = selection ? Math.min(selection.to, content.length) : content.length;
+    const prefix = from > 0 && content[from - 1] !== '\n' ? '\n' : '';
+    const newContent = `${content.slice(0, from)}${prefix}${latex}${content.slice(to)}`;
     dispatch(setContent(newContent));
     if (currentFile) dispatch(updateFileContent({ fileId: currentFile.id, content: newContent }));
+    insertSelectionRef.current = null;
   }, [currentFile, content, dispatch]);
 
   const handleNewFile = useCallback(async () => {
@@ -323,23 +338,42 @@ export default function Editor() {
     e.preventDefault();
     const workspace = workspaceRef.current;
     if (!workspace) return;
+    const handle = e.currentTarget;
+    handle.setPointerCapture(e.pointerId);
     const startX = e.clientX;
     const workspaceBounds = workspace.getBoundingClientRect();
     const startPdfWidth = pdfWidth;
+    let currentPdfWidth = startPdfWidth;
+    const minPanelPercent = Math.min(50, (300 / workspaceBounds.width) * 100);
+    const maxPdfPercent = Math.max(minPanelPercent, 100 - minPanelPercent);
+    const clampPdfWidth = (value: number) => Math.max(minPanelPercent, Math.min(maxPdfPercent, value));
     const onMove = (ev: PointerEvent) => {
       const delta = ev.clientX - startX;
       const deltaPercent = (delta / workspaceBounds.width) * 100;
-      dispatch(setPdfWidth(startPdfWidth + deltaPercent));
+      currentPdfWidth = clampPdfWidth(startPdfWidth - deltaPercent);
+      dispatch(setPdfWidthTransient(currentPdfWidth));
     };
-    const onUp = () => {
+    const finish = (cancelled = false) => {
       window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onCancel);
+      window.removeEventListener('keydown', onKeyDown);
+      if (handle.hasPointerCapture(e.pointerId)) handle.releasePointerCapture(e.pointerId);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
+      setIsPdfResizing(false);
+      dispatch(setPdfWidth(cancelled ? startPdfWidth : currentPdfWidth));
     };
+    const onUp = () => finish();
+    const onCancel = () => finish(true);
+    const onKeyDown = (ev: KeyboardEvent) => { if (ev.key === 'Escape') { ev.preventDefault(); onCancel(); } };
+    setIsPdfResizing(true);
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
     window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp, { once: true });
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onCancel);
+    window.addEventListener('keydown', onKeyDown);
   }, [pdfWidth, dispatch]);
 
   const isStale = sourceRevision > compiledRevision;
@@ -479,6 +513,10 @@ export default function Editor() {
                 compileStatus={compileStatus}
                 saving={saving}
                 isStale={isStale}
+                onOpenImage={() => setShowImage(true)}
+                onOpenTable={() => setShowTable(true)}
+                onOpenLink={() => setShowLink(true)}
+                onSelectionChange={selection => { insertSelectionRef.current = selection; }}
               />
             </div>
 
@@ -497,8 +535,25 @@ export default function Editor() {
                 <div
                   ref={pdfResizeRef}
                   className="flex-1 w-full cursor-col-resize"
-                  style={{ background: 'transparent' }}
+                  role="separator"
+                  tabIndex={0}
+                  aria-label="Resize code and PDF panels"
+                  aria-orientation="vertical"
+                  aria-valuemin={25}
+                  aria-valuemax={75}
+                  aria-valuenow={Math.round(100 - pdfWidth)}
+                  style={{ background: isPdfResizing ? 'var(--color-accent)' : 'transparent' }}
                   onPointerDown={handlePdfResize}
+                  onKeyDown={e => {
+                    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+                    e.preventDefault();
+                    const workspace = workspaceRef.current;
+                    const amountPx = e.shiftKey ? 50 : 10;
+                    const amount = workspace ? (amountPx / workspace.getBoundingClientRect().width) * 100 : 2;
+                    dispatch(setPdfWidth(pdfWidth + (e.key === 'ArrowLeft' ? amount : -amount)));
+                  }}
+                  onMouseEnter={e => { if (!isPdfResizing) e.currentTarget.style.background = 'var(--color-surface-elevated)'; }}
+                  onMouseLeave={e => { if (!isPdfResizing) e.currentTarget.style.background = 'transparent'; }}
                 />
                 <button
                   onClick={() => dispatch(togglePdf())}
@@ -586,6 +641,7 @@ export default function Editor() {
       {showTable && <TableBuilder onInsert={handleInsertLatex} onClose={() => setShowTable(false)} />}
       {showBib && <BibliographyManager onInsert={(key) => handleInsertLatex(`\\cite{${key}}`)} onClose={() => setShowBib(false)} />}
       {showImage && <ImageUploader onInsert={handleInsertLatex} onClose={() => setShowImage(false)} />}
+      {showLink && <LinkDialog onInsert={handleInsertLatex} onClose={() => setShowLink(false)} />}
       {showShare && <ShareDialog onClose={() => setShowShare(false)} />}
       {showThemeSelector && <ThemeSelector onClose={() => setShowThemeSelector(false)} />}
     </div>

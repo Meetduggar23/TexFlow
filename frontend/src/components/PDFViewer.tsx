@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, Download, ZoomIn, ZoomOut, Maximize2, Loader2, FileText, ChevronDown, MoreHorizontal } from 'lucide-react';
+import { RefreshCw, Download, ZoomIn, ZoomOut, Loader2, FileText, Contrast } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { compileProject } from '../store/editorSlice';
 import toast from 'react-hot-toast';
@@ -10,11 +10,20 @@ interface PDFViewerProps {
 
 export default function PDFViewer({ projectId }: PDFViewerProps) {
   const dispatch = useAppDispatch();
-  const { compiling, compileResult, sourceRevision, compiledRevision, lastCompiledAt, lastValidPdfUrl } = useAppSelector(state => state.editor);
+  const { compiling, compileResult, sourceRevision, compiledRevision, lastValidPdfUrl } = useAppSelector(state => state.editor);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [zoom, setZoom] = useState(100);
+  const [pdfAppearance, setPdfAppearance] = useState<'normal' | 'inverted'>('normal');
 
   const isStale = sourceRevision > compiledRevision && !compiling;
+
+  useEffect(() => {
+    try {
+      setPdfAppearance(localStorage.getItem(`texflow-pdf-appearance-${projectId}`) === 'inverted' ? 'inverted' : 'normal');
+    } catch {
+      setPdfAppearance('normal');
+    }
+  }, [projectId]);
 
   useEffect(() => {
     if (compileResult?.pdfUrl) {
@@ -26,7 +35,7 @@ export default function PDFViewer({ projectId }: PDFViewerProps) {
     if (lastValidPdfUrl && !previewUrl) {
       setPreviewUrl(`${lastValidPdfUrl}?v=${Date.now()}`);
     }
-  }, [lastValidPdfUrl]);
+  }, [lastValidPdfUrl, previewUrl]);
 
   const handleRefresh = useCallback(async () => {
     try {
@@ -46,9 +55,20 @@ export default function PDFViewer({ projectId }: PDFViewerProps) {
     }
   }, [compileResult, lastValidPdfUrl]);
 
+  const handleTogglePdfAppearance = useCallback(() => {
+    setPdfAppearance(current => {
+      const next = current === 'normal' ? 'inverted' : 'normal';
+      try {
+        localStorage.setItem(`texflow-pdf-appearance-${projectId}`, next);
+      } catch {
+        // Persistence is a convenience; the viewer still works without storage.
+      }
+      return next;
+    });
+  }, [projectId]);
+
   return (
     <div className="h-full flex flex-col" style={{ background: 'var(--color-background)' }}>
-      {/* PDF Toolbar - matches Overleaf style */}
       <div className="flex items-center gap-2 px-3 py-1.5 border-b" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
         <div className="flex items-center gap-0.5">
           <button
@@ -59,43 +79,88 @@ export default function PDFViewer({ projectId }: PDFViewerProps) {
             onMouseEnter={e => { if (!compiling) e.currentTarget.style.background = 'var(--color-accent-hover)'; }}
             onMouseLeave={e => { if (!compiling) e.currentTarget.style.background = 'var(--color-accent)'; }}
             title="Recompile"
+            aria-label="Recompile PDF"
           >
             {compiling ? <Loader2 size={11} className="animate-spin" /> : <RefreshCw size={11} />}
             Recompile
           </button>
         </div>
 
+        {isStale && (
+          <span className="text-[11px]" style={{ color: 'var(--color-warning)' }}>
+            Out of date
+          </span>
+        )}
+
         <div className="flex-1" />
 
-        <button onClick={handleDownload} disabled={!previewUrl} className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)] disabled:opacity-50" style={{ color: 'var(--color-text-muted)' }} title="Download PDF">
+        <button
+          onClick={handleDownload}
+          disabled={!previewUrl}
+          className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)] disabled:opacity-50"
+          style={{ color: 'var(--color-text-muted)' }}
+          title="Download PDF"
+          aria-label="Download PDF"
+        >
           <Download size={14} />
         </button>
 
         <div className="w-px h-4" style={{ background: 'var(--color-border)' }} />
 
-        <button onClick={() => setZoom(p => Math.max(p - 10, 50))} className="p-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Zoom out">
+        <button
+          onClick={() => setZoom(p => Math.max(p - 10, 50))}
+          className="p-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
+          style={{ color: 'var(--color-text-muted)' }}
+          title="Zoom out"
+          aria-label="Zoom out"
+        >
           <ZoomOut size={13} />
         </button>
-        <span className="text-[11px] min-w-[36px] text-center font-medium" style={{ color: 'var(--color-text-secondary)' }}>{zoom}%</span>
-        <button onClick={() => setZoom(p => Math.min(p + 10, 200))} className="p-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Zoom in">
+        <span className="text-[11px] min-w-[36px] text-center font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+          {zoom}%
+        </span>
+        <button
+          onClick={() => setZoom(p => Math.min(p + 10, 200))}
+          className="p-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
+          style={{ color: 'var(--color-text-muted)' }}
+          title="Zoom in"
+          aria-label="Zoom in"
+        >
           <ZoomIn size={13} />
         </button>
 
         <div className="w-px h-4" style={{ background: 'var(--color-border)' }} />
 
-        <button className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="More options">
-          <MoreHorizontal size={14} />
+        <button
+          onClick={handleTogglePdfAppearance}
+          aria-pressed={pdfAppearance === 'inverted'}
+          className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
+          style={{
+            color: pdfAppearance === 'inverted' ? 'var(--color-accent)' : 'var(--color-text-muted)',
+            background: pdfAppearance === 'inverted' ? 'var(--color-accent-soft)' : 'transparent',
+          }}
+          title="Toggle PDF colors"
+          aria-label="Toggle PDF colors"
+        >
+          <Contrast size={14} />
         </button>
       </div>
 
-      {/* PDF content */}
       <div className="flex-1 overflow-auto flex items-start justify-center p-4" style={{ background: 'var(--color-surface)' }}>
         {previewUrl ? (
           <div className="relative w-full h-full flex justify-center">
             <iframe
               src={previewUrl}
               className="pdf-frame"
-              style={{ width: `${zoom}%`, maxWidth: '100%', height: '100%', minHeight: '600px', border: 'none' }}
+              style={{
+                width: `${zoom}%`,
+                maxWidth: '100%',
+                height: '100%',
+                minHeight: '600px',
+                border: 'none',
+                background: pdfAppearance === 'inverted' ? '#000' : '#fff',
+                filter: pdfAppearance === 'inverted' ? 'invert(1) hue-rotate(180deg)' : 'none',
+              }}
               title="PDF Preview"
             />
             {compiling && (

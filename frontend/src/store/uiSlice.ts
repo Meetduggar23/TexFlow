@@ -135,6 +135,9 @@ const uiSlice = createSlice({
       state.pdfWidth = Math.max(25, Math.min(75, action.payload));
       saveLayout(state, currentProjectId);
     },
+    setPdfWidthTransient(state, action: PayloadAction<number>) {
+      state.pdfWidth = Math.max(25, Math.min(75, action.payload));
+    },
     toggleTerminal(state) {
       state.terminalOpen = !state.terminalOpen;
       saveLayout(state, currentProjectId);
@@ -166,7 +169,7 @@ const uiSlice = createSlice({
 
 export const {
   initLayout, toggleSidebar, setSidebarOpen, setFilesWidth, setFilesWidthTransient, setFilesSidebarResizing, setSelectedFolderId,
-  togglePdf, setPdfOpen, setPdfWidth, toggleTerminal, setTerminalOpen, setTerminalHeight,
+  togglePdf, setPdfOpen, setPdfWidth, setPdfWidthTransient, toggleTerminal, setTerminalOpen, setTerminalHeight,
   resetLayout, toggleFileNode,
 } = uiSlice.actions;
 export default uiSlice.reducer;
