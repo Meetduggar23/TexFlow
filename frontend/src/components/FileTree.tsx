@@ -84,7 +84,7 @@ function FileTreeItem({ node, projectId, level = 0 }: FileTreeItemProps) {
       cls: 'text-purple-400',
       sty: 'text-purple-400',
     };
-    return <File size={16} className={colors[ext || ''] || 'text-slate-400'} />;
+    return <File size={16} className={colors[ext || ''] || 'text-texflow-600'} />;
   };
 
   return (
@@ -95,15 +95,15 @@ function FileTreeItem({ node, projectId, level = 0 }: FileTreeItemProps) {
           'flex items-center gap-1.5 px-2 py-1 text-sm cursor-pointer group relative',
           isSelected
             ? 'text-texflow-300'
-            : 'text-slate-300 hover:bg-dark-700/50'
+            : 'text-texflow-700 hover:bg-texflow-200/50'
         )}
         style={{ 
           paddingLeft: `${level * 16 + 8}px`,
-          ...(isSelected ? { background: 'rgba(114,4,85,0.15)' } : {})
+          ...(isSelected ? { background: 'rgba(245,175,175,0.15)' } : {})
         }}
       >
         {isFolder && (
-          <span className="text-slate-500">
+          <span className="text-texflow-500">
             {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           </span>
         )}
@@ -115,22 +115,22 @@ function FileTreeItem({ node, projectId, level = 0 }: FileTreeItemProps) {
           <div className="relative">
             <button
               onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-              className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-dark-600 rounded transition-all"
+              className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-texflow-200 rounded transition-all"
             >
-              <MoreHorizontal size={14} className="text-slate-400" />
+              <MoreHorizontal size={14} className="text-texflow-600" />
             </button>
             {showMenu && (
               <>
                 <div className="fixed inset-0 z-10" onClick={(e) => { e.stopPropagation(); setShowMenu(false); }} />
-                <div className="absolute right-0 top-full mt-1 z-20 border border-texflow-800 rounded-lg shadow-xl py-1 min-w-[160px]" style={{ background: '#0a0c3d' }}>
-                  <button onClick={handleCreateFile} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-slate-300 hover:bg-dark-700">
+                <div className="absolute right-0 top-full mt-1 z-20 border border-texflow-800 rounded-lg shadow-xl py-1 min-w-[160px]" style={{ background: '#FBEFEF' }}>
+                  <button onClick={handleCreateFile} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-texflow-700 hover:bg-texflow-200">
                     <FilePlus size={14} /> New File
                   </button>
-                  <button onClick={handleCreateFolder} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-slate-300 hover:bg-dark-700">
+                  <button onClick={handleCreateFolder} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-texflow-700 hover:bg-texflow-200">
                     <FolderPlus size={14} /> New Folder
                   </button>
                   <div className="border-t border-texflow-800 my-1" />
-                  <button onClick={handleDelete} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-red-400 hover:bg-dark-700">
+                  <button onClick={handleDelete} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-red-400 hover:bg-texflow-200">
                     <Trash2 size={14} /> Delete
                   </button>
                 </div>
@@ -175,22 +175,22 @@ export default function FileTree({ files, projectId }: FileTreeProps) {
   return (
     <div className="h-full flex flex-col bg-dark-900">
       <div className="flex items-center justify-between px-3 py-2 border-b border-texflow-800">
-        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Files</span>
+        <span className="text-xs font-semibold text-texflow-600 uppercase tracking-wider">Files</span>
         <div className="relative">
           <button
             onClick={() => setShowNewMenu(!showNewMenu)}
-            className="p-1 text-slate-400 hover:text-white hover:bg-dark-700 rounded transition-colors"
+            className="p-1 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded transition-colors"
           >
             <Plus size={14} />
           </button>
           {showNewMenu && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setShowNewMenu(false)} />
-              <div className="absolute right-0 top-full mt-1 z-20 border border-texflow-800 rounded-lg shadow-xl py-1 min-w-[140px]" style={{ background: '#0a0c3d' }}>
-                <button onClick={() => handleCreateRootFile('file')} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-slate-300 hover:bg-dark-700">
+              <div className="absolute right-0 top-full mt-1 z-20 border border-texflow-800 rounded-lg shadow-xl py-1 min-w-[140px]" style={{ background: '#FBEFEF' }}>
+                <button onClick={() => handleCreateRootFile('file')} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-texflow-700 hover:bg-texflow-200">
                   <FilePlus size={14} /> New File
                 </button>
-                <button onClick={() => handleCreateRootFile('folder')} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-slate-300 hover:bg-dark-700">
+                <button onClick={() => handleCreateRootFile('folder')} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-texflow-700 hover:bg-texflow-200">
                   <FolderPlus size={14} /> New Folder
                 </button>
               </div>

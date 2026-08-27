@@ -46,18 +46,18 @@ export default function Signup() {
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
             <img src="/logo.png" alt="TexFlow" className="w-10 h-10 object-contain" />
-            <span className="text-2xl font-bold text-white">Tex<span className="gradient-text">Flow</span></span>
+            <span className="text-2xl font-bold text-texflow-900">Tex<span className="gradient-text">Flow</span></span>
           </Link>
-          <h1 className="text-2xl font-bold text-white mb-2">Create your account</h1>
-          <p className="text-slate-400">Start writing LaTeX documents today</p>
+          <h1 className="text-2xl font-bold text-texflow-900 mb-2">Create your account</h1>
+          <p className="text-texflow-600">Start writing LaTeX documents today</p>
         </div>
 
         <div className="card">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Name</label>
+              <label className="block text-sm font-medium text-texflow-700 mb-1.5">Name</label>
               <div className="relative">
-                <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-texflow-500" />
                 <input
                   type="text"
                   value={name}
@@ -70,9 +70,9 @@ export default function Signup() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Email</label>
+              <label className="block text-sm font-medium text-texflow-700 mb-1.5">Email</label>
               <div className="relative">
-                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-texflow-500" />
                 <input
                   type="email"
                   value={email}
@@ -85,9 +85,9 @@ export default function Signup() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Password</label>
+              <label className="block text-sm font-medium text-texflow-700 mb-1.5">Password</label>
               <div className="relative">
-                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-texflow-500" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
@@ -99,7 +99,7 @@ export default function Signup() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-texflow-500 hover:text-texflow-900"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -120,7 +120,7 @@ export default function Signup() {
           </form>
         </div>
 
-        <p className="text-center text-sm text-slate-400 mt-6">
+        <p className="text-center text-sm text-texflow-600 mt-6">
           Already have an account?{' '}
           <Link to="/login" className="text-texflow-400 hover:text-texflow-300 font-medium">
             Log in

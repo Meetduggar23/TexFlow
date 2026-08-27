@@ -25,21 +25,21 @@ const latexStreamParser = {
 const latexLanguage = StreamLanguage.define(latexStreamParser);
 
 const texflowTheme = EditorView.theme({
-  '&': { height: '100%', background: '#0a0c3d' },
+  '&': { height: '100%', background: '#FBEFEF' },
   '.cm-scroller': { overflow: 'auto' },
-  '.cm-gutters': { background: '#030637', borderRight: '1px solid #3C0753', color: '#720455' },
-  '.cm-activeLineGutter': { background: 'rgba(114,4,85,0.15)' },
-  '.cm-activeLine': { background: 'rgba(114,4,85,0.08)' },
-  '.cm-cursor': { borderLeftColor: '#910A67' },
-  '.cm-selectionBackground': { background: 'rgba(145,10,103,0.25) !important' },
-  '&.cm-focused .cm-selectionBackground': { background: 'rgba(145,10,103,0.35) !important' },
-  '.cm-matchingBracket': { background: 'rgba(114,4,85,0.4)', outline: '1px solid rgba(145,10,103,0.6)' },
-  '.cm-content': { caretColor: '#910A67' },
+  '.cm-gutters': { background: '#FCF8F8', borderRight: '1px solid #F9DFDF', color: '#F5AFAF' },
+  '.cm-activeLineGutter': { background: 'rgba(245,175,175,0.15)' },
+  '.cm-activeLine': { background: 'rgba(245,175,175,0.08)' },
+  '.cm-cursor': { borderLeftColor: '#d47777' },
+  '.cm-selectionBackground': { background: 'rgba(249,223,223,0.5) !important' },
+  '&.cm-focused .cm-selectionBackground': { background: 'rgba(249,223,223,0.6) !important' },
+  '.cm-matchingBracket': { background: 'rgba(245,175,175,0.35)', outline: '1px solid rgba(245,175,175,0.6)' },
+  '.cm-content': { caretColor: '#d47777' },
   '.cm-line': { padding: '0 4px' },
-  '.ͼ5': { color: '#910A67' },
-  '.ͼ6': { color: '#b97cc9' },
-  '.ͼ7': { color: '#720455', fontStyle: 'italic' },
-}, { dark: true });
+  '.ͼ5': { color: '#d47777' },
+  '.ͼ6': { color: '#b85c5c' },
+  '.ͼ7': { color: '#F5AFAF', fontStyle: 'italic' },
+}, { dark: false });
 
 interface CodeEditorProps {
   content: string;
@@ -115,11 +115,11 @@ export default function CodeEditor({ content, onChange, onSave, file }: CodeEdit
     return (
       <div className="h-full flex items-center justify-center bg-dark-900">
         <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(114,4,85,0.2), rgba(145,10,103,0.2))' }}>
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(245,175,175,0.2), rgba(249,223,223,0.2))' }}>
             <span className="text-3xl">📝</span>
           </div>
-          <h3 className="text-lg font-medium text-slate-300 mb-2">No file selected</h3>
-          <p className="text-sm text-slate-500">Select a file from the sidebar to start editing</p>
+          <h3 className="text-lg font-medium text-texflow-700 mb-2">No file selected</h3>
+          <p className="text-sm text-texflow-500">Select a file from the sidebar to start editing</p>
         </div>
       </div>
     );
@@ -127,8 +127,8 @@ export default function CodeEditor({ content, onChange, onSave, file }: CodeEdit
 
   return (
     <div className="h-full flex flex-col bg-dark-900">
-      <div className="flex items-center px-3 py-1.5 border-b border-texflow-800" style={{ background: 'rgba(3,6,55,0.5)' }}>
-        <span className="text-xs text-slate-400">{file.name}</span>
+      <div className="flex items-center px-3 py-1.5 border-b border-texflow-200" style={{ background: 'rgba(252,248,248,0.8)' }}>
+        <span className="text-xs text-texflow-600">{file.name}</span>
         <span className="ml-2 text-xs text-texflow-400">
           {file.name.split('.').pop()?.toUpperCase()}
         </span>

@@ -51,20 +51,20 @@ export default function CommentsPanel({ projectId, onClose }: CommentsPanelProps
   };
 
   return (
-    <div className="h-full flex flex-col" style={{ background: '#030637' }}>
+    <div className="h-full flex flex-col" style={{ background: '#FCF8F8' }}>
       <div className="flex items-center justify-between px-4 py-3 border-b border-texflow-800">
         <div className="flex items-center gap-2">
           <MessageSquare size={16} className="text-texflow-400" />
-          <span className="text-sm font-medium text-white">Comments</span>
-          <span className="text-xs text-slate-500">({comments.length})</span>
+          <span className="text-sm font-medium text-texflow-900">Comments</span>
+          <span className="text-xs text-texflow-500">({comments.length})</span>
         </div>
-        <button onClick={onClose} className="p-1 text-slate-400 hover:text-white hover:bg-dark-700 rounded"><X size={16} /></button>
+        <button onClick={onClose} className="p-1 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded"><X size={16} /></button>
       </div>
 
       <div className="p-3 border-b border-texflow-800">
         <div className="flex gap-2">
           <textarea value={newComment} onChange={e => setNewComment(e.target.value)} placeholder="Add a comment..." className="input-field flex-1 resize-none text-sm" rows={2} />
-          <button onClick={handleAddComment} disabled={!newComment.trim()} className="self-end p-2 rounded-lg transition-colors disabled:opacity-30" style={{ background: 'linear-gradient(135deg, #720455, #910A67)' }}>
+          <button onClick={handleAddComment} disabled={!newComment.trim()} className="self-end p-2 rounded-lg transition-colors disabled:opacity-30" style={{ background: 'linear-gradient(135deg, #F5AFAF, #e89595)' }}>
             <Send size={14} className="text-white" />
           </button>
         </div>
@@ -72,23 +72,23 @@ export default function CommentsPanel({ projectId, onClose }: CommentsPanelProps
 
       <div className="flex-1 overflow-auto p-3 space-y-3">
         {comments.length === 0 ? (
-          <div className="text-center py-8"><MessageSquare className="mx-auto h-8 w-8 text-slate-600 mb-2" /><p className="text-sm text-slate-500">No comments yet</p></div>
+          <div className="text-center py-8"><MessageSquare className="mx-auto h-8 w-8 text-texflow-600 mb-2" /><p className="text-sm text-texflow-500">No comments yet</p></div>
         ) : comments.map(comment => (
-          <div key={comment.id} className={`rounded-lg p-3 border ${comment.resolved ? 'border-green-800/30 bg-green-900/10' : 'border-texflow-800'}`} style={{ background: comment.resolved ? undefined : 'rgba(10,12,61,0.5)' }}>
+          <div key={comment.id} className={`rounded-lg p-3 border ${comment.resolved ? 'border-green-800/30 bg-green-900/10' : 'border-texflow-800'}`} style={{ background: comment.resolved ? undefined : 'rgba(251,239,239,0.5)' }}>
             <div className="flex items-center gap-2 mb-1">
-              <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs text-white" style={{ background: 'linear-gradient(135deg, #720455, #910A67)' }}>{comment.user?.name?.[0] || 'U'}</div>
-              <span className="text-xs font-medium text-white">{comment.user?.name || 'User'}</span>
-              <span className="text-xs text-slate-500">{new Date(comment.createdAt).toLocaleString()}</span>
+              <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs text-white" style={{ background: 'linear-gradient(135deg, #F5AFAF, #e89595)' }}>{comment.user?.name?.[0] || 'U'}</div>
+              <span className="text-xs font-medium text-texflow-900">{comment.user?.name || 'User'}</span>
+              <span className="text-xs text-texflow-500">{new Date(comment.createdAt).toLocaleString()}</span>
               {comment.resolved && <CheckCircle size={12} className="text-green-400 ml-auto" />}
             </div>
-            <p className="text-sm text-slate-300 mt-1">{comment.content}</p>
+            <p className="text-sm text-texflow-700 mt-1">{comment.content}</p>
             {comment.replies?.map(reply => (
               <div key={reply.id} className="ml-6 mt-2 pl-3 border-l border-texflow-800">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-white" style={{ background: 'linear-gradient(135deg, #720455, #910A67)' }}>{reply.user?.name?.[0] || 'U'}</div>
-                  <span className="text-xs font-medium text-white">{reply.user?.name || 'User'}</span>
+                  <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-white" style={{ background: 'linear-gradient(135deg, #F5AFAF, #e89595)' }}>{reply.user?.name?.[0] || 'U'}</div>
+                  <span className="text-xs font-medium text-texflow-900">{reply.user?.name || 'User'}</span>
                 </div>
-                <p className="text-xs text-slate-400">{reply.content}</p>
+                <p className="text-xs text-texflow-600">{reply.content}</p>
               </div>
             ))}
             <div className="flex items-center gap-2 mt-2">
@@ -98,7 +98,7 @@ export default function CommentsPanel({ projectId, onClose }: CommentsPanelProps
             {replyTo === comment.id && (
               <div className="flex gap-2 mt-2">
                 <input value={replyContent} onChange={e => setReplyContent(e.target.value)} placeholder="Write a reply..." className="input-field flex-1 text-xs" onKeyDown={e => e.key === 'Enter' && handleReply(comment.id)} />
-                <button onClick={() => handleReply(comment.id)} className="p-1.5 rounded" style={{ background: 'linear-gradient(135deg, #720455, #910A67)' }}><Send size={12} className="text-white" /></button>
+                <button onClick={() => handleReply(comment.id)} className="p-1.5 rounded" style={{ background: 'linear-gradient(135deg, #F5AFAF, #e89595)' }}><Send size={12} className="text-white" /></button>
               </div>
             )}
           </div>

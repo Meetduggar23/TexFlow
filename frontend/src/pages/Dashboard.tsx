@@ -44,8 +44,8 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-white">My Projects</h1>
-              <p className="text-slate-400 mt-1">Manage your LaTeX documents</p>
+              <h1 className="text-3xl font-bold text-texflow-900">My Projects</h1>
+              <p className="text-texflow-600 mt-1">Manage your LaTeX documents</p>
             </div>
             <div className="flex items-center gap-2">
               <button className="btn-secondary flex items-center gap-2 text-sm">
@@ -68,7 +68,7 @@ export default function Dashboard() {
 
           <div className="flex items-center gap-4 mb-6">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-texflow-500" size={18} />
               <input
                 type="text"
                 placeholder="Search projects..."
@@ -77,15 +77,15 @@ export default function Dashboard() {
                 className="input-field w-full pl-10"
               />
             </div>
-            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#0a0c3d', border: '1px solid #3C0753' }}>
+            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#FBEFEF', border: '1px solid #F9DFDF' }}>
               {(['all', 'owned', 'shared', 'favorites'] as const).map(f => (
                 <button
                   key={f}
                   onClick={() => setFilter(f)}
                   className={`px-3 py-1.5 text-xs font-medium rounded transition-colors capitalize ${
-                    filter === f ? 'text-white' : 'text-slate-400 hover:text-white'
+                    filter === f ? 'text-texflow-900' : 'text-texflow-600 hover:text-texflow-900'
                   }`}
-                  style={filter === f ? { background: 'linear-gradient(135deg, #720455, #910A67)' } : {}}
+                  style={filter === f ? { background: 'linear-gradient(135deg, #F5AFAF, #e89595)' } : {}}
                 >
                   {f}
                 </button>
@@ -99,13 +99,13 @@ export default function Dashboard() {
             </div>
           ) : filteredProjects.length === 0 ? (
             <div className="text-center py-20">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(114,4,85,0.2), rgba(145,10,103,0.2))' }}>
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(245,175,175,0.2), rgba(232,149,149,0.2))' }}>
                 <FileText className="text-texflow-400" size={28} />
               </div>
-              <h3 className="text-lg font-medium text-slate-300 mb-2">
+              <h3 className="text-lg font-medium text-texflow-700 mb-2">
                 {searchQuery ? 'No projects found' : 'No projects yet'}
               </h3>
-              <p className="text-slate-400 mb-6">
+              <p className="text-texflow-600 mb-6">
                 {searchQuery ? 'Try a different search term' : 'Create your first LaTeX project to get started'}
               </p>
               {!searchQuery && (
@@ -122,26 +122,26 @@ export default function Dashboard() {
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(114,4,85,0.3), rgba(145,10,103,0.3))' }}>
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(245,175,175,0.3), rgba(232,149,149,0.3))' }}>
                         <FileText className="text-texflow-400" size={20} />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-white group-hover:text-texflow-300 transition-colors">
+                        <h3 className="font-semibold text-texflow-900 group-hover:text-texflow-300 transition-colors">
                           {project.name}
                         </h3>
                         {project.description && (
-                          <p className="text-sm text-slate-400 line-clamp-1">{project.description}</p>
+                          <p className="text-sm text-texflow-600 line-clamp-1">{project.description}</p>
                         )}
                       </div>
                     </div>
                     <button
                       onClick={(e) => handleDelete(e, project.id)}
-                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-dark-700 rounded transition-all"
+                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-texflow-200 rounded transition-all"
                     >
-                      <Trash2 size={16} className="text-slate-400 hover:text-red-400" />
+                      <Trash2 size={16} className="text-texflow-600 hover:text-red-400" />
                     </button>
                   </div>
-                  <div className="flex items-center gap-4 text-xs text-slate-400">
+                  <div className="flex items-center gap-4 text-xs text-texflow-600">
                     <span className="flex items-center gap-1">
                       <Clock size={12} />
                       {new Date(project.updatedAt).toLocaleDateString()}

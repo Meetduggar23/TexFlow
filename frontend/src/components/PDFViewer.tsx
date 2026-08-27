@@ -40,34 +40,34 @@ export default function PDFViewer({ projectId }: PDFViewerProps) {
 
   return (
     <div className="h-full flex flex-col bg-dark-900">
-      <div className="flex items-center justify-between px-3 py-1.5 border-b border-texflow-800" style={{ background: 'rgba(3,6,55,0.5)' }}>
-        <span className="text-xs font-medium text-slate-400">PDF Preview</span>
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-texflow-800" style={{ background: 'rgba(252,248,248,0.5)' }}>
+        <span className="text-xs font-medium text-texflow-600">PDF Preview</span>
         <div className="flex items-center gap-1">
-          <button onClick={() => setZoom(p => Math.max(p - 10, 50))} className="p-1 text-slate-400 hover:text-white hover:bg-dark-700 rounded transition-colors" title="Zoom out">
+          <button onClick={() => setZoom(p => Math.max(p - 10, 50))} className="p-1 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded transition-colors" title="Zoom out">
             <ZoomOut size={14} />
           </button>
-          <span className="text-xs text-slate-400 min-w-[40px] text-center">{zoom}%</span>
-          <button onClick={() => setZoom(p => Math.min(p + 10, 200))} className="p-1 text-slate-400 hover:text-white hover:bg-dark-700 rounded transition-colors" title="Zoom in">
+          <span className="text-xs text-texflow-600 min-w-[40px] text-center">{zoom}%</span>
+          <button onClick={() => setZoom(p => Math.min(p + 10, 200))} className="p-1 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded transition-colors" title="Zoom in">
             <ZoomIn size={14} />
           </button>
-          <button onClick={() => setZoom(100)} className="p-1 text-slate-400 hover:text-white hover:bg-dark-700 rounded transition-colors" title="Fit width">
+          <button onClick={() => setZoom(100)} className="p-1 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded transition-colors" title="Fit width">
             <Maximize2 size={14} />
           </button>
           <div className="w-px h-4 bg-texflow-800 mx-1" />
-          <button onClick={handleRefresh} disabled={compiling} className="p-1 text-slate-400 hover:text-white hover:bg-dark-700 rounded transition-colors disabled:opacity-50" title="Recompile">
+          <button onClick={handleRefresh} disabled={compiling} className="p-1 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded transition-colors disabled:opacity-50" title="Recompile">
             {compiling ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
           </button>
-          <button onClick={handleDownload} disabled={!pdfUrl} className="p-1 text-slate-400 hover:text-white hover:bg-dark-700 rounded transition-colors disabled:opacity-50" title="Download PDF">
+          <button onClick={handleDownload} disabled={!pdfUrl} className="p-1 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded transition-colors disabled:opacity-50" title="Download PDF">
             <Download size={14} />
           </button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto flex items-start justify-center p-4" style={{ background: '#0a0c3d' }}>
+      <div className="flex-1 overflow-auto flex items-start justify-center p-4" style={{ background: '#FBEFEF' }}>
         {compiling ? (
           <div className="flex flex-col items-center justify-center h-full">
             <Loader2 size={32} className="animate-spin text-texflow-400 mb-3" />
-            <p className="text-sm text-slate-400">Compiling LaTeX...</p>
+            <p className="text-sm text-texflow-600">Compiling LaTeX...</p>
           </div>
         ) : pdfUrl ? (
           <iframe
@@ -78,11 +78,11 @@ export default function PDFViewer({ projectId }: PDFViewerProps) {
           />
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(114,4,85,0.2), rgba(145,10,103,0.2))' }}>
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(245,175,175,0.2), rgba(232,149,149,0.2))' }}>
               <span className="text-3xl">📄</span>
             </div>
-            <h3 className="text-lg font-medium text-slate-300 mb-2">No PDF generated</h3>
-            <p className="text-sm text-slate-500 mb-4">Click "Compile" to generate a PDF preview</p>
+            <h3 className="text-lg font-medium text-texflow-700 mb-2">No PDF generated</h3>
+            <p className="text-sm text-texflow-500 mb-4">Click "Compile" to generate a PDF preview</p>
             <button onClick={handleRefresh} className="btn-primary text-sm">Compile Now</button>
           </div>
         )}

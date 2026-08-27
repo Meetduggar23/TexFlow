@@ -31,29 +31,29 @@ export default function EquationEditor({ onInsert, onClose }: EquationEditorProp
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative border border-texflow-800 rounded-2xl shadow-2xl w-full max-w-2xl mx-4" style={{ background: '#0a0c3d' }}>
+      <div className="relative border border-texflow-800 rounded-2xl shadow-2xl w-full max-w-2xl mx-4" style={{ background: '#FBEFEF' }}>
         <div className="flex items-center justify-between p-4 border-b border-texflow-800">
-          <div className="flex items-center gap-2"><Hash size={18} className="text-texflow-400" /><h2 className="text-lg font-semibold text-white">Equation Editor</h2></div>
-          <button onClick={onClose} className="p-1 text-slate-400 hover:text-white hover:bg-dark-700 rounded"><X size={18} /></button>
+          <div className="flex items-center gap-2"><Hash size={18} className="text-texflow-400" /><h2 className="text-lg font-semibold text-texflow-900">Equation Editor</h2></div>
+          <button onClick={onClose} className="p-1 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded"><X size={18} /></button>
         </div>
         <div className="p-4 space-y-4">
           <div>
-            <label className="block text-sm text-slate-300 mb-1">LaTeX Equation</label>
+            <label className="block text-sm text-texflow-700 mb-1">LaTeX Equation</label>
             <textarea value={equation} onChange={e => setEquation(e.target.value)} className="input-field w-full h-20 font-mono text-sm resize-none" placeholder="E = mc^2" />
           </div>
           <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 text-sm text-slate-300"><input type="checkbox" checked={displayMode} onChange={e => setDisplayMode(e.target.checked)} className="accent-texflow-500" /> Display mode (\\[ \\])</label>
+            <label className="flex items-center gap-2 text-sm text-texflow-700"><input type="checkbox" checked={displayMode} onChange={e => setDisplayMode(e.target.checked)} className="accent-texflow-500" /> Display mode (\\[ \\])</label>
           </div>
           <div>
-            <p className="text-xs text-slate-500 mb-2">Greek Letters</p>
+            <p className="text-xs text-texflow-500 mb-2">Greek Letters</p>
             <div className="flex flex-wrap gap-1">
-              {symbols.map(s => <button key={s.latex} onClick={() => insertSymbol(s.latex)} className="px-2 py-1 text-sm rounded border border-texflow-800 hover:bg-dark-700 text-slate-300 transition-colors">{s.label}</button>)}
+              {symbols.map(s => <button key={s.latex} onClick={() => insertSymbol(s.latex)} className="px-2 py-1 text-sm rounded border border-texflow-800 hover:bg-texflow-200 text-texflow-700 transition-colors">{s.label}</button>)}
             </div>
           </div>
           <div>
-            <p className="text-xs text-slate-500 mb-2">Structures</p>
+            <p className="text-xs text-texflow-500 mb-2">Structures</p>
             <div className="flex flex-wrap gap-1">
-              {structures.map(s => <button key={s.latex} onClick={() => insertSymbol(s.latex)} className="px-2 py-1 text-xs rounded border border-texflow-800 hover:bg-dark-700 text-slate-300 transition-colors">{s.label}</button>)}
+              {structures.map(s => <button key={s.latex} onClick={() => insertSymbol(s.latex)} className="px-2 py-1 text-xs rounded border border-texflow-800 hover:bg-texflow-200 text-texflow-700 transition-colors">{s.label}</button>)}
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">

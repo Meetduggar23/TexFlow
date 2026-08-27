@@ -1,8 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 * {
   margin: 0;
@@ -17,11 +17,18 @@ html, body, #root {
 }
 
 body {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Lora', Georgia, serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #030637;
-  color: #f1f5f9;
+  background: #FCF8F8;
+  color: #3d2626;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
 }
 
 /* Loading Screen */
@@ -33,7 +40,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #030637 0%, #3C0753 50%, #030637 100%);
+  background: linear-gradient(135deg, #FCF8F8 0%, #F9DFDF 50%, #FCF8F8 100%);
 }
 
 .loading-logo {
@@ -48,7 +55,7 @@ body {
 .loading-bar-container {
   width: 200px;
   height: 3px;
-  background: rgba(145, 10, 103, 0.2);
+  background: rgba(245, 175, 175, 0.3);
   border-radius: 2px;
   overflow: hidden;
   margin-top: 24px;
@@ -57,7 +64,7 @@ body {
 .loading-bar {
   height: 100%;
   width: 40%;
-  background: linear-gradient(90deg, #720455, #910A67, #b97cc9);
+  background: linear-gradient(90deg, #F5AFAF, #F9DFDF, #FBEFEF);
   border-radius: 2px;
   animation: loadingSlide 1.5s ease-in-out infinite;
 }
@@ -72,42 +79,43 @@ body {
   height: 100%;
   font-family: 'JetBrains Mono', monospace;
   font-size: 14px;
-  background: #0a0c3d !important;
+  background: #FBEFEF !important;
+  color: #3d2626;
 }
 
 .cm-editor .cm-gutters {
-  background-color: #030637;
-  border-right: 1px solid #3C0753;
-  color: #720455;
+  background-color: #FCF8F8;
+  border-right: 1px solid #F9DFDF;
+  color: #F5AFAF;
 }
 
 .cm-editor .cm-content {
-  caret-color: #910A67;
+  caret-color: #d47777;
 }
 
 .cm-editor .cm-activeLine {
-  background-color: rgba(114, 4, 85, 0.08);
+  background-color: rgba(245, 175, 175, 0.12);
 }
 
 .cm-editor .cm-activeLineGutter {
-  background-color: rgba(114, 4, 85, 0.15);
+  background-color: rgba(245, 175, 175, 0.2);
 }
 
 .cm-editor .cm-selectionBackground {
-  background-color: rgba(145, 10, 103, 0.25) !important;
+  background-color: rgba(249, 223, 223, 0.5) !important;
 }
 
 .cm-editor.cm-focused .cm-selectionBackground {
-  background-color: rgba(145, 10, 103, 0.35) !important;
+  background-color: rgba(249, 223, 223, 0.6) !important;
 }
 
 .cm-editor .cm-matchingBracket {
-  background-color: rgba(114, 4, 85, 0.4);
-  outline: 1px solid rgba(145, 10, 103, 0.6);
+  background-color: rgba(245, 175, 175, 0.35);
+  outline: 1px solid rgba(245, 175, 175, 0.6);
 }
 
 .cm-editor .cm-cursor {
-  border-left-color: #910A67;
+  border-left-color: #d47777;
 }
 
 /* Scrollbar */
@@ -117,73 +125,90 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #030637;
+  background: #FCF8F8;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #3C0753;
+  background: #F9DFDF;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #720455;
+  background: #F5AFAF;
 }
 
 /* Component Classes */
 @layer components {
   .btn-primary {
     @apply font-medium py-2 px-4 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
-    background: linear-gradient(135deg, #720455, #910A67);
+    background: linear-gradient(135deg, #F5AFAF, #e89595);
     color: white;
-    box-shadow: 0 2px 10px rgba(114, 4, 85, 0.3);
+    box-shadow: 0 2px 10px rgba(245, 175, 175, 0.3);
   }
 
   .btn-primary:hover {
-    background: linear-gradient(135deg, #910A67, #b97cc9);
-    box-shadow: 0 4px 20px rgba(145, 10, 103, 0.4);
+    background: linear-gradient(135deg, #e89595, #d47777);
+    box-shadow: 0 4px 20px rgba(245, 175, 175, 0.4);
     transform: translateY(-1px);
   }
 
   .btn-secondary {
-    @apply bg-dark-700 hover:bg-dark-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 border border-texflow-800;
+    @apply font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+    background: #FBEFEF;
+    border: 1px solid #F9DFDF;
+    color: #5a3a3a;
+  }
+
+  .btn-secondary:hover {
+    background: #F9DFDF;
   }
 
   .btn-ghost {
-    @apply hover:bg-dark-700 text-slate-300 hover:text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+    @apply font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+    color: #5a3a3a;
+  }
+
+  .btn-ghost:hover {
+    background: #F9DFDF;
+    color: #3d2626;
   }
 
   .input-field {
-    @apply rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:border-transparent placeholder-slate-500 transition-all duration-200;
-    background: #0a0c3d;
-    border: 1px solid #3C0753;
-    color: white;
+    @apply rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200;
+    background: #FCF8F8;
+    border: 1px solid #F9DFDF;
+    color: #3d2626;
+  }
+
+  .input-field::placeholder {
+    color: #b85c5c;
   }
 
   .input-field:focus {
-    box-shadow: 0 0 0 2px rgba(145, 10, 103, 0.3);
-    border-color: #720455;
+    box-shadow: 0 0 0 2px rgba(245, 175, 175, 0.3);
+    border-color: #F5AFAF;
   }
 
   .card {
     @apply rounded-xl p-6 transition-all duration-200;
-    background: rgba(10, 12, 61, 0.6);
-    border: 1px solid #3C0753;
+    background: #FBEFEF;
+    border: 1px solid #F9DFDF;
     backdrop-filter: blur(10px);
   }
 
   .card:hover {
-    border-color: #720455;
-    box-shadow: 0 4px 20px rgba(114, 4, 85, 0.15);
+    border-color: #F5AFAF;
+    box-shadow: 0 4px 20px rgba(245, 175, 175, 0.15);
   }
 
   .glass {
-    background: rgba(3, 6, 55, 0.7);
+    background: rgba(252, 248, 248, 0.85);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(60, 7, 83, 0.5);
+    border: 1px solid rgba(249, 223, 223, 0.5);
   }
 
   .gradient-text {
-    background: linear-gradient(135deg, #910A67, #b97cc9);
+    background: linear-gradient(135deg, #d47777, #b85c5c);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -192,15 +217,15 @@ body {
 
 /* Toast overrides */
 .toast-custom {
-  background: #0a0c3d !important;
-  border: 1px solid #3C0753 !important;
-  color: #f1f5f9 !important;
+  background: #FBEFEF !important;
+  border: 1px solid #F9DFDF !important;
+  color: #3d2626 !important;
 }
 
 /* PDF viewer */
 .pdf-frame {
   background: white;
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
 }
 
 /* Transition utilities */
@@ -227,5 +252,5 @@ input[type="checkbox"] {
 }
 
 input[type="checkbox"]:checked {
-  accent-color: #720455;
+  accent-color: #F5AFAF;
 }

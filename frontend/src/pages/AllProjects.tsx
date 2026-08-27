@@ -68,7 +68,7 @@ export default function AllProjects() {
     if (ext === 'tex') return <FileText size={14} className="text-texflow-400" />;
     if (ext === 'bib') return <File size={14} className="text-green-400" />;
     if (['png', 'jpg', 'jpeg', 'svg'].includes(ext || '')) return <Image size={14} className="text-blue-400" />;
-    return <FileText size={14} className="text-slate-400" />;
+    return <FileText size={14} className="text-texflow-600" />;
   };
 
   const formatTimeAgo = (date: string) => {
@@ -87,25 +87,25 @@ export default function AllProjects() {
   };
 
   return (
-    <div className="h-full flex flex-col" style={{ background: '#0a0c3d' }}>
+    <div className="h-full flex flex-col" style={{ background: '#FBEFEF' }}>
       <div className="px-6 pt-6 pb-4">
         <div className="flex items-center justify-between mb-5">
-          <h1 className="text-2xl font-bold text-white">All projects</h1>
-          <button onClick={handleNewProject} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-all" style={{ background: 'linear-gradient(135deg, #720455, #910A67)' }}>
+          <h1 className="text-2xl font-bold text-texflow-900">All projects</h1>
+          <button onClick={handleNewProject} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-all" style={{ background: 'linear-gradient(135deg, #F5AFAF, #e89595)' }}>
             <Plus size={16} />
             New project
           </button>
         </div>
 
         <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-texflow-500" size={16} />
           <input
             type="text"
             placeholder="Search in all projects..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 text-sm rounded-lg transition-all focus:outline-none focus:ring-2"
-            style={{ background: '#030637', border: '1px solid #3C0753', color: '#f1f5f9' }}
+            style={{ background: '#FCF8F8', border: '1px solid #F9DFDF', color: '#3d2626' }}
           />
         </div>
       </div>
@@ -117,22 +117,22 @@ export default function AllProjects() {
           </div>
         ) : filteredProjects.length === 0 ? (
           <div className="text-center py-20">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(114,4,85,0.2), rgba(145,10,103,0.2))' }}>
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(245,175,175,0.2), rgba(232,149,149,0.2))' }}>
               <FileText className="text-texflow-400" size={28} />
             </div>
-            <h3 className="text-lg font-medium text-slate-300 mb-2">
+            <h3 className="text-lg font-medium text-texflow-700 mb-2">
               {searchQuery ? 'No projects found' : 'No projects yet'}
             </h3>
-            <p className="text-slate-400 mb-6">
+            <p className="text-texflow-600 mb-6">
               {searchQuery ? 'Try a different search term' : 'Create your first LaTeX project to get started'}
             </p>
             {!searchQuery && <button onClick={handleNewProject} className="btn-primary">Create Project</button>}
           </div>
         ) : (
-          <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #3C0753' }}>
+          <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #F9DFDF' }}>
             <table className="w-full">
               <thead>
-                <tr style={{ background: '#030637' }}>
+                <tr style={{ background: '#FCF8F8' }}>
                   <th className="w-10 px-4 py-3">
                     <input
                       type="checkbox"
@@ -141,10 +141,10 @@ export default function AllProjects() {
                       className="w-4 h-4 rounded accent-texflow-500 cursor-pointer"
                     />
                   </th>
-                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-slate-400">Title</th>
-                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-slate-400 w-32">Owner</th>
-                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-slate-400 w-48">Last modified</th>
-                  <th className="text-right px-4 py-3 text-[13px] font-semibold text-slate-400 w-40">Actions</th>
+                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-texflow-600">Title</th>
+                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-texflow-600 w-32">Owner</th>
+                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-texflow-600 w-48">Last modified</th>
+                  <th className="text-right px-4 py-3 text-[13px] font-semibold text-texflow-600 w-40">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -152,8 +152,8 @@ export default function AllProjects() {
                   <tr
                     key={project.id}
                     onClick={() => handleOpenProject(project.id)}
-                    className="cursor-pointer transition-colors hover:bg-dark-700/30"
-                    style={{ borderTop: '1px solid #3C0753' }}
+                    className="cursor-pointer transition-colors hover:bg-texflow-200/30"
+                    style={{ borderTop: '1px solid #F9DFDF' }}
                   >
                     <td className="px-4 py-3">
                       <input
@@ -167,18 +167,18 @@ export default function AllProjects() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
                         <FileText size={16} className="text-texflow-400 flex-shrink-0" />
-                        <span className="text-sm font-medium text-white hover:text-texflow-300 transition-colors truncate">
+                        <span className="text-sm font-medium text-texflow-900 hover:text-texflow-600 transition-colors truncate">
                           {project.name}
                         </span>
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-sm text-slate-400">
+                      <span className="text-sm text-texflow-600">
                         {project.owner?.name || 'You'}
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-sm text-slate-400">
+                      <span className="text-sm text-texflow-600">
                         {formatTimeAgo(project.updatedAt)} by {project.owner?.name || 'You'}
                       </span>
                     </td>
@@ -186,38 +186,38 @@ export default function AllProjects() {
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={(e) => { e.stopPropagation(); handleOpenProject(project.id); }}
-                          className="p-1.5 rounded hover:bg-dark-600 transition-colors"
+                          className="p-1.5 rounded hover:bg-texflow-200 transition-colors"
                           title="Open"
                         >
-                          <FileText size={14} className="text-slate-400" />
+                          <FileText size={14} className="text-texflow-600" />
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleOpenProject(project.id); }}
-                          className="p-1.5 rounded hover:bg-dark-600 transition-colors"
+                          className="p-1.5 rounded hover:bg-texflow-200 transition-colors"
                           title="Download"
                         >
-                          <Download size={14} className="text-slate-400" />
+                          <Download size={14} className="text-texflow-600" />
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); }}
-                          className="p-1.5 rounded hover:bg-dark-600 transition-colors"
+                          className="p-1.5 rounded hover:bg-texflow-200 transition-colors"
                           title="PDF"
                         >
-                          <FileText size={14} className="text-slate-400" />
+                          <FileText size={14} className="text-texflow-600" />
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleOpenProject(project.id); }}
-                          className="p-1.5 rounded hover:bg-dark-600 transition-colors"
+                          className="p-1.5 rounded hover:bg-texflow-200 transition-colors"
                           title="Open in editor"
                         >
-                          <MoreHorizontal size={14} className="text-slate-400" />
+                          <MoreHorizontal size={14} className="text-texflow-600" />
                         </button>
                         <button
                           onClick={(e) => handleDelete(e, project.id)}
-                          className="p-1.5 rounded hover:bg-dark-600 transition-colors"
+                          className="p-1.5 rounded hover:bg-texflow-200 transition-colors"
                           title="Delete"
                         >
-                          <Trash2 size={14} className="text-slate-400 hover:text-red-400" />
+                          <Trash2 size={14} className="text-texflow-600 hover:text-red-400" />
                         </button>
                       </div>
                     </td>
@@ -230,7 +230,7 @@ export default function AllProjects() {
       </div>
 
       {filteredProjects.length > 0 && (
-        <div className="px-6 py-3 text-[13px] text-slate-400" style={{ borderTop: '1px solid #3C0753' }}>
+        <div className="px-6 py-3 text-[13px] text-texflow-600" style={{ borderTop: '1px solid #F9DFDF' }}>
           Showing {filteredProjects.length} out of {projects.length} projects.
         </div>
       )}

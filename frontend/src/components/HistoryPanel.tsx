@@ -33,31 +33,31 @@ export default function HistoryPanel({ onClose }: HistoryPanelProps) {
   };
 
   return (
-    <div className="h-full flex flex-col" style={{ background: '#030637' }}>
+    <div className="h-full flex flex-col" style={{ background: '#FCF8F8' }}>
       <div className="flex items-center justify-between px-4 py-3 border-b border-texflow-800">
         <div className="flex items-center gap-2">
           <History size={16} className="text-texflow-400" />
-          <span className="text-sm font-medium text-white">Version History</span>
+          <span className="text-sm font-medium text-texflow-900">Version History</span>
         </div>
-        <button onClick={onClose} className="p-1 text-slate-400 hover:text-white hover:bg-dark-700 rounded"><X size={16} /></button>
+        <button onClick={onClose} className="p-1 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded"><X size={16} /></button>
       </div>
 
       <div className="flex-1 overflow-auto p-3 space-y-2">
         {loading ? (
           <div className="flex items-center justify-center py-8"><div className="animate-spin rounded-full h-6 w-6 border-2 border-texflow-500 border-t-transparent" /></div>
         ) : versions.length === 0 ? (
-          <div className="text-center py-8"><History className="mx-auto h-8 w-8 text-slate-600 mb-2" /><p className="text-sm text-slate-500">No version history yet</p></div>
+          <div className="text-center py-8"><History className="mx-auto h-8 w-8 text-texflow-600 mb-2" /><p className="text-sm text-texflow-500">No version history yet</p></div>
         ) : versions.map(version => (
-          <div key={version.id} className="rounded-lg p-3 border border-texflow-800 hover:border-texflow-700 transition-colors" style={{ background: 'rgba(10,12,61,0.5)' }}>
+          <div key={version.id} className="rounded-lg p-3 border border-texflow-800 hover:border-texflow-700 transition-colors" style={{ background: 'rgba(251,239,239,0.5)' }}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-white font-medium">{version.label || 'Unnamed version'}</p>
-                <p className="text-xs text-slate-400">{version.user?.name} · {new Date(version.createdAt).toLocaleString()}</p>
+                <p className="text-sm text-texflow-900 font-medium">{version.label || 'Unnamed version'}</p>
+                <p className="text-xs text-texflow-600">{version.user?.name} · {new Date(version.createdAt).toLocaleString()}</p>
               </div>
               <div className="flex items-center gap-1">
-                <button className="p-1.5 text-slate-400 hover:text-white hover:bg-dark-700 rounded transition-colors" title="View"><Eye size={14} /></button>
-                <button className="p-1.5 text-slate-400 hover:text-white hover:bg-dark-700 rounded transition-colors" title="Compare"><GitCompare size={14} /></button>
-                <button onClick={() => handleRestore(version.id)} className="p-1.5 text-slate-400 hover:text-texflow-400 hover:bg-dark-700 rounded transition-colors" title="Restore"><RotateCcw size={14} /></button>
+                <button className="p-1.5 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded transition-colors" title="View"><Eye size={14} /></button>
+                <button className="p-1.5 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded transition-colors" title="Compare"><GitCompare size={14} /></button>
+                <button onClick={() => handleRestore(version.id)} className="p-1.5 text-texflow-600 hover:text-texflow-400 hover:bg-texflow-200 rounded transition-colors" title="Restore"><RotateCcw size={14} /></button>
               </div>
             </div>
           </div>

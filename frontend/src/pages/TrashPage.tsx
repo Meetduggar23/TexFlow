@@ -46,10 +46,10 @@ export default function TrashPage() {
   return (
     <div className="p-8">
       <div className="flex items-center gap-4 mb-8">
-        <button onClick={() => navigate(-1)} className="p-2 text-slate-400 hover:text-white hover:bg-dark-700 rounded-lg transition-colors"><ArrowLeft size={20} /></button>
+        <button onClick={() => navigate(-1)} className="p-2 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded-lg transition-colors"><ArrowLeft size={20} /></button>
         <div>
-          <h1 className="text-3xl font-bold text-white">Trash</h1>
-          <p className="text-slate-400 mt-1">Deleted projects can be restored within 30 days</p>
+          <h1 className="text-3xl font-bold text-texflow-900">Trash</h1>
+          <p className="text-texflow-600 mt-1">Deleted projects can be restored within 30 days</p>
         </div>
       </div>
 
@@ -57,17 +57,17 @@ export default function TrashPage() {
         <div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-2 border-texflow-500 border-t-transparent" /></div>
       ) : projects.length === 0 ? (
         <div className="text-center py-20">
-          <Trash2 className="mx-auto h-12 w-12 text-slate-500 mb-4" />
-          <h3 className="text-lg font-medium text-slate-300">Trash is empty</h3>
-          <p className="text-slate-400">Deleted projects will appear here</p>
+          <Trash2 className="mx-auto h-12 w-12 text-texflow-500 mb-4" />
+          <h3 className="text-lg font-medium text-texflow-700">Trash is empty</h3>
+          <p className="text-texflow-600">Deleted projects will appear here</p>
         </div>
       ) : (
         <div className="space-y-3">
           {projects.map(project => (
             <div key={project.id} className="card flex items-center justify-between">
               <div>
-                <h3 className="font-medium text-white">{project.name}</h3>
-                <p className="text-sm text-slate-400">Deleted {new Date(project.deletedAt || project.updatedAt).toLocaleDateString()}</p>
+                <h3 className="font-medium text-texflow-900">{project.name}</h3>
+                <p className="text-sm text-texflow-600">Deleted {new Date(project.deletedAt || project.updatedAt).toLocaleDateString()}</p>
               </div>
               <div className="flex items-center gap-2">
                 <button onClick={() => handleRestore(project.id)} className="btn-secondary text-xs flex items-center gap-1"><RotateCcw size={14} /> Restore</button>

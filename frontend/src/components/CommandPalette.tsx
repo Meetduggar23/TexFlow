@@ -45,21 +45,21 @@ export default function CommandPalette({ onClose, onCompile, onSave, onTogglePdf
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative w-full max-w-lg border border-texflow-800 rounded-xl shadow-2xl overflow-hidden" style={{ background: '#0a0c3d' }}>
+      <div className="relative w-full max-w-lg border border-texflow-800 rounded-xl shadow-2xl overflow-hidden" style={{ background: '#FBEFEF' }}>
         <div className="flex items-center gap-2 px-4 py-3 border-b border-texflow-800">
           <Command size={16} className="text-texflow-400" />
-          <input autoFocus value={query} onChange={e => setQuery(e.target.value)} onKeyDown={handleKeyDown} placeholder="Type a command..." className="flex-1 bg-transparent text-sm text-white outline-none placeholder-slate-500" />
-          <button onClick={onClose} className="p-1 text-slate-400 hover:text-white"><X size={16} /></button>
+          <input autoFocus value={query} onChange={e => setQuery(e.target.value)} onKeyDown={handleKeyDown} placeholder="Type a command..." className="flex-1 bg-transparent text-sm text-texflow-900 outline-none placeholder-texflow-500" />
+          <button onClick={onClose} className="p-1 text-texflow-600 hover:text-texflow-900"><X size={16} /></button>
         </div>
         <div className="max-h-72 overflow-auto py-1">
           {filtered.map((cmd, i) => (
-            <button key={cmd.label} onClick={() => { cmd.action(); onClose(); }} className={`w-full flex items-center gap-3 px-4 py-2.5 transition-colors text-left ${i === selectedIndex ? 'bg-dark-700' : 'hover:bg-dark-700/50'}`}>
+            <button key={cmd.label} onClick={() => { cmd.action(); onClose(); }} className={`w-full flex items-center gap-3 px-4 py-2.5 transition-colors text-left ${i === selectedIndex ? 'bg-dark-700' : 'hover:bg-texflow-200/50'}`}>
               <cmd.icon size={16} className="text-texflow-400 flex-shrink-0" />
-              <span className="text-sm text-white flex-1">{cmd.label}</span>
-              {cmd.shortcut && <span className="text-xs text-slate-500 font-mono">{cmd.shortcut}</span>}
+              <span className="text-sm text-texflow-900 flex-1">{cmd.label}</span>
+              {cmd.shortcut && <span className="text-xs text-texflow-500 font-mono">{cmd.shortcut}</span>}
             </button>
           ))}
-          {filtered.length === 0 && <p className="text-sm text-slate-500 p-4 text-center">No commands found</p>}
+          {filtered.length === 0 && <p className="text-sm text-texflow-500 p-4 text-center">No commands found</p>}
         </div>
       </div>
     </div>

@@ -51,22 +51,22 @@ export default function CreateProjectModal({ onClose }: CreateProjectModalProps)
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative border border-texflow-800 rounded-2xl shadow-2xl w-full max-w-md mx-4" style={{ background: '#0a0c3d' }}>
+      <div className="relative border border-texflow-800 rounded-2xl shadow-2xl w-full max-w-md mx-4" style={{ background: '#FBEFEF' }}>
         <div className="flex items-center justify-between p-4 border-b border-texflow-800">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(114,4,85,0.3), rgba(145,10,103,0.3))' }}>
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(245,175,175,0.3), rgba(232,149,149,0.3))' }}>
               <FileText className="text-texflow-400" size={20} />
             </div>
-            <h2 className="text-lg font-semibold text-white">New Project</h2>
+            <h2 className="text-lg font-semibold text-texflow-900">New Project</h2>
           </div>
-          <button onClick={onClose} className="p-1 text-slate-400 hover:text-white hover:bg-dark-700 rounded transition-colors">
+          <button onClick={onClose} className="p-1 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded transition-colors">
             <X size={18} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Project Name <span className="text-texflow-400">*</span></label>
+            <label className="block text-sm font-medium text-texflow-700 mb-1.5">Project Name <span className="text-texflow-400">*</span></label>
             <input
               type="text"
               value={name}
@@ -77,7 +77,7 @@ export default function CreateProjectModal({ onClose }: CreateProjectModalProps)
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Description</label>
+            <label className="block text-sm font-medium text-texflow-700 mb-1.5">Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
