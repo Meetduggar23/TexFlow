@@ -41,7 +41,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-2">
-              <img src="/logo.png" alt="TexFlow" className="w-8 h-8 object-contain" />
+              <img src="/logo2.png" alt="TexFlow" className="w-8 h-8 object-contain" />
               <span className="text-xl font-bold text-texflow-900">Tex<span className="gradient-text">Flow</span></span>
             </div>
             
@@ -220,7 +220,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
-              <img src="/logo.png" alt="TexFlow" className="w-6 h-6 object-contain" />
+              <img src="/logo2.png" alt="TexFlow" className="w-6 h-6 object-contain" />
               <span className="font-bold text-texflow-900">Tex<span className="gradient-text">Flow</span></span>
             </div>
             
