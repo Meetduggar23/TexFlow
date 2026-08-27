@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=http://localhost:3001
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - storage:/app/storage
+    environment:
+      - DATABASE_URL=file:/app/storage/texflow.db
+      - JWT_SECRET=change-this-in-production
+      - PORT=3001
+      - CORS_ORIGIN=http://localhost:5173
+      - STORAGE_PATH=/app/storage
+    command: npx prisma db push && npm run dev
+
+volumes:
+  storage:

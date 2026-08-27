@@ -2,11 +2,27 @@ import { useEffect, useRef } from 'react';
 import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter } from '@codemirror/view';
 import { EditorState } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
-import { bracketMatching, foldGutter, indentOnInput } from '@codemirror/language';
+import { bracketMatching, foldGutter, indentOnInput, StreamLanguage } from '@codemirror/language';
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import { lintKeymap } from '@codemirror/lint';
-import { latex } from '@codemirror/lang-latex';
+import { tags } from '@lezer/highlight';
 import type { FileNode } from '../types';
+
+const latexStreamParser = {
+  startState: () => ({ inCommand: false, inMath: false }),
+  token: (stream: any, state: any) => {
+    if (stream.match('\\begin{') || stream.match('\\end{')) return 'keyword';
+    if (stream.match(/^\\[a-zA-Z]+/)) return 'keyword';
+    if (stream.match('$') || stream.match('\\(') || stream.match('\\)') || stream.match('\\[') || stream.match('\\]')) return 'special';
+    if (stream.match('{') || stream.match('}')) return 'bracket';
+    if (stream.match('%')) { stream.skipToEnd(); return 'comment'; }
+    if (stream.match('#') || stream.match('&') || stream.match('_') || stream.match('^')) return 'operator';
+    stream.next();
+    return null;
+  },
+};
+
+const latexLanguage = StreamLanguage.define(latexStreamParser);
 
 const texflowTheme = EditorView.theme({
   '&': { height: '100%', background: '#0a0c3d' },
@@ -19,6 +35,10 @@ const texflowTheme = EditorView.theme({
   '&.cm-focused .cm-selectionBackground': { background: 'rgba(145,10,103,0.35) !important' },
   '.cm-matchingBracket': { background: 'rgba(114,4,85,0.4)', outline: '1px solid rgba(145,10,103,0.6)' },
   '.cm-content': { caretColor: '#910A67' },
+  '.cm-line': { padding: '0 4px' },
+  '.ͼ5': { color: '#910A67' },
+  '.ͼ6': { color: '#b97cc9' },
+  '.ͼ7': { color: '#720455', fontStyle: 'italic' },
 }, { dark: true });
 
 interface CodeEditorProps {
@@ -61,7 +81,7 @@ export default function CodeEditor({ content, onChange, onSave, file }: CodeEdit
         bracketMatching(),
         highlightSelectionMatches(),
         keymap.of(customKeymap),
-        latex(),
+        latexLanguage,
         texflowTheme,
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {

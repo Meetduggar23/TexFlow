@@ -6,6 +6,11 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
+import DashboardLayout from './pages/DashboardLayout';
+import AllProjects from './pages/AllProjects';
+import TemplateBrowser from './pages/TemplateBrowser';
+import TrashPage from './pages/TrashPage';
+import Settings from './pages/Settings';
 import Editor from './pages/Editor';
 
 export default function App() {
@@ -35,7 +40,15 @@ export default function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/templates" element={<TemplateBrowser />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/dashboard" element={<DashboardLayout />}>
+          <Route index element={<AllProjects />} />
+          <Route path="projects" element={<AllProjects />} />
+          <Route path="recent" element={<AllProjects />} />
+          <Route path="shared" element={<AllProjects />} />
+          <Route path="trash" element={<TrashPage />} />
+        </Route>
         <Route path="/project/:projectId" element={<Editor />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

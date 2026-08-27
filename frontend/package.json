@@ -9,14 +9,19 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@codemirror/lang-latex": "^6.0.0",
     "@codemirror/language": "^6.10.0",
     "@codemirror/state": "^6.3.0",
     "@codemirror/view": "^6.22.0",
+    "@codemirror/search": "^6.5.0",
+    "@codemirror/commands": "^6.3.0",
+    "@codemirror/lint": "^6.0.0",
+    "@codemirror/theme-one-dark": "^6.1.0",
+    "@lezer/highlight": "^1.2.0",
+    "@lezer/lr": "^1.4.0",
     "@reduxjs/toolkit": "^2.1.0",
     "clsx": "^2.1.0",
     "codemirror": "^6.0.1",
-    "@codemirror/basic-setup": "^6.3.0",
+    "file-saver": "^2.0.5",
     "jszip": "^3.10.1",
     "lucide-react": "^0.312.0",
     "react": "^18.2.0",
@@ -27,6 +32,7 @@
     "socket.io-client": "^4.7.4"
   },
   "devDependencies": {
+    "@types/file-saver": "^2.0.7",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@vitejs/plugin-react": "^4.2.1",
