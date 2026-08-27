@@ -474,7 +474,7 @@ export default function Editor() {
           style={{
             width: filesOpen ? filesWidth : 0,
             background: 'var(--color-background)',
-            borderColor: 'var(--color-border)',
+            borderRight: '1px solid rgba(0,0,0,0.3)',
             transition: isResizingFilesSidebar ? 'none' : 'width 220ms cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
@@ -522,7 +522,7 @@ export default function Editor() {
 
             {/* PDF Divider with arrows */}
             {pdfOpen && (
-              <div className="flex-shrink-0 flex flex-col items-center justify-center gap-1" style={{ width: 12, background: 'var(--color-background)', borderLeft: '1px solid var(--color-border)', borderRight: '1px solid var(--color-border)' }}>
+              <div className="flex-shrink-0 flex flex-col items-center justify-center gap-1" style={{ width: 12, background: 'var(--color-background)', borderLeft: '1px solid rgba(0,0,0,0.3)', borderRight: '1px solid rgba(0,0,0,0.3)' }}>
                 <button
                   onClick={() => dispatch(togglePdf())}
                   className="p-0.5 rounded transition-colors hover:bg-[var(--color-accent-soft)]"
@@ -569,7 +569,7 @@ export default function Editor() {
 
             {/* PDF not open - show expand button */}
             {!pdfOpen && (
-              <div className="flex-shrink-0 flex flex-col items-center justify-center" style={{ width: 24, background: 'var(--color-background)', borderLeft: '1px solid var(--color-border)' }}>
+              <div className="flex-shrink-0 flex flex-col items-center justify-center" style={{ width: 24, background: 'var(--color-background)', borderLeft: '1px solid rgba(0,0,0,0.3)' }}>
                 <button
                   onClick={() => dispatch(togglePdf())}
                   className="p-1 rounded transition-colors hover:bg-[var(--color-accent-soft)]"
@@ -610,13 +610,13 @@ export default function Editor() {
         </div>
 
         {showComments && (
-          <aside className="flex-shrink-0 border-l" style={{ width: 320, borderColor: 'var(--color-border)' }}>
+          <aside className="flex-shrink-0 border-l" style={{ width: 320, borderColor: 'rgba(0,0,0,0.3)' }}>
             <CommentsPanel projectId={projectId!} onClose={() => setShowComments(false)} />
           </aside>
         )}
 
         {showHistory && (
-          <aside className="flex-shrink-0 border-l" style={{ width: 320, borderColor: 'var(--color-border)' }}>
+          <aside className="flex-shrink-0 border-l" style={{ width: 320, borderColor: 'rgba(0,0,0,0.3)' }}>
             <HistoryPanel onClose={() => setShowHistory(false)} />
           </aside>
         )}
