@@ -38,11 +38,11 @@ export default function DashboardSidebar() {
 
   return (
     <>
-      <aside className="w-60 h-full flex flex-col" style={{ background: '#FCF8F8', borderRight: '1px solid #F9DFDF' }}>
+      <aside className="w-60 h-full flex flex-col" style={{ background: 'var(--color-surface)', borderRight: '1px solid var(--color-border)' }}>
         <div className="p-4 pb-3">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/dashboard')}>
             <BrandLogo className="w-7 h-7 object-contain" />
-            <span className="text-lg font-bold" style={{ color: '#3d2626' }}>Tex<span className="gradient-text">Flow</span></span>
+            <span className="text-lg font-bold" style={{ color: '#FFFFFF' }}>Tex<span className="gradient-text">Flow</span></span>
           </div>
         </div>
 
@@ -57,7 +57,7 @@ export default function DashboardSidebar() {
                   : 'hover:bg-texflow-200/50'
               )}
               style={location.pathname === '/dashboard' || location.pathname === '/dashboard/projects'
-                ? { background: 'linear-gradient(135deg, #F5AFAF, #e89595)', color: '#fff' }
+                ? { background: 'linear-gradient(135deg, var(--color-accent), var(--color-accent-hover))', color: '#fff' }
                 : { color: '#5a3a3a' }}
             >
               <FolderOpen size={18} />
@@ -75,7 +75,7 @@ export default function DashboardSidebar() {
                       'w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[13px] transition-all',
                       isActive ? 'font-medium' : 'hover:bg-texflow-200/30'
                     )}
-                    style={{ color: isActive ? '#3d2626' : '#8a4040' }}
+                    style={{ color: isActive ? '#FFFFFF' : '#8a4040' }}
                   >
                     {item.label}
                   </button>
@@ -84,7 +84,7 @@ export default function DashboardSidebar() {
             </div>
           </div>
 
-          <div className="pt-3 pb-3" style={{ borderTop: '1px solid #F9DFDF' }}>
+          <div className="pt-3 pb-3" style={{ borderTop: '1px solid var(--color-border)' }}>
             <div className="flex items-center justify-between px-3 py-1.5">
               <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#b85c5c' }}>Organize Tags</span>
             </div>
@@ -95,7 +95,7 @@ export default function DashboardSidebar() {
           </div>
         </nav>
 
-        <div className="px-2 pb-2 space-y-0.5 pt-2" style={{ borderTop: '1px solid #F9DFDF' }}>
+        <div className="px-2 pb-2 space-y-0.5 pt-2" style={{ borderTop: '1px solid var(--color-border)' }}>
           {bottomItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
@@ -106,12 +106,12 @@ export default function DashboardSidebar() {
                   'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all',
                   isActive ? 'font-medium' : 'hover:bg-texflow-200/30'
                 )}
-                style={{ color: isActive ? '#3d2626' : '#8a4040' }}
+                style={{ color: isActive ? '#FFFFFF' : '#8a4040' }}
               >
                 <item.icon size={18} />
                 <span className="flex-1 text-left">{item.label}</span>
                 {item.badge && (
-                  <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded text-white" style={{ background: '#F5AFAF' }}>
+                  <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded text-white" style={{ background: 'var(--color-accent)' }}>
                     {item.badge}
                   </span>
                 )}
@@ -124,14 +124,14 @@ export default function DashboardSidebar() {
             );
           })}
 
-          <div className="pt-2 mt-1" style={{ borderTop: '1px solid #F9DFDF' }}>
+          <div className="pt-2 mt-1" style={{ borderTop: '1px solid var(--color-border)' }}>
             {token ? (
               <div className="flex items-center gap-2.5 px-3 py-2">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0" style={{ background: 'linear-gradient(135deg, #F5AFAF, #e89595)' }}>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0" style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-accent-hover))' }}>
                   {getUserInitial()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate" style={{ color: '#3d2626' }}>{user?.name || 'User'}</p>
+                  <p className="text-sm font-medium truncate" style={{ color: '#FFFFFF' }}>{user?.name || 'User'}</p>
                   <p className="text-[11px] truncate" style={{ color: '#b85c5c' }}>{user?.email || ''}</p>
                 </div>
                 <button onClick={handleLogout} className="p-1 hover:text-red-400 transition-colors" style={{ color: '#8a4040' }} title="Log out">

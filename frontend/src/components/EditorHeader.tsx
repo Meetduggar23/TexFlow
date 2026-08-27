@@ -4,17 +4,19 @@ import {
   Search, Command, ChevronDown, FileText, FolderOpen, Upload, Save, Download, Settings,
   Undo, Redo, Scissors, Copy, ClipboardPaste, Replace, Type, Bold, Italic,
   List, ListOrdered, Table2, Link2, Image as ImageIcon, FileCode2,
-  Eye, EyeOff, Maximize2, Minimize2, Terminal, LayoutTemplate,
+  Eye, EyeOff, Terminal, LayoutTemplate,
   Puzzle, HelpCircle, BookOpen, Bug,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import BrandLogo from './BrandLogo';
 import { toggleSidebar, togglePdf, toggleTerminal, resetLayout } from '../store/uiSlice';
+import CompileSettingsDropdown from './CompileSettingsDropdown';
 import type { Project } from '../types';
 
 interface EditorHeaderProps {
   project: Project;
   onCompile: () => void;
+  onCleanBuild: () => void;
   onBack: () => void;
   onToggleComments: () => void;
   onToggleHistory: () => void;
@@ -26,11 +28,6 @@ interface EditorHeaderProps {
   onDownloadSource: () => void;
   onOpenSearch: () => void;
   onOpenCommandPalette: () => void;
-  onInsertSection?: () => void;
-  onInsertFigure?: () => void;
-  onInsertTable?: () => void;
-  onInsertEquation?: () => void;
-  onInsertCitation?: () => void;
 }
 
 interface MenuItem {
@@ -51,19 +48,22 @@ function MenuDropdown({ items, onClose }: { items: MenuItem[]; onClose: () => vo
   }, [onClose]);
 
   return (
-    <div ref={ref} className="absolute top-full left-0 mt-1 z-50 border border-[var(--color-border)] rounded-lg shadow-xl py-1 min-w-[220px]" style={{ background: 'var(--color-surface)' }}>
+    <div ref={ref} className="absolute top-full left-0 mt-1 z-50 border rounded-lg shadow-xl py-1 min-w-[220px]" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border-strong)' }}>
       {items.map((item, i) => {
-        if (item.divider) return <div key={i} className="border-t border-[var(--color-border)] my-1" />;
+        if (item.divider) return <div key={i} className="my-1" style={{ borderTop: '1px solid var(--color-border)' }} />;
         return (
           <button
             key={i}
             onClick={() => { item.action?.(); onClose(); }}
             disabled={item.disabled}
-            className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-secondary)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ color: 'var(--color-text-secondary)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-elevated)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
           >
             <span className="w-4 h-4 flex items-center justify-center">{item.icon}</span>
             <span className="flex-1 text-left">{item.label}</span>
-            {item.shortcut && <span className="text-xs text-[var(--color-text-disabled)] font-mono">{item.shortcut}</span>}
+            {item.shortcut && <span className="text-xs font-mono" style={{ color: 'var(--color-text-disabled)' }}>{item.shortcut}</span>}
           </button>
         );
       })}
@@ -72,14 +72,16 @@ function MenuDropdown({ items, onClose }: { items: MenuItem[]; onClose: () => vo
 }
 
 export default function EditorHeader({
-  project, onCompile, onBack, onToggleComments, onToggleHistory, onToggleShare,
+  project, onCompile, onCleanBuild, onBack, onToggleComments, onToggleHistory, onToggleShare,
   onSave, onNewFile, onNewFolder, onDownloadPdf, onDownloadSource,
   onOpenSearch, onOpenCommandPalette,
 }: EditorHeaderProps) {
   const dispatch = useAppDispatch();
-  const { compiling } = useAppSelector(state => state.editor);
+  const { compiling, compileStatus } = useAppSelector(state => state.editor);
   const { filesOpen: sidebarOpen, pdfOpen: pdfVisible } = useAppSelector(state => state.ui);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [showCompileDropdown, setShowCompileDropdown] = useState(false);
+  const compileDropdownRef = useRef<HTMLDivElement>(null);
 
   const closeMenu = useCallback(() => setActiveMenu(null), []);
 
@@ -132,9 +134,20 @@ export default function EditorHeader({
     { label: 'Reset Layout', icon: <LayoutTemplate size={14} />, action: () => dispatch(resetLayout()) },
   ];
 
+  const formatMenu: MenuItem[] = [
+    { label: 'Bold', icon: <Bold size={14} />, shortcut: 'Ctrl+B' },
+    { label: 'Italic', icon: <Italic size={14} />, shortcut: 'Ctrl+I' },
+    { divider: true },
+    { label: 'Bullet List', icon: <List size={14} /> },
+    { label: 'Numbered List', icon: <ListOrdered size={14} /> },
+    { divider: true },
+    { label: 'Table', icon: <Table2 size={14} /> },
+    { label: 'Link', icon: <Link2 size={14} /> },
+  ];
+
   const toolsMenu: MenuItem[] = [
     { label: compiling ? 'Compiling...' : 'Compile', icon: <Play size={14} />, action: onCompile, shortcut: 'Ctrl+Enter', disabled: compiling },
-    { label: 'Clean Build', icon: <Bug size={14} /> },
+    { label: 'Clean Build', icon: <Bug size={14} />, action: onCleanBuild },
     { divider: true },
     { label: 'Command Palette', icon: <Command size={14} />, action: onOpenCommandPalette, shortcut: 'Ctrl+K' },
   ];
@@ -148,23 +161,29 @@ export default function EditorHeader({
   ];
 
   const menus: Record<string, MenuItem[]> = {
-    File: fileMenu, Edit: editMenu, Insert: insertMenu, View: viewMenu, Tools: toolsMenu, Help: helpMenu,
+    File: fileMenu, Edit: editMenu, Insert: insertMenu, Format: formatMenu, View: viewMenu, Tools: toolsMenu, Help: helpMenu,
   };
 
   return (
-    <header className="h-11 border-b border-[var(--color-border)] flex items-center px-3 gap-1" style={{ background: 'var(--color-surface)' }}>
-      <button onClick={onBack} className="p-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-secondary)] rounded transition-colors" title="Back to Dashboard">
+    <header className="h-11 flex items-center px-3 gap-1" style={{ background: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)' }}>
+      <button onClick={onBack} className="p-1.5 rounded transition-colors" style={{ color: 'var(--color-text-muted)' }} title="Back to Dashboard"
+        onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-elevated)'; e.currentTarget.style.color = 'var(--color-text-primary)'; }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)'; }}
+      >
         <ArrowLeft size={15} />
       </button>
-      <button onClick={() => dispatch(toggleSidebar())} className="p-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-secondary)] rounded transition-colors" title="Toggle file explorer">
+      <button onClick={() => dispatch(toggleSidebar())} className="p-1.5 rounded transition-colors" style={{ color: sidebarOpen ? 'var(--color-accent)' : 'var(--color-text-muted)' }} title="Toggle file explorer (Ctrl+Shift+B)"
+        onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-elevated)'; }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+      >
         {sidebarOpen ? <PanelLeftClose size={15} /> : <PanelLeftOpen size={15} />}
       </button>
 
-      <div className="w-px h-5 bg-[var(--color-border)] mx-1" />
+      <div className="w-px h-5 mx-1" style={{ background: 'var(--color-border)' }} />
 
       <div className="flex items-center gap-1.5 mr-2">
         <BrandLogo alt="TexFlow" className="w-5 h-5 object-contain" />
-        <span className="text-sm font-semibold" style={{ color: 'var(--color-accent)' }}>TexFlow</span>
+        <span className="text-sm font-bold" style={{ color: 'var(--color-accent)' }}>TexFlow</span>
       </div>
 
       <nav className="flex items-center gap-0">
@@ -173,11 +192,13 @@ export default function EditorHeader({
             <button
               onClick={() => setActiveMenu(activeMenu === menuName ? null : menuName)}
               onMouseEnter={() => activeMenu && setActiveMenu(menuName)}
-              className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
-                activeMenu === menuName
-                  ? 'bg-[var(--color-accent-soft)] text-[var(--color-accent)]'
-                  : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-secondary)]'
-              }`}
+              className="px-2.5 py-1 text-xs font-medium rounded transition-colors"
+              style={{
+                background: activeMenu === menuName ? 'var(--color-accent-soft)' : 'transparent',
+                color: activeMenu === menuName ? 'var(--color-accent)' : 'var(--color-text-secondary)',
+              }}
+              onMouseOver={e => { if (activeMenu !== menuName) e.currentTarget.style.background = 'var(--color-surface-elevated)'; }}
+              onMouseOut={e => { if (activeMenu !== menuName) e.currentTarget.style.background = 'transparent'; }}
             >
               {menuName}
             </button>
@@ -186,46 +207,100 @@ export default function EditorHeader({
         ))}
       </nav>
 
-      <div className="ml-2 text-xs text-[var(--color-text-muted)] font-medium truncate max-w-[180px]">
-        {project.name}
-      </div>
-
       <div className="ml-auto flex items-center gap-1">
-        <button onClick={onOpenSearch} className="p-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-secondary)] rounded transition-colors" title="Search (Ctrl+Shift+F)">
+        <button onClick={onOpenSearch} className="p-1.5 rounded transition-colors" style={{ color: 'var(--color-text-muted)' }} title="Search (Ctrl+Shift+F)"
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-elevated)'; e.currentTarget.style.color = 'var(--color-text-primary)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)'; }}
+        >
           <Search size={14} />
         </button>
-        <button onClick={onOpenCommandPalette} className="p-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-secondary)] rounded transition-colors" title="Command Palette (Ctrl+K)">
+        <button onClick={onOpenCommandPalette} className="p-1.5 rounded transition-colors" style={{ color: 'var(--color-text-muted)' }} title="Command Palette (Ctrl+K)"
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-elevated)'; e.currentTarget.style.color = 'var(--color-text-primary)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)'; }}
+        >
           <Command size={14} />
         </button>
 
-        <div className="w-px h-5 bg-[var(--color-border)] mx-1" />
+        <div className="w-px h-5 mx-1" style={{ background: 'var(--color-border)' }} />
 
-        <button onClick={onToggleComments} className="p-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-secondary)] rounded transition-colors" title="Comments">
+        <button onClick={onToggleComments} className="p-1.5 rounded transition-colors" style={{ color: 'var(--color-text-muted)' }} title="Comments"
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-elevated)'; e.currentTarget.style.color = 'var(--color-text-primary)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)'; }}
+        >
           <MessageSquare size={14} />
         </button>
-        <button onClick={onToggleHistory} className="p-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-secondary)] rounded transition-colors" title="History">
+        <button onClick={onToggleHistory} className="p-1.5 rounded transition-colors" style={{ color: 'var(--color-text-muted)' }} title="History"
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-elevated)'; e.currentTarget.style.color = 'var(--color-text-primary)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)'; }}
+        >
           <History size={14} />
         </button>
 
-        <div className="flex items-center gap-1 px-2 py-1 text-xs text-[var(--color-text-muted)]" title="Collaborators">
+        <div className="flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors" style={{ color: 'var(--color-text-muted)' }} title="Collaborators"
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-elevated)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+        >
           <Users size={13} />
           <span>{project.collaborators?.length || 1}</span>
         </div>
 
-        <button onClick={onToggleShare} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded transition-all" style={{ background: 'var(--color-accent)' }} title="Share">
+        <button onClick={onToggleShare} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded transition-all" style={{ background: 'var(--color-accent)' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-accent-hover)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'var(--color-accent)'; }}
+          title="Share"
+        >
           <Share2 size={12} />
           Share
         </button>
 
-        <div className="w-px h-5 bg-[var(--color-border)] mx-1" />
+        <div className="w-px h-5 mx-1" style={{ background: 'var(--color-border)' }} />
 
-        <button onClick={() => dispatch(togglePdf())} className={`px-2.5 py-1.5 text-xs font-medium rounded transition-colors ${pdfVisible ? 'text-[var(--color-accent)] bg-[var(--color-accent-soft)]' : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-secondary)]'}`}>
+        <button onClick={() => dispatch(togglePdf())} className="px-2.5 py-1.5 text-xs font-medium rounded transition-colors"
+          style={{
+            background: pdfVisible ? 'var(--color-accent-soft)' : 'transparent',
+            color: pdfVisible ? 'var(--color-accent)' : 'var(--color-text-muted)',
+          }}
+          onMouseEnter={e => { if (!pdfVisible) e.currentTarget.style.background = 'var(--color-surface-elevated)'; }}
+          onMouseLeave={e => { if (!pdfVisible) e.currentTarget.style.background = 'transparent'; }}
+        >
           PDF
         </button>
-        <button onClick={onCompile} disabled={compiling} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded transition-all disabled:opacity-50" style={{ background: compiling ? 'var(--color-border)' : 'var(--color-accent)' }}>
-          {compiling ? <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent" /> : <Play size={11} />}
-          {compiling ? 'Compiling...' : 'Recompile'}
-        </button>
+
+        <div className="relative" ref={compileDropdownRef}>
+          <div className="flex items-center">
+            <button
+              onClick={onCompile}
+              disabled={compiling}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded-l transition-all disabled:opacity-50"
+              style={{ background: compiling ? 'var(--color-border)' : 'var(--color-accent)' }}
+              onMouseEnter={e => { if (!compiling) e.currentTarget.style.background = 'var(--color-accent-hover)'; }}
+              onMouseLeave={e => { if (!compiling) e.currentTarget.style.background = 'var(--color-accent)'; }}
+              title="Recompile (Ctrl+Enter)"
+            >
+              {compiling ? <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent" /> : <Play size={11} />}
+              {compiling ? 'Compiling...' : 'Recompile'}
+            </button>
+            <button
+              onClick={() => setShowCompileDropdown(p => !p)}
+              className="flex items-center justify-center px-1.5 py-1.5 text-white rounded-r transition-all border-l"
+              style={{
+                background: compiling ? 'var(--color-border)' : 'var(--color-accent)',
+                borderColor: 'rgba(255,255,255,0.2)',
+              }}
+              onMouseEnter={e => { if (!compiling) e.currentTarget.style.background = 'var(--color-accent-hover)'; }}
+              onMouseLeave={e => { if (!compiling) e.currentTarget.style.background = 'var(--color-accent)'; }}
+              title="Compilation settings"
+            >
+              <ChevronDown size={12} />
+            </button>
+          </div>
+          {showCompileDropdown && (
+            <CompileSettingsDropdown
+              onClose={() => setShowCompileDropdown(false)}
+              onCleanBuild={onCleanBuild}
+            />
+          )}
+        </div>
       </div>
     </header>
   );

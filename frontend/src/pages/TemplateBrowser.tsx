@@ -66,7 +66,7 @@ export default function TemplateBrowser() {
 
       <div className="flex flex-wrap gap-2 mb-6">
         {categories.map(cat => (
-          <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-3 py-1.5 text-sm rounded-full transition-all ${selectedCategory === cat ? 'text-texflow-900' : 'text-texflow-600 border border-texflow-700 hover:border-texflow-500'}`} style={selectedCategory === cat ? { background: 'linear-gradient(135deg, #F5AFAF, #e89595)' } : {}}>
+          <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-3 py-1.5 text-sm rounded-full transition-all ${selectedCategory === cat ? 'text-texflow-900' : 'text-texflow-600 border border-texflow-700 hover:border-texflow-500'}`} style={selectedCategory === cat ? { background: 'linear-gradient(135deg, var(--color-accent), var(--color-accent-hover))' } : {}}>
             {cat}
           </button>
         ))}

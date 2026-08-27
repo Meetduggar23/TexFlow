@@ -18,14 +18,14 @@ interface CommandPaletteProps {
 
 export default function CommandPalette({ onClose, onCompile, onSave, onToggleShare, onToggleHistory, onNewFile, onNewFolder, onDownloadPdf, onDownloadProject }: CommandPaletteProps) {
   const dispatch = useAppDispatch();
-  const { autoCompile } = useAppSelector(state => state.editor);
+  const { compileSettings } = useAppSelector(state => state.editor);
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const commands = [
     { icon: Play, label: 'Compile', action: onCompile, shortcut: 'Ctrl+Enter' },
     { icon: Save, label: 'Save', action: onSave, shortcut: 'Ctrl+S' },
-    { icon: autoCompile ? Zap : ZapOff, label: `Auto Compile: ${autoCompile ? 'ON' : 'OFF'}`, action: () => dispatch(setAutoCompile(!autoCompile)) },
+    { icon: compileSettings.autoCompile ? Zap : ZapOff, label: `Auto Compile: ${compileSettings.autoCompile ? 'ON' : 'OFF'}`, action: () => dispatch(setAutoCompile(!compileSettings.autoCompile)) },
     { icon: FilePlus, label: 'New File', action: onNewFile },
     { icon: FolderPlus, label: 'New Folder', action: onNewFolder },
     { icon: Eye, label: 'Toggle PDF Preview', action: () => dispatch(togglePdf()), shortcut: 'Ctrl+B' },

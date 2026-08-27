@@ -8,6 +8,16 @@ export interface EditorTab {
 }
 
 export type CompileStatus = 'idle' | 'saving' | 'saved' | 'compiling' | 'compiled' | 'error';
+export type CompileMode = 'normal' | 'draft';
+export type SyntaxCheckMode = 'check' | 'none';
+export type ErrorHandling = 'stop' | 'continue';
+
+interface CompileSettings {
+  autoCompile: boolean;
+  compileMode: CompileMode;
+  syntaxCheck: SyntaxCheckMode;
+  errorHandling: ErrorHandling;
+}
 
 interface EditorState {
   content: string;
@@ -21,10 +31,34 @@ interface EditorState {
   lastSavedAt: number | null;
   lastCompiledAt: number | null;
   saving: boolean;
-  autoCompile: boolean;
   compileStatus: CompileStatus;
   lastValidPdfUrl: string | null;
+  compileSettings: CompileSettings;
 }
+
+function loadCompileSettings(projectId?: string): CompileSettings {
+  const defaults: CompileSettings = {
+    autoCompile: true,
+    compileMode: 'normal',
+    syntaxCheck: 'check',
+    errorHandling: 'continue',
+  };
+  try {
+    const key = projectId ? `texflow-compile-${projectId}` : 'texflow-compile';
+    const saved = localStorage.getItem(key);
+    if (saved) return { ...defaults, ...JSON.parse(saved) };
+  } catch {}
+  return defaults;
+}
+
+function saveCompileSettings(settings: CompileSettings, projectId?: string) {
+  try {
+    const key = projectId ? `texflow-compile-${projectId}` : 'texflow-compile';
+    localStorage.setItem(key, JSON.stringify(settings));
+  } catch {}
+}
+
+let currentProjectId: string | undefined;
 
 const initialState: EditorState = {
   content: '',
@@ -38,9 +72,9 @@ const initialState: EditorState = {
   lastSavedAt: null,
   lastCompiledAt: null,
   saving: false,
-  autoCompile: true,
   compileStatus: 'idle',
   lastValidPdfUrl: null,
+  compileSettings: loadCompileSettings(),
 };
 
 let compileRequestId = 0;
@@ -65,6 +99,7 @@ export const compileProject = createAsyncThunk(
     const requestId = ++compileRequestId;
     const state = getState() as { editor: EditorState };
     const sourceRevision = state.editor.sourceRevision;
+    const settings = state.editor.compileSettings;
     const token = localStorage.getItem('token');
 
     const response = await fetch(`/api/compile/${projectId}`, {
@@ -73,9 +108,81 @@ export const compileProject = createAsyncThunk(
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ compiler: 'pdflatex' }),
+      body: JSON.stringify({
+        compiler: 'pdflatex',
+        draft: settings.compileMode === 'draft',
+        syntaxCheck: settings.syntaxCheck === 'check',
+        errorHandling: settings.errorHandling,
+      }),
     });
     if (!response.ok) throw new Error('Compilation failed');
+    const data = await response.json();
+
+    const logs = data.logs || '';
+    const errors: CompileResult['errors'] = [];
+    const warnings: CompileResult['warnings'] = [];
+
+    const lines = logs.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const errorMatch = line.match(/^!\s+(.+)\.$/);
+      if (errorMatch) {
+        const err: { line: number; column: number; message: string; file?: string } = {
+          line: 0, column: 0, message: errorMatch[1],
+        };
+        const nextLine = lines[i + 1];
+        if (nextLine) {
+          const fileMatch = nextLine.match(/^<\*?>\s*(.*)/);
+          if (fileMatch) err.file = fileMatch[1].trim();
+        }
+        errors.push(err);
+      }
+      const fileLineMatch = line.match(/^l\.(\d+)/);
+      if (fileLineMatch && errors.length > 0) {
+        const lastErr = errors[errors.length - 1];
+        if (lastErr.line === 0) lastErr.line = parseInt(fileLineMatch[1]);
+      }
+      const warningMatch = line.match(/Warning/i);
+      if (warningMatch && !errorMatch) {
+        warnings.push({ line: 0, column: 0, message: line.trim() });
+      }
+    }
+
+    return {
+      success: data.status === 'success',
+      pdfUrl: data.pdfUrl as string | undefined,
+      errors: errors.length > 0 ? errors : undefined,
+      warnings: warnings.length > 0 ? warnings : undefined,
+      logs,
+      sourceRevision,
+      requestId,
+    };
+  }
+);
+
+export const cleanBuild = createAsyncThunk(
+  'editor/cleanBuild',
+  async (projectId: string, { getState }) => {
+    const requestId = ++compileRequestId;
+    const state = getState() as { editor: EditorState };
+    const sourceRevision = state.editor.sourceRevision;
+    const settings = state.editor.compileSettings;
+    const token = localStorage.getItem('token');
+
+    const response = await fetch(`/api/compile/${projectId}/clean`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        compiler: 'pdflatex',
+        draft: settings.compileMode === 'draft',
+        syntaxCheck: settings.syntaxCheck === 'check',
+        errorHandling: settings.errorHandling,
+      }),
+    });
+    if (!response.ok) throw new Error('Clean build failed');
     const data = await response.json();
 
     const logs = data.logs || '';
@@ -189,7 +296,24 @@ const editorSlice = createSlice({
       if (action.payload) state.compileStatus = 'saving';
     },
     setAutoCompile(state, action) {
-      state.autoCompile = action.payload;
+      state.compileSettings.autoCompile = action.payload;
+      saveCompileSettings(state.compileSettings, currentProjectId);
+    },
+    setCompileMode(state, action) {
+      state.compileSettings.compileMode = action.payload;
+      saveCompileSettings(state.compileSettings, currentProjectId);
+    },
+    setSyntaxCheck(state, action) {
+      state.compileSettings.syntaxCheck = action.payload;
+      saveCompileSettings(state.compileSettings, currentProjectId);
+    },
+    setErrorHandling(state, action) {
+      state.compileSettings.errorHandling = action.payload;
+      saveCompileSettings(state.compileSettings, currentProjectId);
+    },
+    initCompileSettings(state, action) {
+      currentProjectId = action.payload;
+      state.compileSettings = loadCompileSettings(action.payload);
     },
     setCompileStatus(state, action) {
       state.compileStatus = action.payload;
@@ -249,6 +373,44 @@ const editorSlice = createSlice({
           errors: [{ line: 0, column: 0, message: 'Compilation failed. Please try again.' }],
         };
         state.compileStatus = 'error';
+      })
+      .addCase(cleanBuild.pending, (state) => {
+        state.compiling = true;
+        state.compileStatus = 'compiling';
+      })
+      .addCase(cleanBuild.fulfilled, (state, action) => {
+        state.compiling = false;
+        const result = action.payload;
+
+        if (result.requestId < compileRequestId) {
+          state.compileStatus = 'idle';
+          return;
+        }
+
+        state.compileResult = {
+          success: result.success,
+          pdfUrl: result.pdfUrl,
+          errors: result.errors,
+          warnings: result.warnings,
+          logs: result.logs,
+        };
+        state.compiledRevision = result.sourceRevision;
+        state.lastCompiledAt = Date.now();
+
+        if (result.success && result.pdfUrl) {
+          state.lastValidPdfUrl = result.pdfUrl;
+          state.compileStatus = 'compiled';
+        } else {
+          state.compileStatus = 'error';
+        }
+      })
+      .addCase(cleanBuild.rejected, (state) => {
+        state.compiling = false;
+        state.compileResult = {
+          success: false,
+          errors: [{ line: 0, column: 0, message: 'Clean build failed. Please try again.' }],
+        };
+        state.compileStatus = 'error';
       });
   },
 });
@@ -257,6 +419,7 @@ export const {
   setContent, setCursors, updateCursor, removeCursor,
   clearCompileResult, openTab, closeTab, setActiveTab,
   closeAllTabs, closeOtherTabs, markTabSaved, setSaving,
-  setAutoCompile, setCompileStatus,
+  setAutoCompile, setCompileMode, setSyntaxCheck, setErrorHandling,
+  initCompileSettings, setCompileStatus,
 } = editorSlice.actions;
 export default editorSlice.reducer;

@@ -1,49 +1,34 @@
-@import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
-  --color-background: #FFF8FA;
-  --color-surface: #FFFFFF;
-  --color-surface-elevated: #FFFFFF;
-  --color-surface-secondary: #FFF1F5;
-  --color-accent: #A0005A;
-  --color-accent-hover: #C21875;
-  --color-accent-soft: rgba(160, 0, 90, 0.10);
-  --color-text-primary: #171329;
-  --color-text-secondary: #4B4558;
-  --color-text-muted: #777184;
-  --color-text-disabled: #A9A4B0;
-  --color-border: #E8DDE4;
-  --color-border-strong: #D8C9D2;
-  --color-success: #16A34A;
-  --color-warning: #D97706;
-  --color-error: #DC2626;
-  --color-info: #2563EB;
-}
-
-:root[data-theme='dark'] {
   color-scheme: dark;
-  --color-background: #070B12;
-  --color-surface: #0D1421;
-  --color-surface-elevated: #111A2A;
-  --color-surface-secondary: #172033;
-  --color-accent: #A0005A;
-  --color-accent-hover: #C21875;
-  --color-accent-soft: rgba(160, 0, 90, 0.15);
-  --color-text-primary: #F8FAFC;
-  --color-text-secondary: #CBD5E1;
-  --color-text-muted: #94A3B8;
-  --color-text-disabled: #64748B;
-  --color-border: #253047;
-  --color-border-strong: #334155;
-  --color-success: #22C55E;
-  --color-warning: #F59E0B;
-  --color-error: #EF4444;
-  --color-info: #38BDF8;
+  --texflow-bg: #082032;
+  --texflow-surface: #2C394B;
+  --texflow-surface-alt: #334756;
+  --texflow-accent: #FF4C29;
+
+  --color-background: #082032;
+  --color-surface: #2C394B;
+  --color-surface-elevated: #334756;
+  --color-surface-secondary: #334756;
+  --color-accent: #FF4C29;
+  --color-accent-hover: #FF6345;
+  --color-accent-active: #E63F20;
+  --color-accent-soft: rgba(255, 76, 41, 0.15);
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #D8E0E5;
+  --color-text-muted: #9AA8B2;
+  --color-text-disabled: #9AA8B2;
+  --color-border: rgba(255, 255, 255, 0.10);
+  --color-border-strong: rgba(255, 255, 255, 0.18);
+  --color-success: #4ADE80;
+  --color-warning: #FFB84D;
+  --color-error: #FF5C5C;
+  --color-info: #D8E0E5;
 }
 
 * {
@@ -61,7 +46,7 @@ body {
   overflow-x: hidden;
   background: var(--color-background);
   color: var(--color-text-primary);
-  font-family: Lora, Georgia, 'Times New Roman', serif;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -132,9 +117,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .cm-editor .cm-content { caret-color: var(--color-accent); }
 .cm-editor .cm-activeLine { background-color: var(--color-surface-secondary); }
 .cm-editor .cm-activeLineGutter { background-color: var(--color-accent-soft); }
-.cm-editor .cm-selectionBackground { background-color: rgba(160, 0, 90, 0.12) !important; }
-.cm-editor.cm-focused .cm-selectionBackground { background-color: rgba(160, 0, 90, 0.18) !important; }
-.cm-editor .cm-matchingBracket { background-color: rgba(160, 0, 90, 0.15); outline: 1px solid rgba(160, 0, 90, 0.4); }
+.cm-editor .cm-selectionBackground { background-color: rgba(255, 76, 41, 0.20) !important; }
+.cm-editor.cm-focused .cm-selectionBackground { background-color: rgba(255, 76, 41, 0.24) !important; }
+.cm-editor .cm-matchingBracket { background-color: rgba(255, 76, 41, 0.15); outline: 1px solid rgba(255, 76, 41, 0.4); }
 .cm-editor .cm-cursor { border-left-color: var(--color-accent); }
 
 /* Split handle */

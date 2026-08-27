@@ -30,7 +30,7 @@ export default function SearchPanel({ onClose, onNavigateToFile }: SearchPanelPr
   };
 
   return (
-    <div className="fixed top-12 left-1/2 -translate-x-1/2 w-full max-w-xl z-50 border border-texflow-800 rounded-xl shadow-2xl overflow-hidden" style={{ background: '#FBEFEF' }}>
+    <div className="fixed top-12 left-1/2 -translate-x-1/2 w-full max-w-xl z-50 border border-texflow-800 rounded-xl shadow-2xl overflow-hidden" style={{ background: 'var(--color-background)' }}>
       <div className="flex items-center gap-2 px-4 py-3 border-b border-texflow-800">
         <Search size={16} className="text-texflow-400" />
         <input autoFocus value={query} onChange={e => { setQuery(e.target.value); handleSearch(); }} placeholder="Search in project... (Ctrl+Shift+F)" className="flex-1 bg-transparent text-sm text-texflow-900 outline-none placeholder-texflow-500" />

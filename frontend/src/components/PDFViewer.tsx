@@ -104,7 +104,7 @@ export default function PDFViewer({ projectId }: PDFViewerProps) {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto flex items-start justify-center p-4" style={{ background: 'var(--color-background)' }}>
+      <div className="flex-1 overflow-auto flex items-start justify-center p-4" style={{ background: 'var(--color-surface)' }}>
         {previewUrl ? (
           <div className="relative w-full h-full flex justify-center">
             <iframe

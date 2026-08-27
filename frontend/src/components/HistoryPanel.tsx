@@ -33,7 +33,7 @@ export default function HistoryPanel({ onClose }: HistoryPanelProps) {
   };
 
   return (
-    <div className="h-full flex flex-col" style={{ background: '#FCF8F8' }}>
+    <div className="h-full flex flex-col" style={{ background: 'var(--color-surface)' }}>
       <div className="flex items-center justify-between px-4 py-3 border-b border-texflow-800">
         <div className="flex items-center gap-2">
           <History size={16} className="text-texflow-400" />
@@ -48,7 +48,7 @@ export default function HistoryPanel({ onClose }: HistoryPanelProps) {
         ) : versions.length === 0 ? (
           <div className="text-center py-8"><History className="mx-auto h-8 w-8 text-texflow-600 mb-2" /><p className="text-sm text-texflow-500">No version history yet</p></div>
         ) : versions.map(version => (
-          <div key={version.id} className="rounded-lg p-3 border border-texflow-800 hover:border-texflow-700 transition-colors" style={{ background: 'rgba(251,239,239,0.5)' }}>
+          <div key={version.id} className="rounded-lg p-3 border border-texflow-800 hover:border-texflow-700 transition-colors" style={{ background: 'rgba(44,57,75,0.65)' }}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-texflow-900 font-medium">{version.label || 'Unnamed version'}</p>

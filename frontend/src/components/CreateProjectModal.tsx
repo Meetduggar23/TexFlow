@@ -51,10 +51,10 @@ export default function CreateProjectModal({ onClose }: CreateProjectModalProps)
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative border border-texflow-800 rounded-2xl shadow-2xl w-full max-w-md mx-4" style={{ background: '#FBEFEF' }}>
+      <div className="relative border border-texflow-800 rounded-2xl shadow-2xl w-full max-w-md mx-4" style={{ background: 'var(--color-background)' }}>
         <div className="flex items-center justify-between p-4 border-b border-texflow-800">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(245,175,175,0.3), rgba(232,149,149,0.3))' }}>
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(255,76,41,0.18), rgba(51,71,86,0.50))' }}>
               <FileText className="text-texflow-400" size={20} />
             </div>
             <h2 className="text-lg font-semibold text-texflow-900">New Project</h2>

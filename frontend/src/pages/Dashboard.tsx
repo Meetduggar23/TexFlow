@@ -77,7 +77,7 @@ export default function Dashboard() {
                 className="input-field w-full pl-10"
               />
             </div>
-            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#FBEFEF', border: '1px solid #F9DFDF' }}>
+            <div className="flex gap-1 p-1 rounded-lg" style={{ background: 'var(--color-background)', border: '1px solid var(--color-border)' }}>
               {(['all', 'owned', 'shared', 'favorites'] as const).map(f => (
                 <button
                   key={f}
@@ -85,7 +85,7 @@ export default function Dashboard() {
                   className={`px-3 py-1.5 text-xs font-medium rounded transition-colors capitalize ${
                     filter === f ? 'text-texflow-900' : 'text-texflow-600 hover:text-texflow-900'
                   }`}
-                  style={filter === f ? { background: 'linear-gradient(135deg, #F5AFAF, #e89595)' } : {}}
+                  style={filter === f ? { background: 'linear-gradient(135deg, var(--color-accent), var(--color-accent-hover))' } : {}}
                 >
                   {f}
                 </button>
@@ -99,7 +99,7 @@ export default function Dashboard() {
             </div>
           ) : filteredProjects.length === 0 ? (
             <div className="text-center py-20">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(245,175,175,0.2), rgba(232,149,149,0.2))' }}>
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(255,76,41,0.15), rgba(51,71,86,0.45))' }}>
                 <FileText className="text-texflow-400" size={28} />
               </div>
               <h3 className="text-lg font-medium text-texflow-700 mb-2">
@@ -122,7 +122,7 @@ export default function Dashboard() {
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(245,175,175,0.3), rgba(232,149,149,0.3))' }}>
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(255,76,41,0.18), rgba(51,71,86,0.50))' }}>
                         <FileText className="text-texflow-400" size={20} />
                       </div>
                       <div>

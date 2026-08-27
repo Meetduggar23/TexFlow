@@ -87,11 +87,11 @@ export default function AllProjects() {
   };
 
   return (
-    <div className="h-full flex flex-col" style={{ background: '#FBEFEF' }}>
+    <div className="h-full flex flex-col" style={{ background: 'var(--color-background)' }}>
       <div className="px-6 pt-6 pb-4">
         <div className="flex items-center justify-between mb-5">
           <h1 className="text-2xl font-bold text-texflow-900">All projects</h1>
-          <button onClick={handleNewProject} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-all" style={{ background: 'linear-gradient(135deg, #F5AFAF, #e89595)' }}>
+          <button onClick={handleNewProject} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-all" style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-accent-hover))' }}>
             <Plus size={16} />
             New project
           </button>
@@ -105,7 +105,7 @@ export default function AllProjects() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 text-sm rounded-lg transition-all focus:outline-none focus:ring-2"
-            style={{ background: '#FCF8F8', border: '1px solid #F9DFDF', color: '#3d2626' }}
+            style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: '#FFFFFF' }}
           />
         </div>
       </div>
@@ -117,7 +117,7 @@ export default function AllProjects() {
           </div>
         ) : filteredProjects.length === 0 ? (
           <div className="text-center py-20">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(245,175,175,0.2), rgba(232,149,149,0.2))' }}>
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(255,76,41,0.15), rgba(51,71,86,0.45))' }}>
               <FileText className="text-texflow-400" size={28} />
             </div>
             <h3 className="text-lg font-medium text-texflow-700 mb-2">
@@ -129,10 +129,10 @@ export default function AllProjects() {
             {!searchQuery && <button onClick={handleNewProject} className="btn-primary">Create Project</button>}
           </div>
         ) : (
-          <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #F9DFDF' }}>
+          <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--color-border)' }}>
             <table className="w-full">
               <thead>
-                <tr style={{ background: '#FCF8F8' }}>
+                <tr style={{ background: 'var(--color-surface)' }}>
                   <th className="w-10 px-4 py-3">
                     <input
                       type="checkbox"
@@ -153,7 +153,7 @@ export default function AllProjects() {
                     key={project.id}
                     onClick={() => handleOpenProject(project.id)}
                     className="cursor-pointer transition-colors hover:bg-texflow-200/30"
-                    style={{ borderTop: '1px solid #F9DFDF' }}
+                    style={{ borderTop: '1px solid var(--color-border)' }}
                   >
                     <td className="px-4 py-3">
                       <input
@@ -230,7 +230,7 @@ export default function AllProjects() {
       </div>
 
       {filteredProjects.length > 0 && (
-        <div className="px-6 py-3 text-[13px] text-texflow-600" style={{ borderTop: '1px solid #F9DFDF' }}>
+        <div className="px-6 py-3 text-[13px] text-texflow-600" style={{ borderTop: '1px solid var(--color-border)' }}>
           Showing {filteredProjects.length} out of {projects.length} projects.
         </div>
       )}

@@ -147,7 +147,7 @@ function FileTreeItem({ node, projectId, level = 0 }: FileTreeItemProps) {
     }
     const ext = node.name.split('.').pop()?.toLowerCase();
     const colors: Record<string, string> = {
-      tex: 'var(--color-accent)', bib: '#16A34A', cls: '#7C3AED', sty: '#7C3AED',
+      tex: 'var(--color-accent)', bib: '#16A34A', cls: '#FFFFFF', sty: '#FFFFFF',
     };
     return <File size={15} style={{ color: colors[ext || ''] || 'var(--color-text-muted)' }} />;
   };

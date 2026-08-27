@@ -152,7 +152,7 @@ export default function Landing() {
             {features.map((feature, i) => (
               <div key={i} className="card group hover:translate-y-[-2px]">
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-all group-hover:scale-110"
-                  style={{ background: 'linear-gradient(135deg, rgba(245,175,175,0.2), rgba(232,149,149,0.2))' }}>
+                  style={{ background: 'linear-gradient(135deg, rgba(255,76,41,0.15), rgba(51,71,86,0.45))' }}>
                   <feature.icon size={24} className="text-texflow-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-texflow-900 mb-2">{feature.title}</h3>

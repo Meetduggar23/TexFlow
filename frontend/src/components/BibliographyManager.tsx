@@ -59,7 +59,7 @@ export default function BibliographyManager({ onInsert, onClose }: BibliographyM
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative border border-texflow-800 rounded-2xl shadow-2xl w-full max-w-lg mx-4" style={{ background: '#FBEFEF' }}>
+      <div className="relative border border-texflow-800 rounded-2xl shadow-2xl w-full max-w-lg mx-4" style={{ background: 'var(--color-background)' }}>
         <div className="flex items-center justify-between p-4 border-b border-texflow-800">
           <div className="flex items-center gap-2"><BookOpen size={18} className="text-texflow-400" /><h2 className="text-lg font-semibold text-texflow-900">Bibliography</h2></div>
           <button onClick={onClose} className="p-1 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded"><X size={18} /></button>
@@ -71,7 +71,7 @@ export default function BibliographyManager({ onInsert, onClose }: BibliographyM
           </div>
 
           {showAdd && (
-            <div className="p-3 rounded-lg border border-texflow-800 space-y-2" style={{ background: 'rgba(252,248,248,0.5)' }}>
+            <div className="p-3 rounded-lg border border-texflow-800 space-y-2" style={{ background: 'rgba(44,57,75,0.65)' }}>
               <div className="flex gap-2"><input value={newKey} onChange={e => setNewKey(e.target.value)} placeholder="Citation key" className="input-field flex-1 text-sm" /><select value={newType} onChange={e => setNewType(e.target.value)} className="input-field text-sm"><option value="article">Article</option><option value="book">Book</option><option value="inproceedings">Conference</option><option value="misc">Misc</option></select></div>
               <input value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="Title" className="input-field w-full text-sm" />
               <div className="flex gap-2"><input value={newAuthor} onChange={e => setNewAuthor(e.target.value)} placeholder="Author" className="input-field flex-1 text-sm" /><input value={newYear} onChange={e => setNewYear(e.target.value)} placeholder="Year" className="input-field w-24 text-sm" /></div>

@@ -6,9 +6,9 @@ import {
   updateFileInTree, updateFileContent, createFile,
 } from '../store/projectSlice';
 import {
-  setContent, compileProject, openTab,
+  setContent, compileProject, cleanBuild, openTab,
   setSaving, markTabSaved,
-  saveFile, setAutoCompile,
+  saveFile, setAutoCompile, initCompileSettings,
 } from '../store/editorSlice';
 import { initLayout, toggleSidebar, togglePdf, toggleTerminal, setFilesWidth, setPdfWidth, setTerminalHeight } from '../store/uiSlice';
 import { COLLAPSED_RAIL_WIDTH } from '../store/uiSlice';
@@ -42,7 +42,7 @@ export default function Editor() {
   const { currentProject, files, currentFile } = useAppSelector(state => state.project);
   const {
     content, compiling, openTabs, activeTabId,
-    saving, autoCompile, compileStatus, sourceRevision, compiledRevision,
+    saving, compileStatus, sourceRevision, compiledRevision, compileSettings,
   } = useAppSelector(state => state.editor);
   const { filesOpen, filesWidth, pdfOpen, pdfWidth, terminalOpen, terminalHeight } = useAppSelector(state => state.ui);
 
@@ -65,7 +65,7 @@ export default function Editor() {
   const isCompilingRef = useRef(false);
   const contentRef = useRef(content);
   const currentFileRef = useRef(currentFile);
-  const autoCompileRef = useRef(autoCompile);
+  const autoCompileRef = useRef(compileSettings.autoCompile);
   const projectIdRef = useRef(projectId);
   const filesResizeRef = useRef<HTMLDivElement>(null);
   const terminalResizeRef = useRef<HTMLDivElement>(null);
@@ -74,7 +74,7 @@ export default function Editor() {
 
   contentRef.current = content;
   currentFileRef.current = currentFile;
-  autoCompileRef.current = autoCompile;
+  autoCompileRef.current = compileSettings.autoCompile;
   projectIdRef.current = projectId;
 
   useEffect(() => {
@@ -82,6 +82,7 @@ export default function Editor() {
       dispatch(fetchProject(projectId));
       dispatch(fetchFiles(projectId));
       dispatch(initLayout(projectId));
+      dispatch(initCompileSettings(projectId));
     }
     return () => { dispatch(clearCurrentProject()); };
   }, [projectId, dispatch]);
@@ -178,6 +179,17 @@ export default function Editor() {
     if (compileTimerRef.current) clearTimeout(compileTimerRef.current);
     await doSaveThenCompile();
   }, [doSaveThenCompile]);
+
+  const handleCleanBuild = useCallback(async () => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    if (compileTimerRef.current) clearTimeout(compileTimerRef.current);
+    await doSave();
+    const pid = projectIdRef.current;
+    if (!pid) return;
+    try {
+      await dispatch(cleanBuild(pid)).unwrap();
+    } catch {}
+  }, [doSave, dispatch]);
 
   const handleSave = useCallback(async () => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -320,6 +332,7 @@ export default function Editor() {
       <EditorHeader
         project={currentProject}
         onCompile={handleCompile}
+        onCleanBuild={handleCleanBuild}
         onBack={() => navigate('/dashboard')}
         onToggleComments={() => setShowComments(p => !p)}
         onToggleHistory={() => setShowHistory(p => !p)}

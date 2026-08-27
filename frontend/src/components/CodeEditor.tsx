@@ -34,13 +34,13 @@ const texflowTheme = EditorView.theme({
   '.cm-activeLineGutter': { background: 'var(--color-accent-soft)' },
   '.cm-activeLine': { background: 'var(--color-surface-secondary)' },
   '.cm-cursor': { borderLeftColor: 'var(--color-accent)' },
-  '.cm-selectionBackground': { background: 'rgba(160, 0, 90, 0.12) !important' },
-  '&.cm-focused .cm-selectionBackground': { background: 'rgba(160, 0, 90, 0.18) !important' },
-  '.cm-matchingBracket': { background: 'rgba(160, 0, 90, 0.15)', outline: '1px solid rgba(160, 0, 90, 0.4)' },
+  '.cm-selectionBackground': { background: 'rgba(255, 76, 41, 0.20) !important' },
+  '&.cm-focused .cm-selectionBackground': { background: 'rgba(255, 76, 41, 0.24) !important' },
+  '.cm-matchingBracket': { background: 'rgba(255, 76, 41, 0.15)', outline: '1px solid rgba(255, 76, 41, 0.4)' },
   '.cm-content': { caretColor: 'var(--color-accent)' },
   '.cm-line': { padding: '0 6px' },
-  '.ͼ5': { color: '#A0005A' },
-  '.ͼ6': { color: '#7C3AED' },
+  '.ͼ5': { color: '#FF4C29' },
+  '.ͼ6': { color: '#FFFFFF' },
   '.ͼ7': { color: 'var(--color-text-disabled)', fontStyle: 'italic' },
 }, { dark: false });
 

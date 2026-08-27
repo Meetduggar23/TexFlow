@@ -35,7 +35,7 @@ export default function Header() {
         <button className="p-2 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded-lg transition-colors">
           <Settings size={18} />
         </button>
-        <div className="w-8 h-8 rounded-full flex items-center justify-center text-texflow-900 text-sm font-medium" style={{ background: 'linear-gradient(135deg, #F5AFAF, #e89595)' }}>
+        <div className="w-8 h-8 rounded-full flex items-center justify-center text-texflow-900 text-sm font-medium" style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-accent-hover))' }}>
           U
         </div>
       </div>

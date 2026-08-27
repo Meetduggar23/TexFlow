@@ -44,7 +44,7 @@ export default function ImageUploader({ onInsert, onClose }: ImageUploaderProps)
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative border border-texflow-800 rounded-2xl shadow-2xl w-full max-w-md mx-4" style={{ background: '#FBEFEF' }}>
+      <div className="relative border border-texflow-800 rounded-2xl shadow-2xl w-full max-w-md mx-4" style={{ background: 'var(--color-background)' }}>
         <div className="flex items-center justify-between p-4 border-b border-texflow-800">
           <div className="flex items-center gap-2"><ImageIcon size={18} className="text-texflow-400" /><h2 className="text-lg font-semibold text-texflow-900">Insert Image</h2></div>
           <button onClick={onClose} className="p-1 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded"><X size={18} /></button>

@@ -13,7 +13,7 @@ interface LayoutState {
 }
 
 const DEFAULT_FILES_WIDTH = 260;
-const DEFAULT_PDF_WIDTH = 50;
+const DEFAULT_PDF_WIDTH = 45;
 const DEFAULT_TERMINAL_HEIGHT = 200;
 const COLLAPSED_RAIL_WIDTH = 44;
 

@@ -68,11 +68,11 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative border border-texflow-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden" style={{ background: '#FBEFEF' }}>
+      <div className="relative border border-texflow-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden" style={{ background: 'var(--color-background)' }}>
         <div className="flex items-center justify-between p-4 border-b border-texflow-800">
           <div className="flex items-center gap-2">
             <BrandLogo className="w-7 h-7 object-contain" />
-            <span className="text-lg font-bold text-texflow-900">Tex<span style={{ background: 'linear-gradient(135deg, #e89595, #d47777)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Flow</span></span>
+            <span className="text-lg font-bold text-texflow-900">Tex<span style={{ background: 'linear-gradient(135deg, var(--color-accent-hover), var(--color-accent-active))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Flow</span></span>
           </div>
           <button onClick={onClose} className="p-1 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded transition-colors">
             <X size={18} />
@@ -83,14 +83,14 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
           <button
             onClick={() => setTab('login')}
             className={`flex-1 py-3 text-sm font-medium transition-colors ${tab === 'login' ? 'text-texflow-900 border-b-2' : 'text-texflow-600 hover:text-texflow-900'}`}
-            style={tab === 'login' ? { borderColor: '#F5AFAF' } : {}}
+            style={tab === 'login' ? { borderColor: 'var(--color-accent)' } : {}}
           >
             Log in
           </button>
           <button
             onClick={() => setTab('signup')}
             className={`flex-1 py-3 text-sm font-medium transition-colors ${tab === 'signup' ? 'text-texflow-900 border-b-2' : 'text-texflow-600 hover:text-texflow-900'}`}
-            style={tab === 'signup' ? { borderColor: '#F5AFAF' } : {}}
+            style={tab === 'signup' ? { borderColor: 'var(--color-accent)' } : {}}
           >
             Sign up
           </button>

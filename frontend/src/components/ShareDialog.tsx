@@ -58,7 +58,7 @@ export default function ShareDialog({ onClose }: ShareDialogProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative border border-texflow-800 rounded-2xl shadow-2xl w-full max-w-lg mx-4" style={{ background: '#FBEFEF' }}>
+      <div className="relative border border-texflow-800 rounded-2xl shadow-2xl w-full max-w-lg mx-4" style={{ background: 'var(--color-background)' }}>
         <div className="flex items-center justify-between p-4 border-b border-texflow-800">
           <div className="flex items-center gap-2"><Share2 size={18} className="text-texflow-400" /><h2 className="text-lg font-semibold text-texflow-900">Share Project</h2></div>
           <button onClick={onClose} className="p-1 text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200 rounded"><X size={18} /></button>
@@ -73,7 +73,7 @@ export default function ShareDialog({ onClose }: ShareDialogProps) {
           <div>
             <button onClick={handleGenerateLink} className="text-sm text-texflow-400 hover:text-texflow-300 flex items-center gap-1"><Link2 size={14} /> Generate share link</button>
             {shareLink && (
-              <div className="flex items-center gap-2 mt-2 p-2 rounded-lg border border-texflow-800" style={{ background: '#FCF8F8' }}>
+              <div className="flex items-center gap-2 mt-2 p-2 rounded-lg border border-texflow-800" style={{ background: 'var(--color-surface)' }}>
                 <input value={shareLink} readOnly className="flex-1 bg-transparent text-xs text-texflow-700 outline-none" />
                 <button onClick={handleCopyLink} className="p-1 text-texflow-600 hover:text-texflow-900">{copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}</button>
               </div>
@@ -85,9 +85,9 @@ export default function ShareDialog({ onClose }: ShareDialogProps) {
               <h3 className="text-sm font-medium text-texflow-700 mb-2">Members</h3>
               <div className="space-y-2">
                 {members.map(member => (
-                  <div key={member.id} className="flex items-center justify-between p-2 rounded-lg border border-texflow-800" style={{ background: 'rgba(252,248,248,0.5)' }}>
+                  <div key={member.id} className="flex items-center justify-between p-2 rounded-lg border border-texflow-800" style={{ background: 'rgba(44,57,75,0.65)' }}>
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs text-texflow-900" style={{ background: 'linear-gradient(135deg, #F5AFAF, #e89595)' }}>{member.user?.name?.[0] || 'U'}</div>
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs text-texflow-900" style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-accent-hover))' }}>{member.user?.name?.[0] || 'U'}</div>
                       <div><p className="text-sm text-texflow-900">{member.user?.name || member.user?.email}</p><p className="text-xs text-texflow-500">{member.role}</p></div>
                     </div>
                     <button onClick={() => handleRemoveMember(member.userId)} className="p-1 text-texflow-600 hover:text-red-400"><Trash2 size={14} /></button>

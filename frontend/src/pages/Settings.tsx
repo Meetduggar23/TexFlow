@@ -68,7 +68,7 @@ export default function Settings() {
       <div className="flex gap-6">
         <div className="w-48 flex-shrink-0 space-y-1">
           {tabs.map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${activeTab === tab.id ? 'text-texflow-900' : 'text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200'}`} style={activeTab === tab.id ? { background: 'linear-gradient(135deg, rgba(245,175,175,0.3), rgba(232,149,149,0.2))' } : {}}>
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${activeTab === tab.id ? 'text-texflow-900' : 'text-texflow-600 hover:text-texflow-900 hover:bg-texflow-200'}`} style={activeTab === tab.id ? { background: 'linear-gradient(135deg, rgba(255,76,41,0.18), rgba(51,71,86,0.45))' } : {}}>
               <tab.icon size={16} /> {tab.label}
             </button>
           ))}
@@ -96,15 +96,15 @@ export default function Settings() {
               <h2 className="text-lg font-semibold text-texflow-900 mb-4">Editor Preferences</h2>
               <div><label className="block text-sm text-texflow-700 mb-1">Theme</label><select value={editorTheme} onChange={e => handleThemeChange(e.target.value)} className="input-field w-full"><option value="light">Light</option><option value="dark">Dark</option><option value="system">System</option></select></div>
               <div><label className="block text-sm text-texflow-700 mb-1">Font Size</label><select value={fontSize} onChange={e => setFontSize(e.target.value)} className="input-field w-full"><option value="12">12px</option><option value="14">14px</option><option value="16">16px</option><option value="18">18px</option></select></div>
-              <div className="flex items-center justify-between"><label className="text-sm text-texflow-700">Autosave</label><button onClick={() => setAutosave(!autosave)} className={`w-11 h-6 rounded-full transition-colors ${autosave ? '' : 'bg-dark-600'}`} style={autosave ? { background: 'linear-gradient(135deg, #F5AFAF, #e89595)' } : {}}><div className={`w-5 h-5 bg-white rounded-full transform transition-transform ${autosave ? 'translate-x-5.5' : 'translate-x-0.5'}`} style={{ marginTop: '2px', marginLeft: autosave ? '22px' : '2px' }} /></button></div>
-              <div className="flex items-center justify-between"><label className="text-sm text-texflow-700">Auto-compile on save</label><button onClick={() => setAutoCompile(!autoCompile)} className={`w-11 h-6 rounded-full transition-colors ${autoCompile ? '' : 'bg-dark-600'}`} style={autoCompile ? { background: 'linear-gradient(135deg, #F5AFAF, #e89595)' } : {}}><div className={`w-5 h-5 bg-white rounded-full transform transition-transform`} style={{ marginTop: '2px', marginLeft: autoCompile ? '22px' : '2px' }} /></button></div>
+              <div className="flex items-center justify-between"><label className="text-sm text-texflow-700">Autosave</label><button onClick={() => setAutosave(!autosave)} className={`w-11 h-6 rounded-full transition-colors ${autosave ? '' : 'bg-dark-600'}`} style={autosave ? { background: 'linear-gradient(135deg, var(--color-accent), var(--color-accent-hover))' } : {}}><div className={`w-5 h-5 bg-white rounded-full transform transition-transform ${autosave ? 'translate-x-5.5' : 'translate-x-0.5'}`} style={{ marginTop: '2px', marginLeft: autosave ? '22px' : '2px' }} /></button></div>
+              <div className="flex items-center justify-between"><label className="text-sm text-texflow-700">Auto-compile on save</label><button onClick={() => setAutoCompile(!autoCompile)} className={`w-11 h-6 rounded-full transition-colors ${autoCompile ? '' : 'bg-dark-600'}`} style={autoCompile ? { background: 'linear-gradient(135deg, var(--color-accent), var(--color-accent-hover))' } : {}}><div className={`w-5 h-5 bg-white rounded-full transform transition-transform`} style={{ marginTop: '2px', marginLeft: autoCompile ? '22px' : '2px' }} /></button></div>
             </div>
           )}
           {activeTab === 'notifications' && (
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-texflow-900 mb-4">Notification Settings</h2>
               {['Project shared with you', 'New comment on your project', 'Compilation completed', 'Compilation failed', 'Mention in comment'].map(item => (
-                <div key={item} className="flex items-center justify-between py-2"><span className="text-sm text-texflow-700">{item}</span><div className="w-11 h-6 rounded-full cursor-pointer" style={{ background: 'linear-gradient(135deg, #F5AFAF, #e89595)' }}><div className="w-5 h-5 bg-white rounded-full transform translate-x-5.5" style={{ marginTop: '2px', marginLeft: '22px' }} /></div></div>
+                <div key={item} className="flex items-center justify-between py-2"><span className="text-sm text-texflow-700">{item}</span><div className="w-11 h-6 rounded-full cursor-pointer" style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-accent-hover))' }}><div className="w-5 h-5 bg-white rounded-full transform translate-x-5.5" style={{ marginTop: '2px', marginLeft: '22px' }} /></div></div>
               ))}
             </div>
           )}
