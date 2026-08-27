@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -12,7 +12,7 @@
   --color-surface-secondary: #FFF1F5;
   --color-accent: #A0005A;
   --color-accent-hover: #C21875;
-  --color-accent-soft: rgba(160, 0, 90, 0.12);
+  --color-accent-soft: rgba(160, 0, 90, 0.10);
   --color-text-primary: #171329;
   --color-text-secondary: #4B4558;
   --color-text-muted: #777184;
@@ -31,9 +31,9 @@
   --color-surface: #0D1421;
   --color-surface-elevated: #111A2A;
   --color-surface-secondary: #172033;
-  --color-accent: #4F8CFF;
-  --color-accent-hover: #6BA0FF;
-  --color-accent-soft: rgba(79, 140, 255, 0.12);
+  --color-accent: #A0005A;
+  --color-accent-hover: #C21875;
+  --color-accent-soft: rgba(160, 0, 90, 0.15);
   --color-text-primary: #F8FAFC;
   --color-text-secondary: #CBD5E1;
   --color-text-muted: #94A3B8;
@@ -44,25 +44,6 @@
   --color-warning: #F59E0B;
   --color-error: #EF4444;
   --color-info: #38BDF8;
-}
-
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme='dark']) {
-    color-scheme: light;
-    --color-background: #FFF8FA;
-    --color-surface: #FFFFFF;
-    --color-surface-elevated: #FFFFFF;
-    --color-surface-secondary: #FFF1F5;
-    --color-accent: #A0005A;
-    --color-accent-hover: #C21875;
-    --color-accent-soft: rgba(160, 0, 90, 0.12);
-    --color-text-primary: #171329;
-    --color-text-secondary: #4B4558;
-    --color-text-muted: #777184;
-    --color-text-disabled: #A9A4B0;
-    --color-border: #E8DDE4;
-    --color-border-strong: #D8C9D2;
-  }
 }
 
 * {
@@ -80,7 +61,7 @@ body {
   overflow-x: hidden;
   background: var(--color-background);
   color: var(--color-text-primary);
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: Lora, Georgia, 'Times New Roman', serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -132,13 +113,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   background: var(--color-accent);
 }
 
-/* CodeMirror remains intentionally monospaced. */
+/* CodeMirror */
 .cm-editor {
   height: 100%;
   background: var(--color-surface) !important;
   color: var(--color-text-secondary);
   font-family: "JetBrains Mono", monospace;
-  font-size: 14px;
+  font-size: 13.5px;
+  line-height: 1.6;
 }
 
 .cm-editor .cm-gutters {
@@ -148,16 +130,17 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 
 .cm-editor .cm-content { caret-color: var(--color-accent); }
-.cm-editor .cm-activeLine { background-color: var(--color-surface-elevated); }
+.cm-editor .cm-activeLine { background-color: var(--color-surface-secondary); }
 .cm-editor .cm-activeLineGutter { background-color: var(--color-accent-soft); }
-.cm-editor .cm-selectionBackground { background-color: rgba(79, 140, 255, 0.2) !important; }
-.cm-editor.cm-focused .cm-selectionBackground { background-color: rgba(79, 140, 255, 0.24) !important; }
-.cm-editor .cm-matchingBracket { background-color: rgba(79, 140, 255, 0.2); outline: 1px solid rgba(79, 140, 255, 0.45); }
+.cm-editor .cm-selectionBackground { background-color: rgba(160, 0, 90, 0.12) !important; }
+.cm-editor.cm-focused .cm-selectionBackground { background-color: rgba(160, 0, 90, 0.18) !important; }
+.cm-editor .cm-matchingBracket { background-color: rgba(160, 0, 90, 0.15); outline: 1px solid rgba(160, 0, 90, 0.4); }
 .cm-editor .cm-cursor { border-left-color: var(--color-accent); }
 
+/* Split handle */
 .editor-split-handle {
-  width: 6px;
-  flex: 0 0 6px;
+  width: 5px;
+  flex: 0 0 5px;
   cursor: col-resize;
   background: var(--color-border);
   touch-action: none;
@@ -165,10 +148,27 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 
 .editor-split-handle:hover,
-.editor-split-handle:active { background: var(--color-accent); }
+.editor-split-handle:active {
+  background: var(--color-accent);
+}
 
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: var(--color-background); }
+/* Terminal resize handle */
+.terminal-resize-handle {
+  height: 4px;
+  flex: 0 0 4px;
+  cursor: row-resize;
+  touch-action: none;
+  transition: background-color 150ms ease;
+}
+
+.terminal-resize-handle:hover,
+.terminal-resize-handle:active {
+  background: var(--color-accent);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar { width: 7px; height: 7px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-border-strong); }
 
@@ -229,7 +229,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   color: var(--color-text-primary) !important;
 }
 
-.pdf-frame { background: #fff; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18); }
+.pdf-frame {
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+  border-radius: 2px;
+}
+
 .transition-theme { transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease; }
 table { border-collapse: collapse; }
 table th { white-space: nowrap; }

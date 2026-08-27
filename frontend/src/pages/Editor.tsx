@@ -1,8 +1,14 @@
 import { useEffect, useCallback, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { fetchProject, fetchFiles, setCurrentFile, clearCurrentProject, updateFileInTree, updateFileContent, createFile } from '../store/projectSlice';
-import { setContent, compileProject, togglePdf, setSplitRatio } from '../store/editorSlice';
+import {
+  fetchProject, fetchFiles, setCurrentFile, clearCurrentProject,
+  updateFileInTree, updateFileContent, createFile,
+} from '../store/projectSlice';
+import {
+  setContent, compileProject, togglePdf, setSplitRatio, openTab,
+  setSaving, markTabSaved, setTerminalOpen, setTerminalHeight,
+} from '../store/editorSlice';
 import { setSidebarOpen } from '../store/uiSlice';
 import EditorHeader from '../components/EditorHeader';
 import FileTree from '../components/FileTree';
@@ -28,7 +34,7 @@ export default function Editor() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { currentProject, files, currentFile } = useAppSelector(state => state.project);
-  const { compiling, pdfVisible, splitRatio, content } = useAppSelector(state => state.editor);
+  const { content, compiling, pdfVisible, splitRatio, openTabs, activeTabId, saving } = useAppSelector(state => state.editor);
   const { sidebarOpen } = useAppSelector(state => state.ui);
 
   const [showComments, setShowComments] = useState(false);
@@ -41,6 +47,11 @@ export default function Editor() {
   const [showBib, setShowBib] = useState(false);
   const [showImage, setShowImage] = useState(false);
   const workspaceRef = useRef<HTMLDivElement>(null);
+  const editorPanelRef = useRef<HTMLDivElement>(null);
+  const pdfPanelRef = useRef<HTMLDivElement>(null);
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [editorWidth, setEditorWidth] = useState<number | null>(null);
+  const [pdfWidth, setPdfWidth] = useState<number | null>(null);
 
   const socket = useSocket(projectId);
 
@@ -55,8 +66,9 @@ export default function Editor() {
   useEffect(() => {
     if (currentFile?.content !== undefined) {
       dispatch(setContent(currentFile.content));
+      dispatch(openTab({ fileId: currentFile.id, name: currentFile.name, content: currentFile.content }));
     }
-  }, [currentFile, dispatch]);
+  }, [currentFile?.id, dispatch]);
 
   useEffect(() => {
     if (!socket) return;
@@ -72,10 +84,11 @@ export default function Editor() {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'F') { e.preventDefault(); setShowSearch(p => !p); }
       if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); handleSave(); }
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); handleCompile(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'b') { e.preventDefault(); dispatch(togglePdf()); }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentFile, content, projectId, compiling]);
+  }, [currentFile, content, projectId, compiling, dispatch]);
 
   const handleCompile = useCallback(async () => {
     if (!projectId || compiling) return;
@@ -91,19 +104,29 @@ export default function Editor() {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       socket.emit('file-update', { projectId, fileId: currentFile.id, content: newContent, userId: user.id });
     }
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = setTimeout(() => {
+      handleSave();
+    }, 2000);
   }, [dispatch, socket, currentFile, projectId]);
 
   const handleSave = useCallback(async () => {
     if (!currentFile) return;
+    dispatch(setSaving(true));
     try {
       await dispatch(updateFileContent({ fileId: currentFile.id, content })).unwrap();
-      toast.success('Saved');
-    } catch { toast.error('Failed to save'); }
+      dispatch(markTabSaved(currentFile.id));
+    } catch {
+      // silent
+    } finally {
+      dispatch(setSaving(false));
+    }
   }, [currentFile, dispatch, content]);
 
   const handleDownloadPdf = useCallback(async () => {
+    if (!projectId) return;
     try {
-      await dispatch(compileProject(projectId!)).unwrap();
+      await dispatch(compileProject(projectId)).unwrap();
       const link = document.createElement('a');
       link.href = `/api/compile/${projectId}/pdf`;
       link.download = 'document.pdf';
@@ -112,7 +135,7 @@ export default function Editor() {
   }, [projectId, dispatch]);
 
   const handleDownloadProject = useCallback(async () => {
-    if (!currentProject) return;
+    if (!currentProject || !projectId) return;
     try {
       const token = localStorage.getItem('token');
       const res = await fetch(`/api/files/project/${projectId}`, {
@@ -121,7 +144,12 @@ export default function Editor() {
       const data = await res.json();
       const zip = new JSZip();
       for (const file of (data.files || [])) {
-        zip.file(file.name, file.content || '');
+        const path = file.path || file.name;
+        zip.file(path, file.content || '');
+      }
+      for (const folder of (data.folders || [])) {
+        const path = folder.path || folder.name;
+        zip.folder(path);
       }
       const blob = await zip.generateAsync({ type: 'blob' });
       saveAs(blob, `${currentProject.name.replace(/[^a-zA-Z0-9]/g, '_')}.zip`);
@@ -142,8 +170,9 @@ export default function Editor() {
     const name = prompt('Enter file name:');
     if (!name || !projectId) return;
     try {
-      await dispatch(createFile({ projectId, name, parentId: null, type: 'file' })).unwrap();
+      const result = await dispatch(createFile({ projectId, name, parentId: null, type: 'file' })).unwrap();
       toast.success('File created');
+      if (result) dispatch(setCurrentFile(result));
     } catch { toast.error('Failed to create file'); }
   }, [dispatch, projectId]);
 
@@ -156,33 +185,45 @@ export default function Editor() {
     } catch { toast.error('Failed to create folder'); }
   }, [dispatch, projectId]);
 
+  const handleNavigateToLine = useCallback((line: number) => {
+    toast.success(`Navigate to line ${line}`);
+  }, []);
+
   const handleSplitPointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     event.preventDefault();
+    const workspace = workspaceRef.current;
+    if (!workspace) return;
+    const bounds = workspace.getBoundingClientRect();
+
     const handlePointerMove = (moveEvent: PointerEvent) => {
-      const workspace = workspaceRef.current;
-      if (!workspace) return;
-      const bounds = workspace.getBoundingClientRect();
-      const ratio = ((moveEvent.clientX - bounds.left) / bounds.width) * 100;
-      dispatch(setSplitRatio(Math.min(75, Math.max(25, ratio))));
+      const offset = moveEvent.clientX - bounds.left;
+      const width = bounds.width;
+      const ratio = (offset / width) * 100;
+      const clamped = Math.min(75, Math.max(25, ratio));
+      dispatch(setSplitRatio(clamped));
     };
     const handlePointerUp = () => {
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
     };
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
     window.addEventListener('pointermove', handlePointerMove);
     window.addEventListener('pointerup', handlePointerUp, { once: true });
   }, [dispatch]);
 
   if (!currentProject) {
     return (
-      <div className="h-screen flex items-center justify-center bg-dark-900">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-texflow-500 border-t-transparent" />
+      <div className="h-screen flex items-center justify-center" style={{ background: 'var(--color-background)' }}>
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-t-transparent" style={{ borderColor: 'var(--color-accent)', borderTopColor: 'transparent' }} />
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col bg-dark-900">
+    <div className="h-screen flex flex-col" style={{ background: 'var(--color-background)' }}>
       <EditorHeader
         project={currentProject}
         onCompile={handleCompile}
@@ -190,43 +231,58 @@ export default function Editor() {
         onToggleComments={() => setShowComments(p => !p)}
         onToggleHistory={() => setShowHistory(p => !p)}
         onToggleShare={() => setShowShare(p => !p)}
+        onSave={handleSave}
+        onNewFile={handleNewFile}
+        onNewFolder={handleNewFolder}
+        onDownloadPdf={handleDownloadPdf}
+        onDownloadSource={handleDownloadProject}
+        onOpenSearch={() => setShowSearch(p => !p)}
+        onOpenCommandPalette={() => setShowCommandPalette(p => !p)}
       />
 
       <div className="flex-1 flex overflow-hidden">
         {sidebarOpen && (
-          <aside className="flex-shrink-0 border-r border-texflow-800 overflow-hidden" style={{ width: 280 }}>
+          <aside className="flex-shrink-0 border-r border-[var(--color-border)] overflow-hidden" style={{ width: 260, background: 'var(--color-background)' }}>
             <FileTree files={files} projectId={projectId!} />
           </aside>
         )}
 
-        <div ref={workspaceRef} className="flex-1 flex overflow-hidden editor-workspace">
-          <div className="flex flex-col border-r border-texflow-800" style={{ width: pdfVisible ? `${splitRatio}%` : '100%' }}>
-            <CodeEditor content={content} onChange={handleContentChange} onSave={handleSave} file={currentFile} />
+        <div ref={workspaceRef} className="flex-1 flex overflow-hidden">
+          <div ref={editorPanelRef} className="flex flex-col min-w-0 overflow-hidden" style={{ width: pdfVisible ? `${splitRatio}%` : '100%' }}>
+            <CodeEditor content={content} onChange={handleContentChange} onSave={handleSave} file={currentFile} allFiles={files} />
           </div>
+
           {pdfVisible && (
-            <div className="editor-split-handle" role="separator" aria-label="Resize editor and PDF panels" aria-orientation="vertical" onPointerDown={handleSplitPointerDown} />
+            <div
+              className="editor-split-handle"
+              role="separator"
+              aria-label="Resize editor and PDF panels"
+              aria-orientation="vertical"
+              onPointerDown={handleSplitPointerDown}
+            />
           )}
+
           {pdfVisible && (
-            <div className="flex flex-col min-w-0" style={{ width: `calc(${100 - splitRatio}% - 6px)` }}>
+            <div ref={pdfPanelRef} className="flex flex-col min-w-0 overflow-hidden" style={{ width: `calc(${100 - splitRatio}% - 6px)` }}>
               <PDFViewer projectId={projectId!} />
             </div>
           )}
         </div>
 
         {showComments && (
-          <aside className="flex-shrink-0 border-l border-texflow-800" style={{ width: 320 }}>
+          <aside className="flex-shrink-0 border-l border-[var(--color-border)]" style={{ width: 320 }}>
             <CommentsPanel projectId={projectId!} onClose={() => setShowComments(false)} />
           </aside>
         )}
 
         {showHistory && (
-          <aside className="flex-shrink-0 border-l border-texflow-800" style={{ width: 320 }}>
+          <aside className="flex-shrink-0 border-l border-[var(--color-border)]" style={{ width: 320 }}>
             <HistoryPanel onClose={() => setShowHistory(false)} />
           </aside>
         )}
       </div>
 
-      <TerminalPanel />
+      <TerminalPanel onNavigateToLine={handleNavigateToLine} />
 
       {showSearch && <SearchPanel onClose={() => setShowSearch(false)} onNavigateToFile={(fileId) => {}} />}
       {showCommandPalette && (

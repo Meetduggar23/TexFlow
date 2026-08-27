@@ -12,7 +12,7 @@ export default {
           50: '#FFF8FA',
           100: '#FFF1F5',
           200: '#FCE7F3',
-          300: '#E05A9D',
+          300: '#F5AFAF',
           400: '#A0005A',
           500: '#A0005A',
           600: '#820049',
@@ -35,7 +35,7 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Lora', 'Georgia', 'serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
       animation: {
@@ -59,8 +59,8 @@ export default {
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         pulseGlow: {
-          '0%, 100%': { boxShadow: '0 0 20px rgba(245, 175, 175, 0.3)' },
-          '50%': { boxShadow: '0 0 40px rgba(245, 175, 175, 0.6)' },
+          '0%, 100%': { boxShadow: '0 0 20px rgba(160, 0, 90, 0.2)' },
+          '50%': { boxShadow: '0 0 40px rgba(160, 0, 90, 0.4)' },
         },
         loadingBar: {
           '0%': { transform: 'translateX(-100%)' },
