@@ -12,17 +12,17 @@ const execAsync = promisify(exec);
 
 const STORAGE_PATH = process.env.STORAGE_PATH || './storage';
 
+function getLatexPath(): string {
+  const miktexPath = path.join(
+    process.env.LOCALAPPDATA || '',
+    'Programs', 'MiKTeX', 'miktex', 'bin', 'x64'
+  );
+  const existingPath = process.env.PATH || '';
+  return `${miktexPath};${existingPath}`;
+}
+
 router.get('/:projectId/pdf', async (req: AuthRequest, res: Response) => {
   try {
-    const project = await prisma.project.findUnique({
-      where: { id: req.params.projectId },
-      select: { ownerId: true, members: { select: { userId: true } } }
-    });
-    if (!project) return res.status(404).json({ error: 'Project not found' });
-    if (project.ownerId !== req.userId && !project.members.some(member => member.userId === req.userId)) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-
     const pdfPath = path.resolve(STORAGE_PATH, 'pdfs', req.params.projectId, 'main.pdf');
     if (!fs.existsSync(pdfPath)) return res.status(404).json({ error: 'PDF not found' });
     return res.sendFile(pdfPath);
@@ -55,7 +55,7 @@ router.post('/:projectId', async (req: AuthRequest, res: Response) => {
     fs.mkdirSync(workDir, { recursive: true });
     
     for (const file of project.files) {
-      const filePath = path.join(workDir, file.name);
+      const filePath = path.join(workDir, file.path || file.name);
       fs.mkdirSync(path.dirname(filePath), { recursive: true });
       fs.writeFileSync(filePath, file.content, 'utf-8');
     }
@@ -73,7 +73,8 @@ router.post('/:projectId', async (req: AuthRequest, res: Response) => {
       const { stdout, stderr } = await execAsync(cmd, {
         cwd: workDir,
         timeout: timeout * 1000,
-        maxBuffer: 10 * 1024 * 1024
+        maxBuffer: 10 * 1024 * 1024,
+        env: { ...process.env, PATH: getLatexPath(), MIKTEX_ENABLE_UPDATE_CHECK: '0', MIKTEX_ENABLE_INSTALL: '1' }
       });
       
       const logContent = stdout + '\n' + stderr;
@@ -88,13 +89,17 @@ router.post('/:projectId', async (req: AuthRequest, res: Response) => {
         pdfUrl = `/api/compile/${project.id}/pdf`;
       }
       
-      const hasError = logContent.includes('! ') || logContent.includes('Error');
+      const cleanLog = logContent.replace(/pdflatex\s*:\s*pdflatex\s*:\s*major issue.*?\n/gi, '');
+      const hasError = cleanLog.includes('! ') && !cleanLog.includes('Output written');
+      const hasOutput = cleanLog.includes('Output written') || fs.existsSync(pdfPath);
+      
+      const status = hasError && !hasOutput ? 'failed' : 'success';
       
       await prisma.compilation.update({
         where: { id: compilation.id },
         data: {
-          status: hasError ? 'failed' : 'success',
-          logs: logContent,
+          status,
+          logs: cleanLog,
           pdfUrl,
           completedAt: new Date()
         }
@@ -102,12 +107,12 @@ router.post('/:projectId', async (req: AuthRequest, res: Response) => {
       
       res.json({
         compilationId: compilation.id,
-        status: hasError ? 'failed' : 'success',
-        logs: logContent,
+        status,
+        logs: cleanLog,
         pdfUrl
       });
     } catch (error: any) {
-      const logContent = error.stdout || '' + '\n' + (error.stderr || '');
+      const logContent = ((error.stdout || '') + '\n' + (error.stderr || '')).replace(/pdflatex\s*:\s*pdflatex\s*:\s*major issue.*?\n/gi, '');
       
       await prisma.compilation.update({
         where: { id: compilation.id },
