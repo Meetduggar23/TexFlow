@@ -166,7 +166,7 @@ export default function EditorHeader({
   };
 
   return (
-    <header className="h-11 flex items-center px-3 gap-1" style={{ background: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)' }}>
+    <header className="h-11 flex items-center px-3 gap-1 relative z-50" style={{ background: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)' }}>
       <div className="flex items-center gap-1 mr-2">
         <button onClick={onBack} className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Back to dashboard" aria-label="Back to dashboard">
           <ArrowLeft size={15} />
@@ -177,7 +177,7 @@ export default function EditorHeader({
         <span className="text-sm font-bold" style={{ color: 'var(--color-accent)' }}>TexFlow</span>
       </div>
 
-      <nav className="flex items-center gap-0">
+      <nav className="flex items-center gap-0 relative z-50">
         {Object.keys(menus).map(menuName => (
           <div key={menuName} className="relative">
             <button
@@ -233,7 +233,7 @@ export default function EditorHeader({
           Share
         </button>
 
-        <div className="relative z-30" ref={compileDropdownRef}>
+        <div className="relative z-50" ref={compileDropdownRef}>
           <div className="inline-flex items-stretch overflow-hidden rounded-md border shadow-sm" style={{ borderColor: 'rgba(255,255,255,0.22)', background: 'var(--color-accent)' }}>
             <button
               onClick={onCompile}
