@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo.png" width="98" alt="Flow logo" />
+  <img src="frontend/public/logo.png" width="98" alt="Flow logo" />
 </p>
 
 # TexFlow — Collaborative LaTeX Writing Platform
