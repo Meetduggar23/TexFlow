@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, type KeyboardEvent as ReactKeyboardEvent, type RefObject } from 'react';
 import { Check } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
@@ -8,6 +8,9 @@ import {
 interface CompileSettingsDropdownProps {
   onClose: () => void;
   onCleanBuild: () => void;
+  onStopCompilation: () => void;
+  compiling: boolean;
+  containerRef?: RefObject<HTMLDivElement>;
 }
 
 function RadioOption({ label, suffix, checked, onChange }: {
@@ -19,6 +22,9 @@ function RadioOption({ label, suffix, checked, onChange }: {
   return (
     <button
       onClick={onChange}
+      type="button"
+      role="menuitemradio"
+      aria-checked={checked}
       className="w-full flex items-center gap-2 px-3 py-1.5 text-sm transition-colors hover:bg-[var(--color-surface-elevated)] rounded"
       style={{ color: checked ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}
     >
@@ -35,14 +41,19 @@ function RadioOption({ label, suffix, checked, onChange }: {
   );
 }
 
-function ActionButton({ label, onClick, danger }: {
+function ActionButton({ label, onClick, danger, disabled = false }: {
   label: string;
   onClick: () => void;
   danger?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
+      type="button"
+      role="menuitem"
+      disabled={disabled}
+      aria-disabled={disabled}
       className="w-full flex items-center gap-2 px-3 py-1.5 text-sm transition-colors hover:bg-[var(--color-surface-elevated)] rounded"
       style={{ color: danger ? 'var(--color-error)' : 'var(--color-text-secondary)' }}
     >
@@ -51,10 +62,11 @@ function ActionButton({ label, onClick, danger }: {
   );
 }
 
-export default function CompileSettingsDropdown({ onClose, onCleanBuild }: CompileSettingsDropdownProps) {
+export default function CompileSettingsDropdown({ onClose, onCleanBuild, onStopCompilation, compiling, containerRef }: CompileSettingsDropdownProps) {
   const dispatch = useAppDispatch();
   const { compileSettings } = useAppSelector(state => state.editor);
-  const ref = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const ref = containerRef || menuRef;
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -71,6 +83,15 @@ export default function CompileSettingsDropdown({ onClose, onCleanBuild }: Compi
     };
   }, [onClose]);
 
+  const handleMenuKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    e.preventDefault();
+    const items = Array.from(ref.current?.querySelectorAll<HTMLElement>('button:not(:disabled)') || []);
+    const index = items.indexOf(document.activeElement as HTMLElement);
+    const next = e.key === 'ArrowDown' ? (index + 1) % items.length : (index - 1 + items.length) % items.length;
+    items[next]?.focus();
+  };
+
   const handleCleanBuild = useCallback(() => {
     onCleanBuild();
     onClose();
@@ -78,8 +99,11 @@ export default function CompileSettingsDropdown({ onClose, onCleanBuild }: Compi
 
   return (
     <div
-      ref={ref}
-      className="absolute top-full right-0 mt-1 z-50 border rounded-lg shadow-2xl py-1 min-w-[280px]"
+      ref={menuRef}
+      role="menu"
+      aria-label="Compilation options"
+      onKeyDown={handleMenuKeyDown}
+      className="absolute top-full right-0 mt-1 z-50 border rounded-lg shadow-2xl py-1 min-w-[280px] max-h-[min(80vh,520px)] overflow-y-auto"
       style={{
         background: 'var(--color-surface)',
         borderColor: 'var(--color-border-strong)',
@@ -150,6 +174,7 @@ export default function CompileSettingsDropdown({ onClose, onCleanBuild }: Compi
 
       <div className="border-t mx-2 my-1" style={{ borderColor: 'var(--color-border)' }} />
 
+      <ActionButton label={compiling ? 'Stop compilation' : 'No compilation is currently running'} onClick={onStopCompilation} danger={compiling} disabled={!compiling} />
       <ActionButton label="Recompile from scratch" onClick={handleCleanBuild} />
     </div>
   );

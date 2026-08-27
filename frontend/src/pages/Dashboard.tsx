@@ -6,6 +6,7 @@ import { fetchProjects, createProject, deleteProject } from '../store/projectSli
 import Header from '../components/Header';
 import CreateProjectModal from '../components/CreateProjectModal';
 import toast from 'react-hot-toast';
+import { useDialog } from '../components/DialogProvider';
 
 export default function Dashboard() {
   const dispatch = useAppDispatch();
@@ -14,6 +15,7 @@ export default function Dashboard() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'owned' | 'shared' | 'favorites'>('all');
+  const { confirm } = useDialog();
 
   useEffect(() => {
     dispatch(fetchProjects());
@@ -21,7 +23,7 @@ export default function Dashboard() {
 
   const handleDelete = async (e: React.MouseEvent, projectId: string) => {
     e.stopPropagation();
-    if (window.confirm('Are you sure you want to delete this project?')) {
+    if (await confirm({ title: 'Delete project?', message: 'This project will be moved to trash.', confirmText: 'Delete', danger: true })) {
       try {
         await dispatch(deleteProject(projectId)).unwrap();
         toast.success('Project deleted');

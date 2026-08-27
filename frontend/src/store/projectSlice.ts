@@ -84,18 +84,19 @@ export const fetchFiles = createAsyncThunk(
     const response = await fetch(`${API}/files/project/${projectId}`, { headers });
     if (!response.ok) throw new Error('Failed to fetch files');
     const data = await response.json();
-    return data.files || data;
+    // Keep both collections; the fulfilled reducer builds the hierarchical tree.
+    return data;
   }
 );
 
 export const updateFileContent = createAsyncThunk(
   'project/updateFileContent',
-  async ({ fileId, content }: { fileId: string; content: string }) => {
+  async ({ fileId, content, name }: { fileId: string; content?: string; name?: string }) => {
     const token = localStorage.getItem('token');
     const response = await fetch(`${API}/files/${fileId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ ...(content !== undefined ? { content } : {}), ...(name !== undefined ? { name } : {}) }),
     });
     if (!response.ok) throw new Error('Failed to update file');
     const data = await response.json();
@@ -108,12 +109,18 @@ export const createFile = createAsyncThunk(
   async (data: { projectId: string; name: string; parentId: string | null; type: 'file' | 'folder' }) => {
     const token = localStorage.getItem('token');
     const url = data.type === 'folder' ? `${API}/files/folders` : `${API}/files`;
+    const body = data.type === 'folder'
+      ? { projectId: data.projectId, name: data.name, parentId: data.parentId }
+      : { projectId: data.projectId, name: data.name, ...(data.parentId ? { folderId: data.parentId } : {}) };
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(data),
+      body: JSON.stringify(body),
     });
-    if (!response.ok) throw new Error('Failed to create file');
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || `Failed to create ${data.type}`);
+    }
     const result = await response.json();
     const item = result.file || result.folder || result;
     return {

@@ -9,24 +9,10 @@ export default {
     extend: {
       colors: {
         texflow: {
-          50: '#082032',
-          100: '#2C394B',
-          200: '#334756',
-          300: '#FF6345',
-          400: '#FF4C29',
-          500: '#FF4C29',
-          600: '#9AA8B2',
-          700: '#D8E0E5',
-          800: 'rgba(255,255,255,0.10)',
-          900: '#FFFFFF',
-          950: '#FFFFFF',
+          50: 'var(--color-background)', 100: 'var(--color-surface)', 200: 'var(--color-surface-elevated)', 300: 'var(--color-accent-hover)', 400: 'var(--color-accent)', 500: 'var(--color-accent)', 600: 'var(--color-text-muted)', 700: 'var(--color-text-secondary)', 800: 'var(--color-border)', 900: 'var(--color-text-primary)', 950: 'var(--color-text-primary)',
         },
         dark: {
-          900: '#082032',
-          800: '#2C394B',
-          700: '#334756',
-          600: '#334756',
-          500: '#FF4C29',
+          900: 'var(--color-background)', 800: 'var(--color-surface)', 700: 'var(--color-surface-elevated)', 600: 'var(--color-surface-elevated)', 500: 'var(--color-accent)',
         },
         accent: {
           primary: '#FF4C29',

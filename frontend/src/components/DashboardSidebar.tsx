@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FolderOpen, Users, Archive, Plus, BookOpen, Trash2, HelpCircle, User, LogOut } from 'lucide-react';
+import { FolderOpen, Users, Archive, Plus, BookOpen, Trash2, HelpCircle, User, LogOut, Settings } from 'lucide-react';
 import clsx from 'clsx';
 import AuthModal from './AuthModal';
 import BrandLogo from './BrandLogo';
@@ -23,6 +23,7 @@ export default function DashboardSidebar() {
     { icon: BookOpen, label: 'Library', path: '/templates', badge: 'New' },
     { icon: Trash2, label: 'Trash', path: '/dashboard/trash' },
     { icon: HelpCircle, label: 'Help', path: '/help' },
+    { icon: Settings, label: 'Settings', path: '/settings' },
   ];
 
   const handleLogout = () => {
@@ -40,10 +41,10 @@ export default function DashboardSidebar() {
     <>
       <aside className="w-60 h-full flex flex-col" style={{ background: 'var(--color-surface)', borderRight: '1px solid var(--color-border)' }}>
         <div className="p-4 pb-3">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/dashboard')}>
+          <button className="flex items-center gap-2 cursor-pointer rounded px-1 py-0.5 hover:bg-[var(--color-surface-elevated)]" onClick={() => navigate('/dashboard')} aria-label="Go to dashboard">
             <BrandLogo className="w-7 h-7 object-contain" />
             <span className="text-lg font-bold" style={{ color: '#FFFFFF' }}>Tex<span className="gradient-text">Flow</span></span>
-          </div>
+          </button>
         </div>
 
         <nav className="flex-1 px-2 space-y-0.5">

@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trash2, RotateCcw, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useDialog } from '../components/DialogProvider';
 
 export default function TrashPage() {
   const navigate = useNavigate();
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { confirm } = useDialog();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -31,7 +33,7 @@ export default function TrashPage() {
   };
 
   const handlePermanentDelete = async (id: string) => {
-    if (!window.confirm('Permanently delete this project? This cannot be undone.')) return;
+    if (!(await confirm({ title: 'Delete project permanently?', message: 'This action cannot be undone.', confirmText: 'Delete permanently', danger: true }))) return;
     try {
       const token = localStorage.getItem('token');
       await fetch(`/api/projects/${id}`, {

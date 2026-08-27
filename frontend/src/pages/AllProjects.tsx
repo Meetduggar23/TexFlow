@@ -6,6 +6,7 @@ import { fetchProjects, deleteProject } from '../store/projectSlice';
 import CreateProjectModal from '../components/CreateProjectModal';
 import AuthModal from '../components/AuthModal';
 import toast from 'react-hot-toast';
+import { useDialog } from '../components/DialogProvider';
 
 export default function AllProjects() {
   const dispatch = useAppDispatch();
@@ -15,6 +16,7 @@ export default function AllProjects() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const { confirm } = useDialog();
 
   const token = localStorage.getItem('token');
 
@@ -27,7 +29,7 @@ export default function AllProjects() {
   const handleDelete = async (e: React.MouseEvent, projectId: string) => {
     e.stopPropagation();
     if (!token) { setShowAuthModal(true); return; }
-    if (window.confirm('Move this project to trash?')) {
+    if (await confirm({ title: 'Move project to trash?', message: 'You can restore it later from Trash.', confirmText: 'Move to trash', danger: true })) {
       try {
         await dispatch(deleteProject(projectId)).unwrap();
         toast.success('Moved to trash');

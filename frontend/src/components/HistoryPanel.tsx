@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { History, RotateCcw, Eye, X, GitCompare } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useDialog } from './DialogProvider';
 
 interface HistoryPanelProps {
   onClose: () => void;
@@ -18,6 +19,7 @@ export default function HistoryPanel({ onClose }: HistoryPanelProps) {
   const { projectId } = useParams<{ projectId: string }>();
   const [versions, setVersions] = useState<Version[]>([]);
   const [loading, setLoading] = useState(true);
+  const { confirm } = useDialog();
 
   useEffect(() => {
     if (!projectId) return;
@@ -25,7 +27,7 @@ export default function HistoryPanel({ onClose }: HistoryPanelProps) {
   }, [projectId]);
 
   const handleRestore = async (versionId: string) => {
-    if (!window.confirm('Restore this version? Current changes will be saved as a new version.')) return;
+    if (!(await confirm({ title: 'Restore this version?', message: 'Current changes will be saved as a new version.', confirmText: 'Restore' }))) return;
     try {
       await fetch(`/api/projects/${projectId}/restore/${versionId}`, { method: 'POST' });
       toast.success('Version restored. Reload to see changes.');

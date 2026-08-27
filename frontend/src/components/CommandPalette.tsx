@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, FilePlus, FolderPlus, Play, Save, Download, Eye, Share2, History, Settings, X, Command, Zap, ZapOff, PanelLeftOpen, Terminal, LayoutTemplate } from 'lucide-react';
+import { Search, FilePlus, FolderPlus, Play, Save, Download, Eye, Share2, History, Settings, X, Command, Zap, ZapOff, PanelLeftOpen, Terminal, LayoutTemplate, Palette } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setAutoCompile } from '../store/editorSlice';
 import { toggleSidebar, togglePdf, toggleTerminal, resetLayout } from '../store/uiSlice';
@@ -14,9 +14,10 @@ interface CommandPaletteProps {
   onNewFolder: () => void;
   onDownloadPdf: () => void;
   onDownloadProject: () => void;
+  onOpenTheme: () => void;
 }
 
-export default function CommandPalette({ onClose, onCompile, onSave, onToggleShare, onToggleHistory, onNewFile, onNewFolder, onDownloadPdf, onDownloadProject }: CommandPaletteProps) {
+export default function CommandPalette({ onClose, onCompile, onSave, onToggleShare, onToggleHistory, onNewFile, onNewFolder, onDownloadPdf, onDownloadProject, onOpenTheme }: CommandPaletteProps) {
   const dispatch = useAppDispatch();
   const { compileSettings } = useAppSelector(state => state.editor);
   const [query, setQuery] = useState('');
@@ -37,6 +38,7 @@ export default function CommandPalette({ onClose, onCompile, onSave, onToggleSha
     { icon: History, label: 'Version History', action: onToggleHistory },
     { icon: LayoutTemplate, label: 'Reset Layout', action: () => dispatch(resetLayout()) },
     { icon: Settings, label: 'Settings', action: () => window.location.href = '/settings' },
+    { icon: Palette, label: 'Appearance: Select Color Theme', action: onOpenTheme },
   ];
 
   const filtered = commands.filter(c => c.label.toLowerCase().includes(query.toLowerCase()));

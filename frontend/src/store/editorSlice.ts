@@ -227,6 +227,19 @@ export const cleanBuild = createAsyncThunk(
   }
 );
 
+export const stopCompilation = createAsyncThunk(
+  'editor/stopCompilation',
+  async (projectId: string) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`/api/compile/${projectId}/running`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) throw new Error('Unable to stop compilation');
+    return response.json() as Promise<{ cancelled: number }>;
+  }
+);
+
 const editorSlice = createSlice({
   name: 'editor',
   initialState,
@@ -411,6 +424,12 @@ const editorSlice = createSlice({
           errors: [{ line: 0, column: 0, message: 'Clean build failed. Please try again.' }],
         };
         state.compileStatus = 'error';
+      })
+      .addCase(stopCompilation.fulfilled, (state, action) => {
+        if (action.payload.cancelled > 0) {
+          state.compiling = false;
+          state.compileStatus = 'idle';
+        }
       });
   },
 });

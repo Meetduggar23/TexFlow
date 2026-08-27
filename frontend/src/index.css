@@ -42,6 +42,14 @@ html, body, #root {
   width: 100%;
 }
 
+html, body, #root, button, input, textarea, select {
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html, body, #root, button, input, textarea, select { transition: none !important; }
+}
+
 body {
   overflow-x: hidden;
   background: var(--color-background);
@@ -154,8 +162,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 /* Scrollbars */
 ::-webkit-scrollbar { width: 7px; height: 7px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--color-border-strong); }
+::-webkit-scrollbar-thumb { background: var(--tf-border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--tf-border-strong); }
 
 @layer components {
   .btn-primary {

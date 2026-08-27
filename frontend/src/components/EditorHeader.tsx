@@ -17,6 +17,7 @@ interface EditorHeaderProps {
   project: Project;
   onCompile: () => void;
   onCleanBuild: () => void;
+  onStopCompilation: () => void;
   onBack: () => void;
   onToggleComments: () => void;
   onToggleHistory: () => void;
@@ -72,7 +73,7 @@ function MenuDropdown({ items, onClose }: { items: MenuItem[]; onClose: () => vo
 }
 
 export default function EditorHeader({
-  project, onCompile, onCleanBuild, onBack, onToggleComments, onToggleHistory, onToggleShare,
+  project, onCompile, onCleanBuild, onStopCompilation, onBack, onToggleComments, onToggleHistory, onToggleShare,
   onSave, onNewFile, onNewFolder, onDownloadPdf, onDownloadSource,
   onOpenSearch, onOpenCommandPalette,
 }: EditorHeaderProps) {
@@ -166,8 +167,13 @@ export default function EditorHeader({
 
   return (
     <header className="h-11 flex items-center px-3 gap-1" style={{ background: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)' }}>
-      <div className="flex items-center gap-1.5 mr-3">
-        <BrandLogo alt="TexFlow" className="w-5 h-5 object-contain" />
+      <div className="flex items-center gap-1 mr-2">
+        <button onClick={onBack} className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Back to dashboard" aria-label="Back to dashboard">
+          <ArrowLeft size={15} />
+        </button>
+        <button onClick={onBack} className="flex items-center gap-1.5 rounded px-1 py-0.5 transition-colors hover:bg-[var(--color-surface-elevated)]" title="Go to dashboard" aria-label="TexFlow dashboard">
+          <BrandLogo alt="TexFlow" className="w-5 h-5 object-contain" />
+        </button>
         <span className="text-sm font-bold" style={{ color: 'var(--color-accent)' }}>TexFlow</span>
       </div>
 
@@ -227,12 +233,12 @@ export default function EditorHeader({
           Share
         </button>
 
-        <div className="relative" ref={compileDropdownRef}>
-          <div className="flex items-center">
+        <div className="relative z-30" ref={compileDropdownRef}>
+          <div className="inline-flex items-stretch overflow-hidden rounded-md border shadow-sm" style={{ borderColor: 'rgba(255,255,255,0.22)', background: 'var(--color-accent)' }}>
             <button
               onClick={onCompile}
               disabled={compiling}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded-l transition-all disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-60"
               style={{ background: compiling ? 'var(--color-border)' : 'var(--color-accent)' }}
               onMouseEnter={e => { if (!compiling) e.currentTarget.style.background = 'var(--color-accent-hover)'; }}
               onMouseLeave={e => { if (!compiling) e.currentTarget.style.background = 'var(--color-accent)'; }}
@@ -243,7 +249,7 @@ export default function EditorHeader({
             </button>
             <button
               onClick={() => setShowCompileDropdown(p => !p)}
-              className="flex items-center justify-center px-1.5 py-1.5 text-white rounded-r transition-all border-l"
+              className="flex items-center justify-center px-2 py-1.5 text-white transition-colors border-l border-white/25 hover:bg-white/10 focus-visible:bg-white/15"
               style={{
                 background: compiling ? 'var(--color-border)' : 'var(--color-accent)',
                 borderColor: 'rgba(255,255,255,0.2)',
@@ -251,6 +257,9 @@ export default function EditorHeader({
               onMouseEnter={e => { if (!compiling) e.currentTarget.style.background = 'var(--color-accent-hover)'; }}
               onMouseLeave={e => { if (!compiling) e.currentTarget.style.background = 'var(--color-accent)'; }}
               title="Compilation settings"
+              aria-label="Compilation options"
+              aria-haspopup="menu"
+              aria-expanded={showCompileDropdown}
             >
               <ChevronDown size={12} />
             </button>
@@ -259,6 +268,9 @@ export default function EditorHeader({
             <CompileSettingsDropdown
               onClose={() => setShowCompileDropdown(false)}
               onCleanBuild={onCleanBuild}
+              onStopCompilation={onStopCompilation}
+              compiling={compiling}
+              containerRef={compileDropdownRef}
             />
           )}
         </div>

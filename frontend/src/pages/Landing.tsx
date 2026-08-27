@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   FileText, Edit3, Eye, Users, MessageSquare, History, BookOpen, 
@@ -6,6 +6,12 @@ import {
   Menu, X, Github, Twitter, Mail
 } from 'lucide-react';
 import BrandLogo from '../components/BrandLogo';
+
+const taglines = [
+  'Write. Compile. Create.',
+  'Where Code Becomes Documents.',
+  'From Code to PDF, Seamlessly.',
+];
 
 const features = [
   { icon: Edit3, title: 'Online LaTeX Editor', desc: 'Professional code editor with syntax highlighting, autocomplete, and LaTeX commands.' },
@@ -35,6 +41,14 @@ const steps = [
 export default function Landing() {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [taglineIndex, setTaglineIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTaglineIndex((prev) => (prev + 1) % taglines.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-dark-900">
@@ -88,7 +102,7 @@ export default function Landing() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-texflow-700 bg-texflow-900/50 text-texflow-300 text-sm mb-8 animate-fade-in">
             <Zap size={14} />
-            Free LaTeX writing platform
+            <span className="transition-opacity duration-500">{taglines[taglineIndex]}</span>
           </div>
           
           <h1 className="text-5xl md:text-7xl font-extrabold text-texflow-900 mb-6 leading-tight animate-slide-up">
@@ -169,7 +183,7 @@ export default function Landing() {
             <h2 className="text-3xl md:text-4xl font-bold text-texflow-900 mb-4">
               How it <span className="gradient-text">works</span>
             </h2>
-            <p className="text-texflow-600">Four steps to your perfect document.</p>
+            <p className="text-texflow-600">Four steps to your perfect document. {taglines[1]}</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -209,7 +223,7 @@ export default function Landing() {
             Start your next document with <span className="gradient-text">TexFlow</span>
           </h2>
           <p className="text-texflow-600 mb-8">
-            Join thousands of researchers, students, and writers using TexFlow every day. It's free.
+            {taglines[2]} Join thousands of researchers, students, and writers using TexFlow every day. It's free.
           </p>
           <button onClick={() => navigate('/dashboard')} className="btn-primary text-lg px-8 py-3">
             Get Started for Free
@@ -239,7 +253,7 @@ export default function Landing() {
           </div>
           
           <div className="text-center text-xs text-texflow-500 mt-8">
-            TexFlow - Free Collaborative LaTeX Platform
+            TexFlow — {taglines[0]} | Free Collaborative LaTeX Platform
           </div>
         </div>
       </footer>

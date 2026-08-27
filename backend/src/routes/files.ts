@@ -8,7 +8,7 @@ const router = Router();
 const createFileSchema = z.object({
   projectId: z.string(),
   name: z.string().min(1),
-  folderId: z.string().optional(),
+  folderId: z.string().nullable().optional(),
   content: z.string().optional(),
   mimeType: z.string().optional()
 });
@@ -34,7 +34,11 @@ router.post('/', async (req: AuthRequest, res: Response) => {
     const { projectId, name, folderId, content, mimeType } = createFileSchema.parse(req.body);
     
     const folder = folderId ? await prisma.folder.findUnique({ where: { id: folderId } }) : null;
+    if (folder && folder.projectId !== projectId) return res.status(400).json({ error: 'Invalid folder' });
+    if (!/^[^\\/:*?"<>|]+$/.test(name) || name === '.' || name === '..') return res.status(400).json({ error: 'Invalid file name' });
     const filePath = folder ? `${folder.path}/${name}` : `/${name}`;
+    const duplicate = await prisma.file.findFirst({ where: { projectId, folderId: folderId || null, name } });
+    if (duplicate) return res.status(409).json({ error: `${name} already exists` });
     
     const fileContent = content || '';
     const file = await prisma.file.create({
@@ -106,19 +110,34 @@ router.delete('/:id', async (req: AuthRequest, res: Response) => {
   }
 });
 
+const createFolderSchema = z.object({
+  projectId: z.string(),
+  name: z.string().min(1),
+  parentId: z.string().nullable().optional(),
+});
+
 router.post('/folders', async (req: AuthRequest, res: Response) => {
   try {
-    const { projectId, name, parentId } = req.body;
+    const { projectId, name, parentId } = createFolderSchema.parse(req.body);
     
     const parent = parentId ? await prisma.folder.findUnique({ where: { id: parentId } }) : null;
+    if (parentId && (!parent || parent.projectId !== projectId)) return res.status(400).json({ error: 'Invalid parent folder' });
+    if (!/^[^\\/:*?"<>|]+$/.test(name) || name === '.' || name === '..') return res.status(400).json({ error: 'Invalid folder name' });
     const folderPath = parent ? `${parent.path}/${name}` : `/${name}`;
+    const duplicate = await prisma.folder.findFirst({ where: { projectId, parentId: parentId || null, name } });
+    if (duplicate) return res.status(409).json({ error: `${name} already exists` });
     
     const folder = await prisma.folder.create({
-      data: { projectId, name, parentId, path: folderPath }
+      data: { projectId, name, parentId: parentId || null, path: folderPath }
     });
+
+    await prisma.project.update({ where: { id: projectId }, data: { updatedAt: new Date() } });
     
     res.json({ folder });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: error.errors[0].message });
+    }
     res.status(500).json({ error: 'Server error' });
   }
 });

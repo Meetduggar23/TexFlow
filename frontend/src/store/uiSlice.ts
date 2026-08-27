@@ -10,6 +10,8 @@ interface LayoutState {
   terminalHeight: number;
   darkMode: boolean;
   fileTreeExpanded: Record<string, boolean>;
+  isResizingFilesSidebar: boolean;
+  selectedFolderId: string | null;
 }
 
 const DEFAULT_FILES_WIDTH = 260;
@@ -55,6 +57,8 @@ function getInitialState(projectId?: string): LayoutState {
     terminalHeight: saved.terminalHeight ?? DEFAULT_TERMINAL_HEIGHT,
     darkMode: false,
     fileTreeExpanded: {},
+    isResizingFilesSidebar: false,
+    selectedFolderId: null,
   };
 }
 
@@ -74,6 +78,8 @@ const uiSlice = createSlice({
       if (saved.terminalHeight !== undefined) state.terminalHeight = saved.terminalHeight;
       state.filesPrevWidth = state.filesWidth > COLLAPSED_RAIL_WIDTH + 20 ? state.filesWidth : DEFAULT_FILES_WIDTH;
     },
+    setFilesSidebarResizing(state, action: PayloadAction<boolean>) { state.isResizingFilesSidebar = action.payload; },
+    setSelectedFolderId(state, action: PayloadAction<string | null>) { state.selectedFolderId = action.payload; },
     toggleSidebar(state) {
       if (state.filesOpen) {
         state.filesPrevWidth = state.filesWidth;
@@ -97,11 +103,16 @@ const uiSlice = createSlice({
       saveLayout(state, currentProjectId);
     },
     setFilesWidth(state, action: PayloadAction<number>) {
-      const w = Math.max(COLLAPSED_RAIL_WIDTH, Math.min(420, action.payload));
+      const w = Math.max(180, Math.min(420, action.payload));
       state.filesWidth = w;
-      state.filesOpen = w > COLLAPSED_RAIL_WIDTH + 20;
-      if (state.filesOpen) state.filesPrevWidth = w;
+      state.filesOpen = true;
+      state.filesPrevWidth = w;
       saveLayout(state, currentProjectId);
+    },
+    setFilesWidthTransient(state, action: PayloadAction<number>) {
+      state.filesWidth = Math.max(180, Math.min(420, action.payload));
+      state.filesOpen = true;
+      state.filesPrevWidth = state.filesWidth;
     },
     togglePdf(state) {
       state.pdfOpen = !state.pdfOpen;
@@ -163,7 +174,7 @@ const uiSlice = createSlice({
 });
 
 export const {
-  initLayout, toggleSidebar, setSidebarOpen, setFilesWidth,
+  initLayout, toggleSidebar, setSidebarOpen, setFilesWidth, setFilesWidthTransient, setFilesSidebarResizing, setSelectedFolderId,
   togglePdf, setPdfOpen, setPdfWidth, toggleTerminal, setTerminalOpen, setTerminalHeight,
   resetLayout, toggleDarkMode, toggleFileNode, expandAll, collapseAll,
 } = uiSlice.actions;
