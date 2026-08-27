@@ -127,8 +127,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 
 .cm-editor .cm-content { caret-color: var(--color-accent); color: var(--color-text-primary) !important; }
-.cm-editor .cm-activeLine { background-color: var(--color-surface-secondary); color: var(--color-text-primary); }
-.cm-editor .cm-activeLineGutter { background-color: var(--color-accent-soft); }
+.cm-editor .cm-activeLine { background-color: rgba(255, 255, 255, 0.05); color: var(--color-text-primary); }
+.cm-editor .cm-activeLineGutter { background-color: rgba(255, 76, 41, 0.12); }
+.cm-editor .cm-activeLine .cm-gutterElement, .cm-editor .cm-activeLineGutter .cm-gutterElement { color: var(--color-accent) !important; }
 .cm-editor .cm-selectionBackground { background-color: rgba(255, 76, 41, 0.20) !important; }
 .cm-editor.cm-focused .cm-selectionBackground { background-color: rgba(255, 76, 41, 0.24) !important; }
 .cm-editor .cm-matchingBracket { background-color: rgba(255, 76, 41, 0.15); outline: 1px solid rgba(255, 76, 41, 0.4); }
