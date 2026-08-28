@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  ArrowLeft, Play, PanelLeftClose, PanelLeftOpen, Users, Share2, History, MessageSquare,
+  Play, PanelLeftClose, PanelLeftOpen, Users, Share2, History, MessageSquare,
   Search, Command, ChevronDown, FileText, FolderOpen, Upload, Save, Download, Settings,
   Undo, Redo, Scissors, Copy, ClipboardPaste, Replace, Type, Bold, Italic,
   List, ListOrdered, Table2, Link2, Image as ImageIcon, FileCode2,
   Eye, EyeOff, Terminal, LayoutTemplate,
-  BookOpen, Bug, Mail,
+  BookOpen, Bug, Mail, Home,
 } from 'lucide-react';
+import clsx from 'clsx';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import BrandLogo from './BrandLogo';
@@ -85,6 +86,7 @@ export default function EditorHeader({
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [showCompileDropdown, setShowCompileDropdown] = useState(false);
   const compileDropdownRef = useRef<HTMLDivElement>(null);
+  const [logoHovered, setLogoHovered] = useState(false);
 
   const closeMenu = useCallback(() => setActiveMenu(null), []);
 
@@ -168,13 +170,28 @@ export default function EditorHeader({
   return (
     <header className="h-11 flex items-center px-3 gap-1 relative z-50" style={{ background: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)' }}>
       <div className="flex items-center gap-1 mr-2">
-        <button onClick={onBack} className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }} title="Back to dashboard" aria-label="Back to dashboard">
-          <ArrowLeft size={15} />
-        </button>
-        <button onClick={onBack} className="flex items-center gap-1.5 rounded px-1 py-0.5 transition-colors hover:bg-[var(--color-surface-elevated)]" title="Go to dashboard" aria-label="TexFlow dashboard">
-          <BrandLogo alt="TexFlow" className="w-5 h-5 object-contain" />
-        </button>
-        <span className="text-sm font-bold" style={{ color: 'var(--color-accent)' }}>TexFlow</span>
+        <div
+          className="relative"
+          onMouseEnter={() => setLogoHovered(true)}
+          onMouseLeave={() => setLogoHovered(false)}
+        >
+          <button
+            onClick={onBack}
+            className="flex items-center gap-1.5 rounded px-1.5 py-1 transition-colors"
+            style={{ background: logoHovered ? 'var(--color-surface-elevated)' : 'transparent' }}
+            aria-label="Back to dashboard"
+          >
+            {/* Default: BrandLogo */}
+            <div className={clsx('flex items-center gap-1.5 transition-all duration-250', logoHovered ? 'opacity-0 blur-[3px] scale-90' : 'opacity-100 blur-0 scale-100')} style={{ pointerEvents: logoHovered ? 'none' : 'auto' }}>
+              <BrandLogo alt="TexFlow" className="w-5 h-5 object-contain" />
+              <span className="text-sm font-bold tf-brand" style={{ color: 'var(--color-accent)' }}>TexFlow</span>
+            </div>
+            {/* Hovered: Home icon only */}
+            <div className={clsx('absolute inset-0 flex items-center justify-center transition-all duration-250', logoHovered ? 'opacity-100 blur-0 scale-100' : 'opacity-0 blur-[3px] scale-90')} style={{ pointerEvents: logoHovered ? 'auto' : 'none' }}>
+              <Home size={16} style={{ color: 'var(--color-text-primary)' }} />
+            </div>
+          </button>
+        </div>
       </div>
 
       <nav className="flex items-center gap-0 relative z-50">

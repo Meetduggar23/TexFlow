@@ -133,8 +133,6 @@ export default function DashboardSidebar({ collapsed, onToggleCollapse, mobileOp
   const [tags, setTags] = useState<TagData[]>(loadTags);
   const helpMenuRef = useRef<HTMLDivElement>(null);
   const logoRef = useRef<HTMLDivElement>(null);
-  const [logoTooltip, setLogoTooltip] = useState(false);
-  const logoTooltipTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [logoHovered, setLogoHovered] = useState(false);
 
   const token = localStorage.getItem('token');
@@ -154,13 +152,6 @@ export default function DashboardSidebar({ collapsed, onToggleCollapse, mobileOp
       dispatch(fetchProjects());
     }
   }, [dispatch, token]);
-
-  // Cleanup tooltip timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (logoTooltipTimeout.current) clearTimeout(logoTooltipTimeout.current);
-    };
-  }, []);
 
   const projectItems = [
     { icon: FolderOpen, label: 'Your projects', path: '/dashboard' },
@@ -191,16 +182,13 @@ export default function DashboardSidebar({ collapsed, onToggleCollapse, mobileOp
     return () => { document.removeEventListener('mousedown', handleClick); document.removeEventListener('keydown', handleEscape); };
   }, [showHelpMenu]);
 
-  // Logo hover: show tooltip + icon morph
+  // Logo hover: icon morph
   const handleLogoEnter = () => {
     setLogoHovered(true);
-    logoTooltipTimeout.current = setTimeout(() => setLogoTooltip(true), 500);
   };
 
   const handleLogoLeave = () => {
     setLogoHovered(false);
-    if (logoTooltipTimeout.current) clearTimeout(logoTooltipTimeout.current);
-    setLogoTooltip(false);
   };
 
   // Logo click: toggle sidebar collapse
@@ -246,16 +234,15 @@ export default function DashboardSidebar({ collapsed, onToggleCollapse, mobileOp
 
           {/* ── Expanded state: Logo + text, morph to icon on hover ── */}
           {!collapsed && (
-            <div className="relative flex items-center gap-2 flex-1 min-w-0">
+            <div className="relative flex items-center flex-1 min-w-0">
               {/* Default: logo + text */}
               <div className={clsx('flex items-center gap-2 transition-all duration-300', logoHovered ? 'opacity-0 blur-[4px] scale-90' : 'opacity-100 blur-0 scale-100')} style={{ pointerEvents: logoHovered ? 'none' : 'auto' }}>
                 <BrandLogo className="w-6 h-6 object-contain flex-shrink-0" />
                 <span className="text-base font-bold whitespace-nowrap" style={{ color: 'var(--color-text-primary)' }}>Tex<span style={{ color: 'var(--color-accent)' }}>Flow</span></span>
               </div>
-              {/* Hovered: collapse icon */}
-              <div className={clsx('absolute inset-0 flex items-center gap-2 transition-all duration-300', logoHovered ? 'opacity-100 blur-0 scale-100' : 'opacity-0 blur-[4px] scale-90')} style={{ pointerEvents: logoHovered ? 'auto' : 'none' }}>
-                <PanelLeftClose size={18} style={{ color: 'var(--color-text-primary)', flexShrink: 0 }} />
-                <span className="text-[13px] font-medium whitespace-nowrap" style={{ color: 'var(--color-text-primary)' }}>Collapse Sidebar</span>
+              {/* Hovered: icon only */}
+              <div className={clsx('absolute inset-0 flex items-center justify-center transition-all duration-300', logoHovered ? 'opacity-100 blur-0 scale-100' : 'opacity-0 blur-[4px] scale-90')} style={{ pointerEvents: logoHovered ? 'auto' : 'none' }}>
+                <PanelLeftClose size={18} style={{ color: 'var(--color-text-primary)' }} />
               </div>
             </div>
           )}
@@ -274,30 +261,6 @@ export default function DashboardSidebar({ collapsed, onToggleCollapse, mobileOp
             </div>
           )}
         </button>
-
-        {/* Tooltip — appears after delay, positioned to the right when collapsed, below when expanded */}
-        {logoTooltip && (
-          <div
-            className="absolute z-[300] pointer-events-none"
-            style={{
-              left: collapsed ? 'calc(100% + 10px)' : '50%',
-              top: '50%',
-              transform: collapsed ? 'translateY(-50%)' : 'translateX(-50%) translateY(calc(100% + 6px))',
-            }}
-          >
-            <div className="relative px-3 py-1.5 rounded-lg text-[12px] font-medium whitespace-nowrap shadow-lg"
-              style={{ background: 'var(--color-text-primary)', color: 'var(--color-surface)' }}>
-              {collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
-              {collapsed ? (
-                <span className="absolute right-full top-1/2 -translate-y-1/2"
-                  style={{ width: 0, height: 0, borderTop: '5px solid transparent', borderBottom: '5px solid transparent', borderRight: '5px solid var(--color-text-primary)' }} />
-              ) : (
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2"
-                  style={{ width: 0, height: 0, borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderBottom: '5px solid var(--color-text-primary)' }} />
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Navigation */}

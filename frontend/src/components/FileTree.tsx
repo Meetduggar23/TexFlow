@@ -357,7 +357,7 @@ export default function FileTree({ files, projectId }: FileTreeProps) {
       {/* Header matching Overleaf style */}
       <div className="relative flex items-center gap-1 px-2 py-1.5 border-b" style={{ borderColor: 'var(--color-border)' }}>
         <ChevronDownIcon size={12} style={{ color: 'var(--color-text-muted)' }} />
-        <span className="text-[11px] font-semibold" style={{ color: 'var(--color-text-secondary)' }}>TexFlow</span>
+        <span className="text-[11px] font-semibold tf-brand" style={{ color: 'var(--color-text-secondary)' }}>TexFlow</span>
         <div className="flex-1" />
         <button
           onClick={() => setShowNewMenu(p => !p)}

@@ -36,7 +36,7 @@ export default function BlogFooter() {
         {/* Brand */}
         <div>
           <p
-            className="text-[13px] font-semibold mb-2"
+            className="text-[13px] font-semibold mb-2 tf-brand"
             style={{ color: 'var(--color-text-primary)' }}
           >
             TexFlow

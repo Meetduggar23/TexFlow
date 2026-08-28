@@ -220,7 +220,7 @@ export default function Landing() {
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-texflow-900 mb-4">
-            Start your next document with <span className="gradient-text">TexFlow</span>
+            Start your next document with <span className="gradient-text tf-brand">TexFlow</span>
           </h2>
           <p className="text-texflow-600 mb-8">
             {taglines[2]} Join thousands of researchers, students, and writers using TexFlow every day. It's free.

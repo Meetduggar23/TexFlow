@@ -34,7 +34,7 @@ export default function DashboardLayout() {
           <button onClick={() => setMobileOpen(true)} className="p-1.5" style={{ color: 'var(--color-text-muted)' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M3 6h18M3 18h18" /></svg>
           </button>
-          <span className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>TexFlow</span>
+          <span className="text-sm font-semibold tf-brand" style={{ color: 'var(--color-text-primary)' }}>TexFlow</span>
         </div>
         <Outlet />
       </main>

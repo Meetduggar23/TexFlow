@@ -647,7 +647,7 @@ function StoragePanel() {
 function AboutPanel() {
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>About TexFlow</h2>
+      <h2 className="text-xl font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>About <span className="tf-brand">TexFlow</span></h2>
       <p className="text-sm mb-6" style={{ color: 'var(--color-text-muted)' }}>Information about TexFlow and its ecosystem.</p>
 
       <div className="flex items-center gap-4 mb-6">
@@ -655,7 +655,7 @@ function AboutPanel() {
           <BrandLogo alt="TexFlow logo" className="w-12 h-12 object-contain" />
         </div>
         <div>
-          <div className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>TexFlow</div>
+          <div className="text-lg font-bold tf-brand" style={{ color: 'var(--color-text-primary)' }}>TexFlow</div>
           <div className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Write. Compile. Create.</div>
         </div>
       </div>
