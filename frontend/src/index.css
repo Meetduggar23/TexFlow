@@ -6,29 +6,29 @@
 
 :root {
   color-scheme: dark;
-  --texflow-bg: #082032;
-  --texflow-surface: #2C394B;
-  --texflow-surface-alt: #334756;
-  --texflow-accent: #FF4C29;
+  --texflow-bg: #1a1f2e;
+  --texflow-surface: #222839;
+  --texflow-surface-alt: #2a3040;
+  --texflow-accent: #22c55e;
 
-  --color-background: #082032;
-  --color-surface: #2C394B;
-  --color-surface-elevated: #334756;
-  --color-surface-secondary: #334756;
-  --color-accent: #FF4C29;
-  --color-accent-hover: #FF6345;
-  --color-accent-active: #E63F20;
-  --color-accent-soft: rgba(255, 76, 41, 0.15);
-  --color-text-primary: #FFFFFF;
-  --color-text-secondary: #D8E0E5;
-  --color-text-muted: #9AA8B2;
-  --color-text-disabled: #9AA8B2;
-  --color-border: rgba(255, 255, 255, 0.10);
-  --color-border-strong: rgba(255, 255, 255, 0.18);
-  --color-success: #4ADE80;
-  --color-warning: #FFB84D;
-  --color-error: #FF5C5C;
-  --color-info: #D8E0E5;
+  --color-background: #1a1f2e;
+  --color-surface: #222839;
+  --color-surface-elevated: #2a3040;
+  --color-surface-secondary: #2a3040;
+  --color-accent: #22c55e;
+  --color-accent-hover: #16a34a;
+  --color-accent-active: #15803d;
+  --color-accent-soft: rgba(34, 197, 94, 0.15);
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #64748b;
+  --color-text-disabled: #64748b;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-strong: rgba(255, 255, 255, 0.15);
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
 }
 
 * {
@@ -150,6 +150,31 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   background: var(--color-accent);
 }
 
+/* PDF/Code divider */
+.pdf-divider {
+  width: 1px;
+  flex-shrink: 0;
+  cursor: col-resize;
+  touch-action: none;
+  background: var(--color-border);
+  transition: background-color 150ms ease;
+  position: relative;
+}
+
+.pdf-divider::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -4px;
+  right: -4px;
+}
+
+.pdf-divider:hover,
+.pdf-divider.dragging {
+  background: var(--color-accent);
+}
+
 /* Terminal resize handle */
 .terminal-resize-handle {
   height: 4px;
@@ -229,8 +254,53 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 
 .pdf-frame {
   background: #fff;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
-  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border-radius: 0;
+}
+
+/* PDF panel integrated styling */
+.pdf-panel-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.pdf-panel-container iframe {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Blog — editorial sharp-zero-radius design */
+.blog-page,
+.blog-page * {
+  border-radius: 0 !important;
+}
+
+.blog-page button,
+.blog-page input,
+.blog-page select,
+.blog-page textarea {
+  border-radius: 0 !important;
+}
+
+.blog-page img {
+  border-radius: 0;
+}
+
+.blog-page pre,
+.blog-page code {
+  border-radius: 0;
+}
+
+.blog-page ::selection {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.blog-page kbd {
+  border-radius: 0;
 }
 
 .transition-theme { transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease; }

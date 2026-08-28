@@ -384,7 +384,7 @@ export default function TrashPage() {
             <button
               onClick={() => navigate('/dashboard')}
               className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-all"
-              style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-accent-hover))' }}
+              style={{ background: 'var(--color-accent)' }}
             >
               View Projects
             </button>

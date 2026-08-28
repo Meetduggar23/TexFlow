@@ -196,6 +196,21 @@ export const emptyTrash = createAsyncThunk(
   }
 );
 
+export const toggleFavorite = createAsyncThunk(
+  'project/toggleFavorite',
+  async (projectId: string) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API}/projects/${projectId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ isFavorite: true }),
+    });
+    if (!response.ok) throw new Error('Failed to update favorite');
+    const data = await response.json();
+    return data.project || data;
+  }
+);
+
 const projectSlice = createSlice({
   name: 'project',
   initialState,
@@ -345,6 +360,13 @@ const projectSlice = createSlice({
       })
       .addCase(emptyTrash.fulfilled, (state) => {
         state.trashCount = 0;
+      })
+      .addCase(toggleFavorite.fulfilled, (state, action) => {
+        const updated = action.payload;
+        const idx = state.projects.findIndex(p => p.id === updated.id);
+        if (idx >= 0) {
+          state.projects[idx] = updated;
+        }
       });
   },
 });

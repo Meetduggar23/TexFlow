@@ -68,47 +68,22 @@ export default function PDFViewer({ projectId }: PDFViewerProps) {
   }, [projectId]);
 
   return (
-    <div className="h-full flex flex-col" style={{ background: 'var(--color-background)' }}>
-      <div className="flex items-center gap-2 px-3 py-1.5 border-b" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
-        <div className="flex items-center gap-0.5">
-          <button
-            onClick={handleRefresh}
-            disabled={compiling}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded transition-all disabled:opacity-50"
-            style={{ background: compiling ? 'var(--color-border)' : 'var(--color-accent)' }}
-            onMouseEnter={e => { if (!compiling) e.currentTarget.style.background = 'var(--color-accent-hover)'; }}
-            onMouseLeave={e => { if (!compiling) e.currentTarget.style.background = 'var(--color-accent)'; }}
-            title="Recompile"
-            aria-label="Recompile PDF"
-          >
-            {compiling ? <Loader2 size={11} className="animate-spin" /> : <RefreshCw size={11} />}
-            Recompile
-          </button>
-        </div>
+    <div className="h-full flex flex-col" style={{ background: 'var(--color-surface)' }}>
+      {/* PDF Toolbar — all controls functional, uses TexFlow theme colors */}
+      <div className="flex items-center gap-1 px-2 py-1 border-b flex-shrink-0" style={{ background: 'var(--color-background)', borderColor: 'var(--color-border)' }}>
+        <span className="text-[11px] font-semibold mr-1" style={{ color: 'var(--color-text-secondary)' }}>PDF Preview</span>
 
         {isStale && (
-          <span className="text-[11px]" style={{ color: 'var(--color-warning)' }}>
+          <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: 'var(--color-warning)', background: 'rgba(245,158,11,0.1)' }}>
             Out of date
           </span>
         )}
 
         <div className="flex-1" />
 
+        {/* Zoom controls */}
         <button
-          onClick={handleDownload}
-          disabled={!previewUrl}
-          className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)] disabled:opacity-50"
-          style={{ color: 'var(--color-text-muted)' }}
-          title="Download PDF"
-          aria-label="Download PDF"
-        >
-          <Download size={14} />
-        </button>
-
-        <div className="w-px h-4" style={{ background: 'var(--color-border)' }} />
-
-        <button
-          onClick={() => setZoom(p => Math.max(p - 10, 50))}
+          onClick={() => setZoom(p => Math.max(p - 10, 25))}
           className="p-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
           style={{ color: 'var(--color-text-muted)' }}
           title="Zoom out"
@@ -116,11 +91,11 @@ export default function PDFViewer({ projectId }: PDFViewerProps) {
         >
           <ZoomOut size={13} />
         </button>
-        <span className="text-[11px] min-w-[36px] text-center font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+        <span className="text-[10px] min-w-[36px] text-center font-medium tabular-nums" style={{ color: 'var(--color-text-secondary)' }}>
           {zoom}%
         </span>
         <button
-          onClick={() => setZoom(p => Math.min(p + 10, 200))}
+          onClick={() => setZoom(p => Math.min(p + 10, 400))}
           className="p-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
           style={{ color: 'var(--color-text-muted)' }}
           title="Zoom in"
@@ -129,42 +104,87 @@ export default function PDFViewer({ projectId }: PDFViewerProps) {
           <ZoomIn size={13} />
         </button>
 
-        <div className="w-px h-4" style={{ background: 'var(--color-border)' }} />
+        <div className="w-px h-3.5 mx-0.5" style={{ background: 'var(--color-border)' }} />
 
+        {/* PDF appearance toggle — ONLY affects PDF rendering, not TexFlow theme */}
         <button
           onClick={handleTogglePdfAppearance}
           aria-pressed={pdfAppearance === 'inverted'}
-          className="p-1.5 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
+          className="p-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
           style={{
             color: pdfAppearance === 'inverted' ? 'var(--color-accent)' : 'var(--color-text-muted)',
             background: pdfAppearance === 'inverted' ? 'var(--color-accent-soft)' : 'transparent',
           }}
-          title="Toggle PDF colors"
+          title={pdfAppearance === 'inverted' ? 'Toggle PDF colors (inverted)' : 'Toggle PDF colors (normal)'}
           aria-label="Toggle PDF colors"
         >
-          <Contrast size={14} />
+          <Contrast size={13} />
+        </button>
+
+        <div className="w-px h-3.5 mx-0.5" style={{ background: 'var(--color-border)' }} />
+
+        {/* Download — always downloads original PDF, not inverted */}
+        <button
+          onClick={handleDownload}
+          disabled={!previewUrl}
+          className="p-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)] disabled:opacity-50"
+          style={{ color: 'var(--color-text-muted)' }}
+          title="Download PDF"
+          aria-label="Download PDF"
+        >
+          <Download size={13} />
+        </button>
+
+        {/* Recompile — stays attached to PDF panel */}
+        <button
+          onClick={handleRefresh}
+          disabled={compiling}
+          className="p-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)] disabled:opacity-50"
+          style={{ color: compiling ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
+          title="Recompile"
+          aria-label="Recompile PDF"
+        >
+          {compiling ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
         </button>
       </div>
 
-      <div className="flex-1 overflow-auto flex items-start justify-center p-4" style={{ background: 'var(--color-surface)' }}>
+      {/* PDF Document Area — independent scroll, centered, zoom scales only the PDF */}
+      <div className="flex-1 overflow-auto flex items-start justify-center" style={{ background: 'var(--color-surface)' }}>
         {previewUrl ? (
-          <div className="relative w-full h-full flex justify-center">
+          <div
+            className="relative flex justify-center"
+            style={{
+              width: `${zoom}%`,
+              maxWidth: '100%',
+              minWidth: zoom < 100 ? `${zoom}%` : undefined,
+              height: '100%',
+              minHeight: 0,
+              flexShrink: 0,
+            }}
+          >
+            {/* 
+              CSS filter applied ONLY to the iframe — not the toolbar, not the background.
+              This is a VIEWER DISPLAY FEATURE only. The underlying PDF is unchanged.
+              pdfAppearance state is independent from TexFlow theme.
+            */}
             <iframe
               src={previewUrl}
               className="pdf-frame"
               style={{
-                width: `${zoom}%`,
-                maxWidth: '100%',
+                width: '100%',
                 height: '100%',
-                minHeight: '600px',
                 border: 'none',
+                flexShrink: 0,
                 background: pdfAppearance === 'inverted' ? '#000' : '#fff',
                 filter: pdfAppearance === 'inverted' ? 'invert(1) hue-rotate(180deg)' : 'none',
               }}
               title="PDF Preview"
             />
             {compiling && (
-              <div className="absolute top-2 right-2 flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-muted)' }}>
+              <div
+                className="absolute top-2 right-2 flex items-center gap-1.5 px-2 py-1 text-[10px] font-medium"
+                style={{ background: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)', color: 'var(--color-text-muted)' }}
+              >
                 <Loader2 size={10} className="animate-spin" />
                 Updating...
               </div>
@@ -172,20 +192,21 @@ export default function PDFViewer({ projectId }: PDFViewerProps) {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ background: 'var(--color-accent-soft)' }}>
-              <FileText size={28} style={{ color: 'var(--color-accent)' }} />
+            <div className="w-12 h-12 mx-auto mb-3 rounded-xl flex items-center justify-center" style={{ background: 'var(--color-accent-soft)' }}>
+              <FileText size={22} style={{ color: 'var(--color-accent)' }} />
             </div>
-            <h3 className="text-lg font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>No PDF generated</h3>
-            <p className="text-sm mb-4" style={{ color: 'var(--color-text-muted)' }}>Start typing to auto-compile, or press Ctrl+Enter</p>
-            <button onClick={handleRefresh} className="btn-primary text-sm">
+            <h3 className="text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>No PDF generated</h3>
+            <p className="text-xs mb-3" style={{ color: 'var(--color-text-muted)' }}>Auto-compile on, or press Ctrl+Enter</p>
+            <button onClick={handleRefresh} className="btn-primary text-xs px-3 py-1.5">
               Compile Now
             </button>
           </div>
         )}
       </div>
 
+      {/* Compilation errors — shows below PDF, only when errors exist */}
       {compileResult?.errors && compileResult.errors.length > 0 && (
-        <div className="border-t px-3 py-2 max-h-28 overflow-auto" style={{ background: 'rgba(220,38,38,0.06)', borderColor: 'var(--color-border)' }}>
+        <div className="border-t px-3 py-2 max-h-28 overflow-auto flex-shrink-0" style={{ background: 'rgba(220,38,38,0.06)', borderColor: 'var(--color-border)' }}>
           <p className="text-xs font-medium mb-1" style={{ color: 'var(--color-error)' }}>Compilation Errors:</p>
           {compileResult.errors.map((error, i) => (
             <p key={i} className="text-xs" style={{ color: 'var(--color-error)' }}>

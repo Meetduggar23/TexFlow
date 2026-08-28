@@ -304,7 +304,8 @@ export default function Editor() {
 
   const handleFilesResize = useCallback((e: React.PointerEvent) => {
     e.preventDefault();
-    e.currentTarget.setPointerCapture(e.pointerId);
+    const handle = e.currentTarget;
+    handle.setPointerCapture(e.pointerId);
     const startX = e.clientX;
     const startWidth = filesWidth;
     dispatch(setFilesSidebarResizing(true));
@@ -345,15 +346,19 @@ export default function Editor() {
       const delta = startY - ev.clientY;
       dispatch(setTerminalHeight(startHeight + delta));
     };
-    const onUp = () => {
+    const finish = () => {
       window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', finish);
+      window.removeEventListener('pointercancel', onCancel);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
     };
+    const onCancel = () => finish();
     document.body.style.cursor = 'row-resize';
     document.body.style.userSelect = 'none';
     window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp, { once: true });
+    window.addEventListener('pointerup', finish);
+    window.addEventListener('pointercancel', onCancel);
   }, [terminalHeight, dispatch]);
 
   const handlePdfResize = useCallback((e: React.PointerEvent) => {
@@ -366,8 +371,8 @@ export default function Editor() {
     const workspaceBounds = workspace.getBoundingClientRect();
     const startPdfWidth = pdfWidth;
     let currentPdfWidth = startPdfWidth;
-    const minPanelPercent = Math.min(50, (300 / workspaceBounds.width) * 100);
-    const maxPdfPercent = Math.max(minPanelPercent, 100 - minPanelPercent);
+    const minPanelPercent = Math.min(35, (300 / workspaceBounds.width) * 100);
+    const maxPdfPercent = 100 - minPanelPercent;
     const clampPdfWidth = (value: number) => Math.max(minPanelPercent, Math.min(maxPdfPercent, value));
     const onMove = (ev: PointerEvent) => {
       const delta = ev.clientX - startX;
@@ -554,9 +559,8 @@ export default function Editor() {
           </div>
         </div>
 
-        <div ref={workspaceRef} className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <div className="flex-1 flex overflow-hidden" style={{ minHeight: 0 }}>
-            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <div ref={workspaceRef} className="flex-1 flex flex-col min-w-0 overflow-hidden">              <div className="flex-1 flex overflow-hidden" style={{ minHeight: 0 }}>
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden" style={{ minWidth: 0 }}>
               <CodeEditor
                 content={content}
                 onChange={handleContentChange}
@@ -573,51 +577,30 @@ export default function Editor() {
               />
             </div>
 
-            {/* PDF Divider with arrows */}
+            {/* PDF Divider — draggable, follows pointer directly */}
             {pdfOpen && (
-              <div className="flex-shrink-0 flex flex-col items-center justify-center gap-1" style={{ width: 12, background: 'var(--color-background)', borderLeft: '1px solid rgba(0,0,0,0.3)', borderRight: '1px solid rgba(0,0,0,0.3)' }}>
-                <button
-                  onClick={() => dispatch(togglePdf())}
-                  className="p-0.5 rounded transition-colors hover:bg-[var(--color-accent-soft)]"
-                  style={{ color: 'var(--color-text-muted)' }}
-                  title="Collapse PDF"
-                  aria-label="Collapse PDF"
-                >
-                  <ChevronRight size={12} />
-                </button>
-                <div
-                  ref={pdfResizeRef}
-                  className="flex-1 w-full cursor-col-resize"
-                  role="separator"
-                  tabIndex={0}
-                  aria-label="Resize code and PDF panels"
-                  aria-orientation="vertical"
-                  aria-valuemin={25}
-                  aria-valuemax={75}
-                  aria-valuenow={Math.round(100 - pdfWidth)}
-                  style={{ background: isPdfResizing ? 'var(--color-accent)' : 'transparent' }}
-                  onPointerDown={handlePdfResize}
-                  onKeyDown={e => {
-                    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-                    e.preventDefault();
-                    const workspace = workspaceRef.current;
-                    const amountPx = e.shiftKey ? 50 : 10;
-                    const amount = workspace ? (amountPx / workspace.getBoundingClientRect().width) * 100 : 2;
-                    dispatch(setPdfWidth(pdfWidth + (e.key === 'ArrowLeft' ? amount : -amount)));
-                  }}
-                  onMouseEnter={e => { if (!isPdfResizing) e.currentTarget.style.background = 'var(--color-surface-elevated)'; }}
-                  onMouseLeave={e => { if (!isPdfResizing) e.currentTarget.style.background = 'transparent'; }}
-                />
-                <button
-                  onClick={() => dispatch(togglePdf())}
-                  className="p-0.5 rounded transition-colors hover:bg-[var(--color-accent-soft)]"
-                  style={{ color: 'var(--color-text-muted)' }}
-                  title="Expand PDF"
-                  aria-label="Expand PDF"
-                >
-                  <ChevronLeft size={12} />
-                </button>
-              </div>
+              <div
+                ref={pdfResizeRef}
+                className={`pdf-divider flex-shrink-0 ${isPdfResizing ? 'dragging' : ''}`}
+                role="separator"
+                tabIndex={0}
+                aria-label="Resize code and PDF panels"
+                aria-orientation="vertical"
+                aria-valuemin={25}
+                aria-valuemax={75}
+                aria-valuenow={Math.round(pdfWidth)}
+                onPointerDown={handlePdfResize}
+                onKeyDown={e => {
+                  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+                  e.preventDefault();
+                  const workspace = workspaceRef.current;
+                  const amountPx = e.shiftKey ? 50 : 10;
+                  const amount = workspace ? (amountPx / workspace.getBoundingClientRect().width) * 100 : 2;
+                  // ArrowLeft = divider moves left = Code gets smaller, PDF gets bigger
+                  // ArrowRight = divider moves right = Code gets bigger, PDF gets smaller
+                  dispatch(setPdfWidth(pdfWidth + (e.key === 'ArrowLeft' ? amount : -amount)));
+                }}
+              />
             )}
 
             {/* PDF not open - show expand button */}
@@ -636,7 +619,7 @@ export default function Editor() {
             )}
 
             {pdfOpen && (
-              <div className="flex flex-col min-w-0 overflow-hidden" style={{ width: `${pdfWidth}%`, minWidth: '300px' }}>
+              <div className="flex flex-col overflow-hidden flex-shrink-0" style={{ width: `${pdfWidth}%`, minWidth: 0, background: 'var(--color-surface)' }}>
                 <PDFViewer projectId={projectId!} />
               </div>
             )}
@@ -660,16 +643,14 @@ export default function Editor() {
           >
             <TerminalPanel onNavigateToLine={handleNavigateToLine} />
           </div>
-        </div>
-
-        {showComments && (
-          <aside className="flex-shrink-0 border-l" style={{ width: 320, borderColor: 'rgba(0,0,0,0.3)' }}>
+        </div>            {showComments && (
+          <aside className="flex-shrink-0 border-l overflow-hidden" style={{ width: 320, borderColor: 'rgba(0,0,0,0.3)' }}>
             <CommentsPanel projectId={projectId!} onClose={() => setShowComments(false)} />
           </aside>
         )}
 
         {showHistory && (
-          <aside className="flex-shrink-0 border-l" style={{ width: 320, borderColor: 'rgba(0,0,0,0.3)' }}>
+          <aside className="flex-shrink-0 border-l overflow-hidden" style={{ width: 320, borderColor: 'rgba(0,0,0,0.3)' }}>
             <HistoryPanel onClose={() => setShowHistory(false)} />
           </aside>
         )}
