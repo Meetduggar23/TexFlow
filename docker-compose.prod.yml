@@ -1,0 +1,29 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: file:/app/storage/texflow.db
+      JWT_SECRET: ${JWT_SECRET:?Set a strong JWT_SECRET}
+      PORT: 3001
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
+      STORAGE_PATH: /app/storage
+      NODE_ENV: production
+      COMPILATION_TIMEOUT: ${COMPILATION_TIMEOUT:-180}
+    volumes:
+      - storage:/app/storage
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  storage:

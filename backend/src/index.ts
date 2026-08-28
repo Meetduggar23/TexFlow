@@ -26,7 +26,8 @@ const io = new Server(server, {
 });
 
 io.use((socket, next) => {
-  const token = socket.handshake.auth?.token || socket.handshake.headers.authorization?.replace(/^Bearer\s+/i, '');
+  const cookieToken = socket.handshake.headers.cookie?.match(/(?:^|;\s*)token=([^;]+)/)?.[1];
+  const token = socket.handshake.auth?.token || socket.handshake.headers.authorization?.replace(/^Bearer\s+/i, '') || cookieToken;
   if (!token) return next(new Error('Authentication required'));
   try {
     const jwtSecret = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? '' : 'dev-secret-change-me');

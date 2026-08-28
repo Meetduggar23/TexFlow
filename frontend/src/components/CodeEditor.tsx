@@ -457,6 +457,10 @@ export default function CodeEditor({ content, onChange, onSave, file, allFiles, 
       viewRef.current = null;
       setEditorView(null);
     };
+  // The editor container is not rendered until a file is selected, so this
+  // effect must run when the first file becomes active. Line numbers remain a
+  // CodeMirror gutter (separate from the editable document), therefore typing,
+  // Backspace and Ctrl+A can never modify the numbers.
   }, [file?.id]);
 
   useEffect(() => {

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Terminal, ChevronUp, ChevronDown, AlertCircle, AlertTriangle, Trash2 } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { setTerminalOpen } from '../store/uiSlice';
+import { clearCompileResult } from '../store/editorSlice';
 import clsx from 'clsx';
 
 interface TerminalPanelProps {
@@ -95,7 +96,7 @@ export default function TerminalPanel({ onNavigateToLine }: TerminalPanelProps) 
             ))}
             <div className="flex-1" />
             <button
-              onClick={(e) => { e.stopPropagation(); }}
+              onClick={(e) => { e.stopPropagation(); dispatch(clearCompileResult()); }}
               className="p-1 rounded hover:bg-[var(--color-surface-elevated)]"
               title="Clear logs"
               aria-label="Clear logs"

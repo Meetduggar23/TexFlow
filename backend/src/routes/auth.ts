@@ -79,7 +79,7 @@ router.post('/login', async (req: Request, res: Response) => {
 });
 
 router.post('/logout', (_req: Request, res: Response) => {
-  res.clearCookie('token');
+  res.clearCookie('token', cookieOptions);
   res.json({ success: true });
 });
 
@@ -135,7 +135,7 @@ router.delete('/me', authenticate, async (req: AuthRequest, res: Response) => {
     const user = await prisma.user.findUnique({ where: { id: req.userId }, select: { id: true, email: true } });
     if (!user) return res.status(404).json({ error: 'User not found' });
     await prisma.user.update({ where: { id: user.id }, data: { deletedAt: new Date(), email: `deleted+${user.id}@invalid.local`, name: 'Deleted user', avatarUrl: null } });
-    res.clearCookie('token');
+    res.clearCookie('token', cookieOptions);
     res.json({ success: true });
   } catch { res.status(500).json({ error: 'Unable to delete account' }); }
 });

@@ -368,6 +368,7 @@ router.delete('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
       } catch {}
       await prisma.documentVersion.deleteMany({ where: { projectId: req.params.id } });
       await prisma.file.deleteMany({ where: { projectId: req.params.id } });
+      await prisma.folder.deleteMany({ where: { projectId: req.params.id } });
       await prisma.project.delete({ where: { id: req.params.id } });
     } else {
       // Soft delete — move to trash

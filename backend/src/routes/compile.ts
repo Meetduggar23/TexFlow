@@ -12,7 +12,11 @@ const activeJobs = new Map<string, ChildProcess>();
 
 function getLatexPath() {
   const miktexPath = path.join(process.env.LOCALAPPDATA || '', 'Programs', 'MiKTeX', 'miktex', 'bin', 'x64');
-  return `${miktexPath};${process.env.PATH || ''}`;
+  // PATH uses `;` on Windows and `:` on Linux/macOS.  A hard-coded separator
+  // makes the compiler fail inside the production Linux container.
+  return fs.existsSync(miktexPath)
+    ? `${miktexPath}${path.delimiter}${process.env.PATH || ''}`
+    : (process.env.PATH || '');
 }
 
 function getCompilerBinary(engine: string): string {
@@ -111,7 +115,8 @@ async function compile(req: AuthRequest, res: Response, clean: boolean) {
     } catch { /* fall back to the conventional root */ }
   }
   if (!fs.existsSync(path.join(workDir, documentName))) {
-    const discovered = project.files.find(file => isTexFile(file));
+    const discovered = project.files.find(file => relativeProjectPath(file.path, file.name).toLowerCase() === 'main.tex')
+      || project.files.find(file => isTexFile(file));
     if (discovered) documentName = relativeProjectPath(discovered.path, discovered.name);
   }
   const args = ['-interaction=nonstopmode', '--enable-installer', ...(syntaxCheck !== false ? ['-file-line-error'] : []), ...(errorHandling === 'stop' ? ['-halt-on-error'] : []), documentName];
@@ -126,7 +131,7 @@ async function compile(req: AuthRequest, res: Response, clean: boolean) {
       await prisma.compilation.update({ where: { id: compilation.id }, data: { status: 'cancelled', logs, completedAt: new Date() } });
       return res.json({ compilationId: compilation.id, status: 'cancelled', logs, pdfUrl: null });
     }
-    const pdfPath = path.join(workDir, `${path.basename(documentName, '.tex')}.pdf`);
+    const pdfPath = path.join(workDir, `${path.basename(documentName, path.extname(documentName))}.pdf`);
     let pdfUrl: string | null = null;
     let pdfGenerated = false;
     if (fs.existsSync(pdfPath)) {
@@ -159,6 +164,7 @@ async function compile(req: AuthRequest, res: Response, clean: boolean) {
 router.get('/:projectId/pdf', async (req: AuthRequest, res: Response) => {
   if (!(await userCanAccessProject(req.params.projectId, req.userId!, false))) return res.status(403).json({ error: 'Project access denied' });
   const fileName = req.query.file as string || 'main.pdf';
+  if (path.basename(fileName) !== fileName || !/\.pdf$/i.test(fileName)) return res.status(400).json({ error: 'Invalid PDF name' });
   const pdfPath = path.resolve(STORAGE_PATH, 'pdfs', req.params.projectId, fileName);
   return fs.existsSync(pdfPath) ? res.sendFile(pdfPath) : res.status(404).json({ error: 'PDF not found' });
 });

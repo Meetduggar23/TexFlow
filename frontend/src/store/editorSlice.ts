@@ -188,7 +188,7 @@ export const compileProject = createAsyncThunk(
     const tokenHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) tokenHeaders.Authorization = `Bearer ${token}`;
     // Re-read state RIGHT NOW for the absolute latest content
-    const latestState = getState() as { editor: EditorState; settings?: { compilation?: { compiler?: string; mainDocument?: string; timeout?: number } } };
+    const latestState = getState() as { editor: EditorState; project?: { currentProject?: { compiler?: string } }; settings?: { compilation?: { compiler?: string; mainDocument?: string; timeout?: number } } };
     if (latestState.editor.activeTabId) {
       // Validate content is pure LaTeX before saving to server
       const validatedContent = validateEditorContent(latestState.editor.content, latestState.editor.activeTabId);
@@ -216,7 +216,7 @@ export const compileProject = createAsyncThunk(
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify({
-        compiler: latestState.settings?.compilation?.compiler || 'pdflatex',
+        compiler: latestState.project?.currentProject?.compiler || latestState.settings?.compilation?.compiler || 'pdflatex',
         mainDocument: latestState.settings?.compilation?.mainDocument || 'main.tex',
         timeout: latestState.settings?.compilation?.timeout,
         draft: settings.compileMode === 'draft',
@@ -280,7 +280,7 @@ export const cleanBuild = createAsyncThunk(
     const tokenHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) tokenHeaders.Authorization = `Bearer ${token}`;
     // Re-read state RIGHT NOW for the absolute latest content
-    const latestState = getState() as { editor: EditorState; settings?: { compilation?: { compiler?: string; mainDocument?: string; timeout?: number } } };
+    const latestState = getState() as { editor: EditorState; project?: { currentProject?: { compiler?: string } }; settings?: { compilation?: { compiler?: string; mainDocument?: string; timeout?: number } } };
     if (latestState.editor.activeTabId) {
       // Validate content is pure LaTeX before saving to server
       const validatedContent = validateEditorContent(latestState.editor.content, latestState.editor.activeTabId);
@@ -306,7 +306,7 @@ export const cleanBuild = createAsyncThunk(
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify({
-        compiler: latestState.settings?.compilation?.compiler || 'pdflatex',
+        compiler: latestState.project?.currentProject?.compiler || latestState.settings?.compilation?.compiler || 'pdflatex',
         mainDocument: latestState.settings?.compilation?.mainDocument || 'main.tex',
         timeout: latestState.settings?.compilation?.timeout,
         draft: settings.compileMode === 'draft',

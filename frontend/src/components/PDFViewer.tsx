@@ -42,6 +42,24 @@ export default function PDFViewer({ projectId, onRecompile }: PDFViewerProps) {
     }
   }, [lastValidPdfUrl, previewUrl]);
 
+  // The browser PDF plug-in does not expose page count to the parent frame.
+  // Read the generated PDF bytes to provide reliable navigation controls while
+  // keeping the native viewer for rendering and accessibility.
+  useEffect(() => {
+    if (!previewUrl) return;
+    let active = true;
+    fetch(previewUrl, { credentials: 'include' })
+      .then(response => response.arrayBuffer())
+      .then(bytes => {
+        if (!active) return;
+        const text = new TextDecoder('latin1').decode(bytes);
+        const count = (text.match(/\/Type\s*\/Page\b/g) || []).length;
+        setTotalPages(Math.max(1, count));
+      })
+      .catch(() => { if (active) setTotalPages(1); });
+    return () => { active = false; };
+  }, [previewUrl]);
+
   const handleRefresh = useCallback(async () => {
     if (onRecompile) {
       onRecompile();
@@ -54,14 +72,18 @@ export default function PDFViewer({ projectId, onRecompile }: PDFViewerProps) {
     }
   }, [dispatch, projectId, onRecompile]);
 
-  const handleDownload = useCallback(() => {
+  const handleDownload = useCallback(async () => {
     const url = compileResult?.pdfUrl || lastValidPdfUrl;
     if (url) {
       const separator = url.includes('?') ? '&' : '?';
+      const response = await fetch(`${url}${separator}_dl=${Date.now()}`, { credentials: 'include' });
+      if (!response.ok) { toast.error('PDF is not available'); return; }
+      const blobUrl = URL.createObjectURL(await response.blob());
       const link = document.createElement('a');
-      link.href = `${url}${separator}_dl=${Date.now()}`;
+      link.href = blobUrl;
       link.download = 'document.pdf';
       link.click();
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
     }
   }, [compileResult, lastValidPdfUrl]);
 
@@ -194,16 +216,15 @@ export default function PDFViewer({ projectId, onRecompile }: PDFViewerProps) {
           <div
             className="relative flex justify-center"
             style={{
-              width: `${zoom}%`,
-              maxWidth: '100%',
-              minWidth: zoom < 100 ? `${zoom}%` : undefined,
+              width: '100%',
+              minWidth: zoom > 100 ? `${zoom}%` : undefined,
               height: '100%',
               minHeight: 0,
               flexShrink: 0,
             }}
           >
             <iframe
-              src={previewUrl}
+              src={`${previewUrl}#page=${currentPage}&zoom=${zoom}`}
               className="pdf-frame"
               style={{
                 width: '100%',

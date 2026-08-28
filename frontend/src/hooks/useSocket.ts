@@ -16,6 +16,7 @@ export default function useSocket(projectId: string | undefined) {
       path: '/socket.io',
       transports: ['websocket', 'polling'],
       auth: token ? { token } : undefined,
+      withCredentials: true,
       reconnection: true,
       reconnectionAttempts: maxReconnectAttempts,
       reconnectionDelay: 1000,
