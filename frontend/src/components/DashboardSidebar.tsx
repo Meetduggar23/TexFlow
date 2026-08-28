@@ -120,9 +120,10 @@ interface DashboardSidebarProps {
   onToggleCollapse: () => void;
   mobileOpen: boolean;
   onMobileClose: () => void;
+  onSearch?: () => void;
 }
 
-export default function DashboardSidebar({ collapsed, onToggleCollapse, mobileOpen, onMobileClose }: DashboardSidebarProps) {
+export default function DashboardSidebar({ collapsed, onToggleCollapse, mobileOpen, onMobileClose, onSearch }: DashboardSidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useAppDispatch();
@@ -133,6 +134,7 @@ export default function DashboardSidebar({ collapsed, onToggleCollapse, mobileOp
   const [tags, setTags] = useState<TagData[]>(loadTags);
   const helpMenuRef = useRef<HTMLDivElement>(null);
   const logoRef = useRef<HTMLDivElement>(null);
+  const [collapsedLogoHovered, setCollapsedLogoHovered] = useState(false);
 
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || 'null');
@@ -222,15 +224,15 @@ export default function DashboardSidebar({ collapsed, onToggleCollapse, mobileOp
             <span className="text-base font-bold whitespace-nowrap" style={{ color: 'var(--color-text-primary)' }}>Tex<span style={{ color: 'var(--color-accent)' }}>Flow</span></span>
           </button>
 
-          {/* Search icon — always visible */}
-          <button className="rounded p-1.5 transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }}
+          {/* Search icon */}
+          <button onClick={onSearch} className="rounded p-1.5 transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }}
             onMouseEnter={e => e.currentTarget.style.color = 'var(--color-text-primary)'}
             onMouseLeave={e => e.currentTarget.style.color = 'var(--color-text-muted)'}
             aria-label="Search">
             <Search size={16} />
           </button>
 
-          {/* Sidebar toggle — always visible */}
+          {/* Sidebar toggle */}
           <button onClick={handleLogoClick} className="rounded p-1.5 transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-muted)' }}
             onMouseEnter={e => e.currentTarget.style.color = 'var(--color-text-primary)'}
             onMouseLeave={e => e.currentTarget.style.color = 'var(--color-text-muted)'}
@@ -240,13 +242,37 @@ export default function DashboardSidebar({ collapsed, onToggleCollapse, mobileOp
         </div>
       )}
 
-      {/* ═══ COLLAPSED HEADER ═══ */}
+      {/* ═══ COLLAPSED HEADER — logo morphs to expand icon on hover ═══ */}
       {collapsed && (
-        <div className="flex-shrink-0 flex flex-col items-center gap-1 pt-3 pb-2 px-2">
-          {/* Logo only — clicking expands */}
-          <button onClick={handleLogoClick} className="rounded p-1.5 transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-primary)' }} aria-label="Expand sidebar">
-            <BrandLogo className="w-6 h-6 object-contain" />
-          </button>
+        <div
+          className="flex-shrink-0 flex flex-col items-center pt-3 pb-2 px-2"
+          onMouseEnter={() => setCollapsedLogoHovered(true)}
+          onMouseLeave={() => setCollapsedLogoHovered(false)}
+        >
+          <div className="relative">
+            {/* Default: brand logo */}
+            <div className={clsx('transition-all duration-200', collapsedLogoHovered ? 'opacity-0 blur-[3px] scale-75' : 'opacity-100 blur-0 scale-100')} style={{ pointerEvents: collapsedLogoHovered ? 'none' : 'auto' }}>
+              <button onClick={handleLogoClick} className="rounded p-1.5 transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-primary)' }} aria-label="Expand sidebar">
+                <BrandLogo className="w-6 h-6 object-contain" />
+              </button>
+            </div>
+            {/* Hovered: expand icon + tooltip */}
+            <div className={clsx('absolute inset-0 flex items-center justify-center transition-all duration-200', collapsedLogoHovered ? 'opacity-100 blur-0 scale-100' : 'opacity-0 blur-[3px] scale-75')} style={{ pointerEvents: collapsedLogoHovered ? 'auto' : 'none' }}>
+              <button onClick={handleLogoClick} className="rounded p-1.5 transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-primary)' }} aria-label="Expand sidebar">
+                <PanelLeftOpen size={16} />
+              </button>
+            </div>
+            {/* Tooltip */}
+            {collapsedLogoHovered && (
+              <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 z-[300] pointer-events-none">
+                <div className="px-3 py-1.5 rounded-lg text-[12px] font-medium whitespace-nowrap shadow-lg"
+                  style={{ background: 'var(--color-text-primary)', color: 'var(--color-surface)' }}>
+                  Open sidebar
+                  <span className="absolute right-full top-1/2 -translate-y-1/2" style={{ width: 0, height: 0, borderTop: '5px solid transparent', borderBottom: '5px solid transparent', borderRight: '5px solid var(--color-text-primary)' }} />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

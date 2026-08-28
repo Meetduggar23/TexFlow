@@ -15,6 +15,7 @@ import ProjectPreview from '../components/ProjectPreview';
 import { TableSkeleton, GridSkeleton } from '../components/SkeletonLoader';
 import toast from 'react-hot-toast';
 import { useDialog } from '../components/DialogProvider';
+import { useDashboardContext } from './DashboardLayout';
 import type { Project } from '../types';
 import { getProjectIdsByTag, isUncategorized, addTagToProject } from '../utils/tagProjects';
 
@@ -164,11 +165,11 @@ export default function AllProjects() {
   const location = useLocation();
   const { projects, loading } = useAppSelector(state => state.project);
   const { confirm } = useDialog();
+  const { searchOpen, setSearchOpen } = useDashboardContext();
 
   // UI state
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
   const [sort, setSort] = useState<SortType>('updated');
@@ -215,7 +216,7 @@ export default function AllProjects() {
   // Keyboard shortcuts
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); setShowCommandPalette(p => !p); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); setSearchOpen(p => !p); }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') { e.preventDefault(); handleNewProject(); }
     };
     window.addEventListener('keydown', h);
@@ -394,7 +395,7 @@ export default function AllProjects() {
           </div>
           {!currentView.includes('archived') && (
             <div className="flex items-center gap-2">
-              <button onClick={() => setShowCommandPalette(true)}
+              <button onClick={() => setSearchOpen(true)}
                 className="p-2 transition-colors"
                 style={{ color: 'var(--color-text-muted)', borderRadius: '6px' }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface)'; e.currentTarget.style.color = 'var(--color-text-primary)'; }}
@@ -611,7 +612,7 @@ export default function AllProjects() {
       {previewProject && <ProjectPreview project={previewProject} onClose={() => setPreviewProject(null)} onOpen={() => { handleOpenProject(previewProject.id); setPreviewProject(null); }} />}
       {showCreateModal && <CreateProjectModal onClose={() => setShowCreateModal(false)} tagToAssign={isTagView && !isUncategorizedView ? activeTag! : undefined} />}
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
-      <CommandPalette isOpen={showCommandPalette} onClose={() => setShowCommandPalette(false)} onNewProject={handleNewProject} />
+      <CommandPalette isOpen={searchOpen} onClose={() => setSearchOpen(false)} onNewProject={handleNewProject} />
     </div>
   );
 }

@@ -1,14 +1,24 @@
-import { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { Outlet, useOutletContext } from 'react-router-dom';
 import DashboardSidebar from '../components/DashboardSidebar';
 
 const SIDEBAR_COLLAPSED_KEY = 'tf-sidebar-collapsed';
+
+type DashboardContextType = {
+  searchOpen: boolean;
+  setSearchOpen: (open: boolean | ((p: boolean) => boolean)) => void;
+};
+
+export function useDashboardContext() {
+  return useOutletContext<DashboardContextType>();
+}
 
 export default function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(() => {
     try { return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true'; } catch { return false; }
   });
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(collapsed));
@@ -20,6 +30,8 @@ export default function DashboardLayout() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const handleSearch = useCallback(() => setSearchOpen(p => !p), []);
+
   return (
     <div className="h-screen flex overflow-hidden" style={{ background: 'var(--color-background)' }}>
       <DashboardSidebar
@@ -27,6 +39,7 @@ export default function DashboardLayout() {
         onToggleCollapse={() => setCollapsed(p => !p)}
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
+        onSearch={handleSearch}
       />
       <main className="flex-1 overflow-auto min-w-0" style={{ background: 'var(--color-background)' }}>
         {/* Mobile top bar */}
@@ -36,7 +49,7 @@ export default function DashboardLayout() {
           </button>
           <span className="text-sm font-semibold tf-brand" style={{ color: 'var(--color-text-primary)' }}>TexFlow</span>
         </div>
-        <Outlet />
+        <Outlet context={{ searchOpen, setSearchOpen }} />
       </main>
     </div>
   );
