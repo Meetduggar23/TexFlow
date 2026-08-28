@@ -225,12 +225,6 @@ export default function EditorHeader({
 
         <div className="w-px h-5 mx-1" style={{ background: 'var(--color-border)' }} />
 
-        <button onClick={onOpenSearch} className="p-1.5 rounded transition-colors" style={{ color: 'var(--color-text-muted)' }} title="Search (Ctrl+Shift+F)"
-          onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-elevated)'; e.currentTarget.style.color = 'var(--color-text-primary)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)'; }}
-        >
-          <Search size={14} />
-        </button>
         <button onClick={onOpenCommandPalette} className="p-1.5 rounded transition-colors" style={{ color: 'var(--color-text-muted)' }} title="Command Palette (Ctrl+K)"
           onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-elevated)'; e.currentTarget.style.color = 'var(--color-text-primary)'; }}
           onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)'; }}

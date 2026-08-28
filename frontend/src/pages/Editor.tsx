@@ -537,7 +537,7 @@ export default function Editor() {
           }}
         >
           <div className="h-full flex flex-col relative overflow-hidden" style={{ width: filesOpen ? filesWidth : 0 }}>
-            <FileTree files={files} projectId={projectId!} />
+            <FileTree files={files} projectId={projectId!} onSearch={() => setShowSearch(p => !p)} />
             {filesOpen && <div
               ref={filesResizeRef}
               className="absolute top-0 -right-1 w-2 h-full cursor-col-resize z-10"

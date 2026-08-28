@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   ChevronRight, ChevronDown, File, Folder, FolderOpen, Plus, Trash2,
   FilePlus, FolderPlus, MoreHorizontal, Pencil, Download, Copy,
-  Upload, X, ChevronDown as ChevronDownIcon,
+  Upload, X, ChevronDown as ChevronDownIcon, Search,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setCurrentFile, createFile, deleteFile, updateFileContent, updateFileInTree } from '../store/projectSlice';
@@ -14,6 +14,7 @@ import clsx from 'clsx';
 interface FileTreeProps {
   files: FileNode[];
   projectId: string;
+  onSearch?: () => void;
 }
 
 interface FileTreeItemProps {
@@ -276,7 +277,7 @@ function FileTreeItem({ node, projectId, level = 0, startCreation }: FileTreeIte
   );
 }
 
-export default function FileTree({ files, projectId }: FileTreeProps) {
+export default function FileTree({ files, projectId, onSearch }: FileTreeProps) {
   const dispatch = useAppDispatch();
   const [showNewMenu, setShowNewMenu] = useState(false);
   const [creatingRoot, setCreatingRoot] = useState<'file' | 'folder' | null>(null);
@@ -359,6 +360,17 @@ export default function FileTree({ files, projectId }: FileTreeProps) {
         <ChevronDownIcon size={12} style={{ color: 'var(--color-text-muted)' }} />
         <span className="text-[11px] font-semibold tf-brand" style={{ color: 'var(--color-text-secondary)' }}>TexFlow</span>
         <div className="flex-1" />
+        {onSearch && (
+          <button
+            onClick={onSearch}
+            className="p-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
+            style={{ color: 'var(--color-text-muted)' }}
+            title="Search in project (Ctrl+Shift+F)"
+            aria-label="Search in project"
+          >
+            <Search size={13} />
+          </button>
+        )}
         <button
           onClick={() => setShowNewMenu(p => !p)}
           className="p-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
