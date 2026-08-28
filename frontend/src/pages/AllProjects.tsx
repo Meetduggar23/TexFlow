@@ -395,14 +395,6 @@ export default function AllProjects() {
           </div>
           {!currentView.includes('archived') && (
             <div className="flex items-center gap-2">
-              <button onClick={() => setSearchOpen(true)}
-                className="p-2 transition-colors"
-                style={{ color: 'var(--color-text-muted)', borderRadius: '6px' }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface)'; e.currentTarget.style.color = 'var(--color-text-primary)'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)'; }}
-                title="Search projects (⌘K)">
-                <Search size={18} />
-              </button>
               <button onClick={() => navigate('/templates')}
                 className="flex items-center gap-2 px-4 py-2 text-[13px] font-medium transition-colors"
                 style={{ color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)', background: 'var(--color-surface)', borderRadius: '6px' }}
