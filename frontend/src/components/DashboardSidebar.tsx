@@ -222,45 +222,45 @@ export default function DashboardSidebar({ collapsed, onToggleCollapse, mobileOp
 
   const sidebarContent = (
     <aside className={clsx('h-full flex flex-col transition-all duration-200', collapsed ? 'w-[56px]' : 'w-[220px]')} style={{ background: 'var(--color-surface)', borderRight: '1px solid var(--color-border)' }}>
-      {/* Logo — ChatGPT-style morph on hover */}
-      <div ref={logoRef} className={clsx('relative flex-shrink-0', collapsed ? 'px-2 pt-3 pb-2' : 'p-4 pb-2')} onMouseEnter={handleLogoEnter} onMouseLeave={handleLogoLeave}>
-        <button
-          onClick={handleLogoClick}
-          className={clsx('group relative w-full flex items-center rounded-lg transition-all duration-200', collapsed ? 'justify-center px-0 py-1.5' : 'gap-2 px-2 py-1.5')}
-          style={{ background: 'transparent', border: 'none' }}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          onMouseEnter={e => e.currentTarget.style.background = 'var(--color-surface-elevated)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-
-          {/* ── Expanded state: Logo + text, morph to icon on hover ── */}
-          {!collapsed && (
-            <div className="relative flex items-center flex-1 min-w-0">
-              {/* Default: logo + text */}
-              <div className={clsx('flex items-center gap-2 transition-all duration-300', logoHovered ? 'opacity-0 blur-[4px] scale-90' : 'opacity-100 blur-0 scale-100')} style={{ pointerEvents: logoHovered ? 'none' : 'auto' }}>
-                <BrandLogo className="w-6 h-6 object-contain flex-shrink-0" />
-                <span className="text-base font-bold whitespace-nowrap" style={{ color: 'var(--color-text-primary)' }}>Tex<span style={{ color: 'var(--color-accent)' }}>Flow</span></span>
-              </div>
-              {/* Hovered: icon only */}
-              <div className={clsx('absolute inset-0 flex items-center justify-center transition-all duration-300', logoHovered ? 'opacity-100 blur-0 scale-100' : 'opacity-0 blur-[4px] scale-90')} style={{ pointerEvents: logoHovered ? 'auto' : 'none' }}>
-                <PanelLeftClose size={18} style={{ color: 'var(--color-text-primary)' }} />
-              </div>
-            </div>
-          )}
-
-          {/* ── Collapsed state: Logo icon, morph to expand icon on hover ── */}
-          {collapsed && (
-            <div className="relative w-6 h-6 flex items-center justify-center">
-              {/* Default: brand logo */}
-              <div className={clsx('absolute inset-0 flex items-center justify-center transition-all duration-300', logoHovered ? 'opacity-0 blur-[4px] scale-75' : 'opacity-100 blur-0 scale-100')} style={{ pointerEvents: logoHovered ? 'none' : 'auto' }}>
-                <BrandLogo className="w-6 h-6 object-contain" />
-              </div>
-              {/* Hovered: expand icon */}
-              <div className={clsx('absolute inset-0 flex items-center justify-center transition-all duration-300', logoHovered ? 'opacity-100 blur-0 scale-100' : 'opacity-0 blur-[4px] scale-75')} style={{ pointerEvents: logoHovered ? 'auto' : 'none' }}>
-                <PanelLeftOpen size={18} style={{ color: 'var(--color-text-primary)' }} />
-              </div>
-            </div>
-          )}
+      {/* Logo row — always visible, with separate hover icon */}
+      <div ref={logoRef} className={clsx('flex-shrink-0 flex items-center', collapsed ? 'px-2 pt-3 pb-2 justify-center' : 'px-4 pt-4 pb-2')}>
+        {/* Logo + brand name — never changes */}
+        <button onClick={() => nav('/dashboard')} className="flex items-center gap-2 cursor-pointer rounded px-1 py-0.5 hover:bg-[var(--color-surface-elevated)] transition-colors flex-1 min-w-0" aria-label="Go to dashboard">
+          <BrandLogo className="w-6 h-6 object-contain flex-shrink-0" />
+          {!collapsed && <span className="text-base font-bold whitespace-nowrap" style={{ color: 'var(--color-text-primary)' }}>Tex<span style={{ color: 'var(--color-accent)' }}>Flow</span></span>}
         </button>
+
+        {/* Separate toggle icon — appears on hover */}
+        {!collapsed && (
+          <div
+            className="relative"
+            onMouseEnter={handleLogoEnter}
+            onMouseLeave={handleLogoLeave}
+          >
+            <button
+              onClick={handleLogoClick}
+              className={clsx('rounded p-1.5 transition-all duration-200', logoHovered ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-1 pointer-events-none')}
+              style={{ color: 'var(--color-text-muted)', background: 'transparent', border: 'none' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-elevated)'; e.currentTarget.style.color = 'var(--color-text-primary)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)'; }}
+              aria-label="Collapse sidebar"
+            >
+              <PanelLeftClose size={16} />
+            </button>
+          </div>
+        )}
+
+        {/* Collapsed: single toggle button */}
+        {collapsed && (
+          <button
+            onClick={handleLogoClick}
+            className="rounded p-1.5 transition-colors hover:bg-[var(--color-surface-elevated)]"
+            style={{ color: 'var(--color-text-muted)' }}
+            aria-label="Expand sidebar"
+          >
+            <PanelLeftOpen size={16} />
+          </button>
+        )}
       </div>
 
       {/* Navigation */}

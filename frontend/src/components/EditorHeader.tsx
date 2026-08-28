@@ -170,6 +170,13 @@ export default function EditorHeader({
   return (
     <header className="h-11 flex items-center px-3 gap-1 relative z-50" style={{ background: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)' }}>
       <div className="flex items-center gap-1 mr-2">
+        {/* Logo + brand name — never changes */}
+        <button onClick={onBack} className="flex items-center gap-1.5 rounded px-1.5 py-1 transition-colors hover:bg-[var(--color-surface-elevated)]" aria-label="Go to dashboard">
+          <BrandLogo alt="TexFlow" className="w-5 h-5 object-contain" />
+          <span className="text-sm font-bold" style={{ color: 'var(--color-accent)' }}>TexFlow</span>
+        </button>
+
+        {/* Separate Home icon — appears on hover */}
         <div
           className="relative"
           onMouseEnter={() => setLogoHovered(true)}
@@ -177,19 +184,13 @@ export default function EditorHeader({
         >
           <button
             onClick={onBack}
-            className="flex items-center gap-1.5 rounded px-1.5 py-1 transition-colors"
-            style={{ background: logoHovered ? 'var(--color-surface-elevated)' : 'transparent' }}
+            className={clsx('rounded p-1.5 transition-all duration-200', logoHovered ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-1 pointer-events-none')}
+            style={{ color: 'var(--color-text-muted)', background: 'transparent', border: 'none' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-elevated)'; e.currentTarget.style.color = 'var(--color-text-primary)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)'; }}
             aria-label="Back to dashboard"
           >
-            {/* Default: BrandLogo */}
-            <div className={clsx('flex items-center gap-1.5 transition-all duration-250', logoHovered ? 'opacity-0 blur-[3px] scale-90' : 'opacity-100 blur-0 scale-100')} style={{ pointerEvents: logoHovered ? 'none' : 'auto' }}>
-              <BrandLogo alt="TexFlow" className="w-5 h-5 object-contain" />
-              <span className="text-sm font-bold tf-brand" style={{ color: 'var(--color-accent)' }}>TexFlow</span>
-            </div>
-            {/* Hovered: Home icon only */}
-            <div className={clsx('absolute inset-0 flex items-center justify-center transition-all duration-250', logoHovered ? 'opacity-100 blur-0 scale-100' : 'opacity-0 blur-[3px] scale-90')} style={{ pointerEvents: logoHovered ? 'auto' : 'none' }}>
-              <Home size={16} style={{ color: 'var(--color-text-primary)' }} />
-            </div>
+            <Home size={15} />
           </button>
         </div>
       </div>
