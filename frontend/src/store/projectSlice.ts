@@ -198,12 +198,15 @@ export const emptyTrash = createAsyncThunk(
 
 export const toggleFavorite = createAsyncThunk(
   'project/toggleFavorite',
-  async (projectId: string) => {
+  async (projectId: string, { getState }) => {
     const token = localStorage.getItem('token');
+    const state = getState() as { project: { projects: Array<{ id: string; isFavorite: boolean }> } };
+    const project = state.project.projects.find(p => p.id === projectId);
+    const newValue = project ? !project.isFavorite : true;
     const response = await fetch(`${API}/projects/${projectId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      body: JSON.stringify({ isFavorite: true }),
+      body: JSON.stringify({ isFavorite: newValue }),
     });
     if (!response.ok) throw new Error('Failed to update favorite');
     const data = await response.json();
