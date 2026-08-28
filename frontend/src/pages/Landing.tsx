@@ -51,8 +51,8 @@ export default function Landing() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-dark-900">
-      <nav className="fixed top-0 left-0 right-0 z-50 glass">
+    <div className="min-h-screen" style={{ background: 'var(--color-background)' }}>
+      <nav className="fixed top-0 left-0 right-0 z-50" style={{ background: 'rgba(var(--color-background-rgb), 0.8)', backdropFilter: 'blur(10px)', borderBottom: '1px solid var(--color-border)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-2">
@@ -61,18 +61,22 @@ export default function Landing() {
             </div>
             
             <div className="hidden md:flex items-center gap-8">
-              <a href="#features" className="text-sm text-texflow-700 hover:text-texflow-900 transition-colors">Features</a>
-              <a href="#templates" className="text-sm text-texflow-700 hover:text-texflow-900 transition-colors">Templates</a>
-              <a href="#how-it-works" className="text-sm text-texflow-700 hover:text-texflow-900 transition-colors">How It Works</a>
+              <a href="#features" className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Features</a>
+              <a href="#templates" className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Templates</a>
+              <a href="#how-it-works" className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>How It Works</a>
             </div>
 
             <div className="hidden md:flex items-center gap-3">
-              <button onClick={() => navigate('/login')} className="btn-ghost text-sm">Log in</button>
-              <button onClick={() => navigate('/dashboard')} className="btn-primary text-sm">Get Started</button>
+              <button onClick={() => navigate('/login')} className="px-4 py-2 text-sm font-medium rounded-lg transition-colors" style={{ color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)', background: 'var(--color-surface)' }}>
+                Log in
+              </button>
+              <button onClick={() => navigate('/dashboard')} className="px-4 py-2 text-sm font-semibold text-white rounded-lg transition-all" style={{ background: 'var(--color-accent)' }}>
+                Get Started
+              </button>
             </div>
 
             <button 
-              className="md:hidden p-2 text-texflow-700 hover:text-texflow-900"
+              className="md:hidden p-2" style={{ color: 'var(--color-text-secondary)' }}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -81,70 +85,70 @@ export default function Landing() {
         </div>
 
         {mobileMenuOpen && (
-          <div className="md:hidden glass border-t border-texflow-800 animate-slide-down">
+          <div className="md:hidden animate-slide-down" style={{ background: 'rgba(var(--color-background-rgb), 0.9)', backdropFilter: 'blur(10px)', borderTop: '1px solid var(--color-border)' }}>
             <div className="px-4 py-4 space-y-3">
-              <a href="#features" className="block text-texflow-700 hover:text-texflow-900 py-2">Features</a>
-              <a href="#templates" className="block text-texflow-700 hover:text-texflow-900 py-2">Templates</a>
-              <a href="#how-it-works" className="block text-texflow-700 hover:text-texflow-900 py-2">How It Works</a>
-              <hr className="border-texflow-800" />
-              <button onClick={() => navigate('/login')} className="block w-full text-left text-texflow-700 hover:text-texflow-900 py-2">Log in</button>
-              <button onClick={() => navigate('/dashboard')} className="block w-full btn-primary text-center">Get Started</button>
+              <a href="#features" className="block py-2" style={{ color: 'var(--color-text-secondary)' }}>Features</a>
+              <a href="#templates" className="block py-2" style={{ color: 'var(--color-text-secondary)' }}>Templates</a>
+              <a href="#how-it-works" className="block py-2" style={{ color: 'var(--color-text-secondary)' }}>How It Works</a>
+              <hr style={{ borderColor: 'var(--color-border)' }} />
+              <button onClick={() => navigate('/login')} className="block w-full text-left py-2" style={{ color: 'var(--color-text-secondary)' }}>Log in</button>
+              <button onClick={() => navigate('/dashboard')} className="block w-full text-center px-4 py-2 text-sm font-semibold text-white rounded-lg" style={{ background: 'var(--color-accent)' }}>Get Started</button>
             </div>
           </div>
         )}
       </nav>
 
       <section className="relative pt-32 pb-20 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-texflow-900/50 to-dark-900" />
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-texflow-600/10 rounded-full blur-[120px]" />
-        <div className="absolute top-40 right-0 w-[400px] h-[400px] bg-texflow-500/10 rounded-full blur-[100px]" />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, var(--color-background), var(--color-background))' }} />
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full blur-[120px]" style={{ background: 'rgba(114, 4, 85, 0.1)' }} />
+        <div className="absolute top-40 right-0 w-[400px] h-[400px] rounded-full blur-[100px]" style={{ background: 'rgba(145, 10, 103, 0.1)' }} />
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-texflow-700 bg-texflow-900/50 text-texflow-300 text-sm mb-8 animate-fade-in">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border mb-8 animate-fade-in" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text-secondary)' }}>
             <Zap size={14} />
             <span className="transition-opacity duration-500">{taglines[taglineIndex]}</span>
           </div>
           
-          <h1 className="text-5xl md:text-7xl font-extrabold text-texflow-900 mb-6 leading-tight animate-slide-up">
+          <h1 className="text-5xl md:text-7xl font-extrabold mb-6 leading-tight animate-slide-up" style={{ color: 'var(--color-text-primary)' }}>
             Write, Compile &<br />
-            <span className="gradient-text">Collaborate</span> with LaTeX
+            <span className="bg-gradient-to-r" style={{ backgroundImage: 'linear-gradient(to right, #720455, #910A67)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Collaborate</span> with LaTeX
           </h1>
           
-          <p className="text-lg md:text-xl text-texflow-600 max-w-2xl mx-auto mb-10 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+          <p className="text-lg md:text-xl max-w-2xl mx-auto mb-10 animate-slide-up" style={{ color: 'var(--color-text-secondary)', animationDelay: '0.1s' }}>
             The complete online LaTeX workspace for research papers, theses, reports, 
             CVs, and academic documents. Write professionally, compile instantly. Free to use.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-            <button onClick={() => navigate('/dashboard')} className="btn-primary text-lg px-8 py-3 flex items-center gap-2">
+            <button onClick={() => navigate('/dashboard')} className="px-8 py-3 text-lg font-semibold text-white rounded-lg transition-all flex items-center gap-2" style={{ background: 'var(--color-accent)' }}>
               Start Writing <ArrowRight size={18} />
             </button>
-            <button onClick={() => navigate('/dashboard')} className="btn-secondary text-lg px-8 py-3 flex items-center gap-2">
+            <button onClick={() => navigate('/dashboard')} className="px-8 py-3 text-lg font-medium rounded-lg transition-all flex items-center gap-2" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}>
               Explore Templates <ChevronRight size={18} />
             </button>
           </div>
 
           <div className="mt-16 mx-auto max-w-5xl animate-slide-up" style={{ animationDelay: '0.3s' }}>
-            <div className="rounded-xl overflow-hidden border border-texflow-800 shadow-2xl shadow-texflow-900/50">
-              <div className="flex items-center gap-2 px-4 py-2 bg-dark-800 border-b border-texflow-800">
+            <div className="rounded-xl overflow-hidden border shadow-2xl" style={{ borderColor: 'var(--color-border)' }}>
+              <div className="flex items-center gap-2 px-4 py-2 border-b" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
                 <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                  <div className="w-3 h-3 rounded-full bg-green-500/80" />
+                  <div className="w-3 h-3 rounded-full" style={{ background: '#FF5F56' }} />
+                  <div className="w-3 h-3 rounded-full" style={{ background: '#FFBD2E' }} />
+                  <div className="w-3 h-3 rounded-full" style={{ background: '#27C93F' }} />
                 </div>
-                <span className="text-xs text-texflow-500 ml-2 font-mono">main.tex — TexFlow Editor</span>
+                <span className="text-xs font-mono ml-2" style={{ color: 'var(--color-text-muted)' }}>main.tex — TexFlow Editor</span>
               </div>
-              <div className="bg-dark-900 p-6 text-left font-mono text-sm">
-                <div className="text-texflow-500">{'\\'}documentclass{'{'}article{'}'}</div>
-                <div className="text-texflow-500">{'\\'}usepackage{'{'}amsmath{'}'}</div>
-                <div className="text-texflow-500">{'\\'}usepackage{'{'}graphicx{'}'}</div>
-                <div className="text-texflow-400">{'\\'}title{'{'}<span className="text-texflow-900">My Research Paper</span>{'}'}</div>
-                <div className="text-texflow-400">{'\\'}author{'{'}<span className="text-texflow-900">Author Name</span>{'}'}</div>
-                <div className="text-texflow-400 mt-2">{'\\'}begin{'{'}document{'}'}</div>
-                <div className="text-texflow-400">{'\\'}maketitle</div>
-                <div className="text-texflow-400 mt-2">{'\\'}section{'{'}<span className="text-texflow-900">Introduction</span>{'}'}</div>
-                <div className="text-texflow-900 pl-4">Welcome to TexFlow — the modern LaTeX platform.</div>
-                <div className="text-texflow-400 mt-2">{'\\'}end{'{'}document{'}'}</div>
+              <div className="p-6 text-left font-mono text-sm" style={{ background: 'var(--color-background)' }}>
+                <div style={{ color: 'var(--color-text-muted)' }}>{'\\'}documentclass{'{'}article{'}'}</div>
+                <div style={{ color: 'var(--color-text-muted)' }}>{'\\'}usepackage{'{'}amsmath{'}'}</div>
+                <div style={{ color: 'var(--color-text-muted)' }}>{'\\'}usepackage{'{'}graphicx{'}'}</div>
+                <div style={{ color: 'var(--color-accent)' }}>{'\\'}title{'{'}<span style={{ color: 'var(--color-text-primary)' }}>My Research Paper</span>{'}'}</div>
+                <div style={{ color: 'var(--color-accent)' }}>{'\\'}author{'{'}<span style={{ color: 'var(--color-text-primary)' }}>Author Name</span>{'}'}</div>
+                <div style={{ color: 'var(--color-text-secondary)', marginTop: '8px' }}>{'\\'}begin{'{'}document{'}'}</div>
+                <div style={{ color: 'var(--color-text-secondary)' }}>{'\\'}maketitle</div>
+                <div style={{ color: 'var(--color-text-secondary)', marginTop: '8px' }}>{'\\'}section{'{'}<span style={{ color: 'var(--color-text-primary)' }}>Introduction</span>{'}'}</div>
+                <div style={{ color: 'var(--color-text-primary)', paddingLeft: '16px' }}>Welcome to TexFlow — the modern LaTeX platform.</div>
+                <div style={{ color: 'var(--color-text-secondary)', marginTop: '8px' }}>{'\\'}end{'{'}document{'}'}</div>
               </div>
             </div>
           </div>
@@ -154,44 +158,43 @@ export default function Landing() {
       <section id="features" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-texflow-900 mb-4">
-              Everything you need for <span className="gradient-text">LaTeX</span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
+              Everything you need for <span className="bg-gradient-to-r" style={{ backgroundImage: 'linear-gradient(to right, #720455, #910A67)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>LaTeX</span>
             </h2>
-            <p className="text-texflow-600 max-w-2xl mx-auto">
+            <p className="text-texflow-600 max-w-2xl mx-auto" style={{ color: 'var(--color-text-secondary)' }}>
               A complete platform for writing, compiling, and collaborating on LaTeX documents. Free to use.
             </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature, i) => (
-              <div key={i} className="card group hover:translate-y-[-2px]">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-all group-hover:scale-110"
-                  style={{ background: 'linear-gradient(135deg, rgba(255,76,41,0.15), rgba(51,71,86,0.45))' }}>
-                  <feature.icon size={24} className="text-texflow-400" />
+              <div key={i} className="card group hover:translate-y-[-2px]" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '24px' }}>
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-all group-hover:scale-110" style={{ background: 'linear-gradient(135deg, rgba(114, 4, 85, 0.15), rgba(145, 10, 103, 0.15))' }}>
+                  <feature.icon size={24} style={{ color: 'var(--color-accent)' }} />
                 </div>
-                <h3 className="text-lg font-semibold text-texflow-900 mb-2">{feature.title}</h3>
-                <p className="text-texflow-600 text-sm leading-relaxed">{feature.desc}</p>
+                <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>{feature.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>{feature.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section id="how-it-works" className="py-20 bg-dark-800/50">
+      <section id="how-it-works" className="py-20" style={{ background: 'var(--color-surface)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-texflow-900 mb-4">
-              How it <span className="gradient-text">works</span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
+              How it <span className="bg-gradient-to-r" style={{ backgroundImage: 'linear-gradient(to right, #720455, #910A67)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>works</span>
             </h2>
-            <p className="text-texflow-600">Four steps to your perfect document. {taglines[1]}</p>
+            <p style={{ color: 'var(--color-text-secondary)' }}>Four steps to your perfect document. {taglines[1]}</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {steps.map((step, i) => (
               <div key={i} className="text-center">
-                <div className="text-5xl font-extrabold gradient-text mb-4 opacity-30">{step.num}</div>
-                <h3 className="text-xl font-bold text-texflow-900 mb-2">{step.title}</h3>
-                <p className="text-texflow-600 text-sm">{step.desc}</p>
+                <div className="text-5xl font-extrabold mb-4 opacity-30 bg-gradient-to-r" style={{ backgroundImage: 'linear-gradient(to right, #720455, #910A67)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{step.num}</div>
+                <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>{step.title}</h3>
+                <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{step.desc}</p>
               </div>
             ))}
           </div>
@@ -201,15 +204,15 @@ export default function Landing() {
       <section id="templates" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-texflow-900 mb-4">
-              Start from a <span className="gradient-text">template</span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
+              Start from a <span className="bg-gradient-to-r" style={{ backgroundImage: 'linear-gradient(to right, #720455, #910A67)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>template</span>
             </h2>
-            <p className="text-texflow-600">Choose from professionally designed templates.</p>
+            <p style={{ color: 'var(--color-text-secondary)' }}>Choose from professionally designed templates.</p>
           </div>
           
           <div className="flex flex-wrap justify-center gap-3">
             {templateCategories.map((cat, i) => (
-              <span key={i} className="px-4 py-2 rounded-full border border-texflow-700 bg-texflow-900/30 text-texflow-300 text-sm hover:bg-texflow-800/50 hover:border-texflow-600 transition-all cursor-pointer">
+              <span key={i} className="px-4 py-2 rounded-full border text-sm cursor-pointer transition-all" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text-secondary)' }}>
                 {cat}
               </span>
             ))}
@@ -219,19 +222,19 @@ export default function Landing() {
 
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-texflow-900 mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
             Start your next document with <span className="tf-brand"><span className="tf-brand-tex">Tex</span><span className="tf-brand-flow">Flow</span></span>
           </h2>
-          <p className="text-texflow-600 mb-8">
+          <p className="mb-8" style={{ color: 'var(--color-text-secondary)' }}>
             {taglines[2]} Join thousands of researchers, students, and writers using TexFlow every day. It's free.
           </p>
-          <button onClick={() => navigate('/dashboard')} className="btn-primary text-lg px-8 py-3">
+          <button onClick={() => navigate('/dashboard')} className="px-8 py-3 text-lg font-semibold text-white rounded-lg transition-all" style={{ background: 'var(--color-accent)' }}>
             Get Started for Free
           </button>
         </div>
       </section>
 
-      <footer className="border-t border-texflow-800 py-12">
+      <footer className="py-12" style={{ borderTop: '1px solid var(--color-border)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
@@ -239,20 +242,20 @@ export default function Landing() {
               <span className="font-bold tf-brand"><span className="tf-brand-tex">Tex</span><span className="tf-brand-flow">Flow</span></span>
             </div>
             
-            <div className="flex items-center gap-6 text-sm text-texflow-600">
-              <a href="#features" className="hover:text-texflow-900 transition-colors">Features</a>
-              <a href="#templates" className="hover:text-texflow-900 transition-colors">Templates</a>
-              <a href="#" className="hover:text-texflow-900 transition-colors">Docs</a>
+            <div className="flex items-center gap-6 text-sm" style={{ color: 'var(--color-text-muted)' }}>
+              <a href="#features" className="hover:text-texflow-900 transition-colors" style={{ color: 'var(--color-text-muted)' }}>Features</a>
+              <a href="#templates" className="hover:text-texflow-900 transition-colors" style={{ color: 'var(--color-text-muted)' }}>Templates</a>
+              <a href="#" className="hover:text-texflow-900 transition-colors" style={{ color: 'var(--color-text-muted)' }}>Docs</a>
             </div>
             
             <div className="flex items-center gap-3">
-              <a href="#" className="p-2 text-texflow-600 hover:text-texflow-900 transition-colors"><Github size={18} /></a>
-              <a href="#" className="p-2 text-texflow-600 hover:text-texflow-900 transition-colors"><Twitter size={18} /></a>
-              <a href="#" className="p-2 text-texflow-600 hover:text-texflow-900 transition-colors"><Mail size={18} /></a>
+              <a href="#" className="p-2 transition-colors" style={{ color: 'var(--color-text-muted)' }}><Github size={18} /></a>
+              <a href="#" className="p-2 transition-colors" style={{ color: 'var(--color-text-muted)' }}><Twitter size={18} /></a>
+              <a href="#" className="p-2 transition-colors" style={{ color: 'var(--color-text-muted)' }}><Mail size={18} /></a>
             </div>
           </div>
           
-          <div className="text-center text-xs text-texflow-500 mt-8">
+          <div className="text-center text-xs mt-8" style={{ color: 'var(--color-text-muted)' }}>
             TexFlow — {taglines[0]} | Free Collaborative LaTeX Platform
           </div>
         </div>

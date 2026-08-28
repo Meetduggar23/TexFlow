@@ -78,7 +78,8 @@ const uiSlice = createSlice({
       const projectId = action.payload;
       currentProjectId = projectId;
       const saved = loadLayout(projectId);
-      if (saved.filesOpen !== undefined) state.filesOpen = saved.filesOpen;
+      // Always start with sidebar open; user toggles via header icon
+      state.filesOpen = saved.filesOpen ?? true;
       if (saved.filesWidth !== undefined) state.filesWidth = saved.filesWidth;
       else state.filesWidth = loadDefaultFilesWidth();
       if (saved.pdfOpen !== undefined) state.pdfOpen = saved.pdfOpen;
@@ -121,7 +122,6 @@ const uiSlice = createSlice({
     setFilesWidthTransient(state, action: PayloadAction<number>) {
       state.filesWidth = Math.max(180, Math.min(420, action.payload));
       state.filesOpen = true;
-      state.filesPrevWidth = state.filesWidth;
     },
     togglePdf(state) {
       state.pdfOpen = !state.pdfOpen;

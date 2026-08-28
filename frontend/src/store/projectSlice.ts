@@ -125,12 +125,12 @@ export const updateFileContent = createAsyncThunk(
 
 export const createFile = createAsyncThunk(
   'project/createFile',
-  async (data: { projectId: string; name: string; parentId: string | null; type: 'file' | 'folder' }) => {
+  async (data: { projectId: string; name: string; parentId: string | null; type: 'file' | 'folder'; copyFromId?: string; content?: string; mimeType?: string }) => {
     const token = localStorage.getItem('token');
     const url = data.type === 'folder' ? `${API}/files/folders` : `${API}/files`;
     const body = data.type === 'folder'
       ? { projectId: data.projectId, name: data.name, parentId: data.parentId }
-      : { projectId: data.projectId, name: data.name, ...(data.parentId ? { folderId: data.parentId } : {}) };
+      : { projectId: data.projectId, name: data.name, ...(data.parentId ? { folderId: data.parentId } : {}), ...(data.copyFromId ? { copyFromId: data.copyFromId } : {}), ...(data.content !== undefined ? { content: data.content } : {}), ...(data.mimeType ? { mimeType: data.mimeType } : {}) };
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },

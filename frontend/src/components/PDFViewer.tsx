@@ -1,18 +1,21 @@
 import { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, Download, ZoomIn, ZoomOut, Loader2, FileText, Contrast } from 'lucide-react';
+import { RefreshCw, Download, ZoomIn, ZoomOut, Loader2, FileText, Contrast, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { compileProject } from '../store/editorSlice';
 import toast from 'react-hot-toast';
 
 interface PDFViewerProps {
   projectId: string;
+  onRecompile?: () => void;
 }
 
-export default function PDFViewer({ projectId }: PDFViewerProps) {
+export default function PDFViewer({ projectId, onRecompile }: PDFViewerProps) {
   const dispatch = useAppDispatch();
   const { compiling, compileResult, sourceRevision, compiledRevision, lastValidPdfUrl } = useAppSelector(state => state.editor);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [zoom, setZoom] = useState(100);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [pdfAppearance, setPdfAppearance] = useState<'normal' | 'inverted'>('normal');
 
   const isStale = sourceRevision > compiledRevision && !compiling;
@@ -27,7 +30,9 @@ export default function PDFViewer({ projectId }: PDFViewerProps) {
 
   useEffect(() => {
     if (compileResult?.pdfUrl) {
-      setPreviewUrl(`${compileResult.pdfUrl}?v=${Date.now()}`);
+      const separator = compileResult.pdfUrl.includes('?') ? '&' : '?';
+      setPreviewUrl(`${compileResult.pdfUrl}${separator}v=${Date.now()}`);
+      setCurrentPage(1);
     }
   }, [compileResult]);
 
@@ -38,18 +43,23 @@ export default function PDFViewer({ projectId }: PDFViewerProps) {
   }, [lastValidPdfUrl, previewUrl]);
 
   const handleRefresh = useCallback(async () => {
+    if (onRecompile) {
+      onRecompile();
+      return;
+    }
     try {
       await dispatch(compileProject(projectId)).unwrap();
     } catch {
       toast.error('Compilation failed');
     }
-  }, [dispatch, projectId]);
+  }, [dispatch, projectId, onRecompile]);
 
   const handleDownload = useCallback(() => {
     const url = compileResult?.pdfUrl || lastValidPdfUrl;
     if (url) {
+      const separator = url.includes('?') ? '&' : '?';
       const link = document.createElement('a');
-      link.href = url;
+      link.href = `${url}${separator}_dl=${Date.now()}`;
       link.download = 'document.pdf';
       link.click();
     }
@@ -60,18 +70,21 @@ export default function PDFViewer({ projectId }: PDFViewerProps) {
       const next = current === 'normal' ? 'inverted' : 'normal';
       try {
         localStorage.setItem(`texflow-pdf-appearance-${projectId}`, next);
-      } catch {
-        // Persistence is a convenience; the viewer still works without storage.
-      }
+      } catch { /* persistence is optional */ }
       return next;
     });
   }, [projectId]);
 
   return (
     <div className="h-full flex flex-col" style={{ background: 'var(--color-surface)' }}>
-      {/* PDF Toolbar — all controls functional, uses TexFlow theme colors */}
-      <div className="flex items-center gap-1 px-2 py-1 border-b flex-shrink-0" style={{ background: 'var(--color-background)', borderColor: 'var(--color-border)' }}>
-        <span className="text-[11px] font-semibold mr-1" style={{ color: 'var(--color-text-secondary)' }}>PDF Preview</span>
+      {/* ── PDF Toolbar ── */}
+      <div
+        className="flex items-center gap-1 px-2 py-1.5 border-b flex-shrink-0"
+        style={{ background: 'var(--color-background)', borderColor: 'var(--color-border)' }}
+      >
+        <span className="text-[11px] font-semibold mr-1" style={{ color: 'var(--color-text-secondary)' }}>
+          PDF Preview
+        </span>
 
         {isStale && (
           <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: 'var(--color-warning)', background: 'rgba(245,158,11,0.1)' }}>
@@ -106,7 +119,34 @@ export default function PDFViewer({ projectId }: PDFViewerProps) {
 
         <div className="w-px h-3.5 mx-0.5" style={{ background: 'var(--color-border)' }} />
 
-        {/* PDF appearance toggle — ONLY affects PDF rendering, not TexFlow theme */}
+        {/* Page navigation */}
+        <button
+          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+          disabled={currentPage <= 1}
+          className="p-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)] disabled:opacity-40"
+          style={{ color: 'var(--color-text-muted)' }}
+          title="Previous page"
+          aria-label="Previous page"
+        >
+          <ChevronLeft size={13} />
+        </button>
+        <span className="text-[10px] min-w-[40px] text-center tabular-nums" style={{ color: 'var(--color-text-secondary)' }}>
+          {currentPage}/{totalPages}
+        </span>
+        <button
+          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+          disabled={currentPage >= totalPages}
+          className="p-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)] disabled:opacity-40"
+          style={{ color: 'var(--color-text-muted)' }}
+          title="Next page"
+          aria-label="Next page"
+        >
+          <ChevronRight size={13} />
+        </button>
+
+        <div className="w-px h-3.5 mx-0.5" style={{ background: 'var(--color-border)' }} />
+
+        {/* PDF appearance toggle */}
         <button
           onClick={handleTogglePdfAppearance}
           aria-pressed={pdfAppearance === 'inverted'}
@@ -115,7 +155,7 @@ export default function PDFViewer({ projectId }: PDFViewerProps) {
             color: pdfAppearance === 'inverted' ? 'var(--color-accent)' : 'var(--color-text-muted)',
             background: pdfAppearance === 'inverted' ? 'var(--color-accent-soft)' : 'transparent',
           }}
-          title={pdfAppearance === 'inverted' ? 'Toggle PDF colors (inverted)' : 'Toggle PDF colors (normal)'}
+          title={pdfAppearance === 'inverted' ? 'Inverted (dark) PDF' : 'Normal PDF'}
           aria-label="Toggle PDF colors"
         >
           <Contrast size={13} />
@@ -123,7 +163,7 @@ export default function PDFViewer({ projectId }: PDFViewerProps) {
 
         <div className="w-px h-3.5 mx-0.5" style={{ background: 'var(--color-border)' }} />
 
-        {/* Download — always downloads original PDF, not inverted */}
+        {/* Download */}
         <button
           onClick={handleDownload}
           disabled={!previewUrl}
@@ -135,7 +175,7 @@ export default function PDFViewer({ projectId }: PDFViewerProps) {
           <Download size={13} />
         </button>
 
-        {/* Recompile — stays attached to PDF panel */}
+        {/* Recompile */}
         <button
           onClick={handleRefresh}
           disabled={compiling}
@@ -148,7 +188,7 @@ export default function PDFViewer({ projectId }: PDFViewerProps) {
         </button>
       </div>
 
-      {/* PDF Document Area — independent scroll, centered, zoom scales only the PDF */}
+      {/* ── PDF Document Area ── */}
       <div className="flex-1 overflow-auto flex items-start justify-center" style={{ background: 'var(--color-surface)' }}>
         {previewUrl ? (
           <div
@@ -162,11 +202,6 @@ export default function PDFViewer({ projectId }: PDFViewerProps) {
               flexShrink: 0,
             }}
           >
-            {/* 
-              CSS filter applied ONLY to the iframe — not the toolbar, not the background.
-              This is a VIEWER DISPLAY FEATURE only. The underlying PDF is unchanged.
-              pdfAppearance state is independent from TexFlow theme.
-            */}
             <iframe
               src={previewUrl}
               className="pdf-frame"
@@ -204,7 +239,7 @@ export default function PDFViewer({ projectId }: PDFViewerProps) {
         )}
       </div>
 
-      {/* Compilation errors — shows below PDF, only when errors exist */}
+      {/* ── Compilation Errors ── */}
       {compileResult?.errors && compileResult.errors.length > 0 && (
         <div className="border-t px-3 py-2 max-h-28 overflow-auto flex-shrink-0" style={{ background: 'rgba(220,38,38,0.06)', borderColor: 'var(--color-border)' }}>
           <p className="text-xs font-medium mb-1" style={{ color: 'var(--color-error)' }}>Compilation Errors:</p>

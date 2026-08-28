@@ -142,7 +142,7 @@ export default function TrashPage() {
 
   const handleRestore = async (id: string) => {
     try {
-      const res = await fetch(`${API}/projects/${id}/restore-from-trash`, {
+      const res = await fetch(`${API}/projects/${id}/restore`, {
         method: 'POST', headers: authHeaders(),
       });
       const data = await res.json();

@@ -7,21 +7,21 @@ const cards = [
     title: 'Documentation',
     description: 'Learn how to use TexFlow — from getting started to advanced LaTeX features.',
     link: '/documentation',
-    gradient: 'linear-gradient(135deg, #FF4C29, #FF6345)',
+    gradient: 'linear-gradient(135deg, #720455, #910A67)',
   },
   {
     icon: Mail,
     title: 'Contact Us',
     description: 'Have a question, found a problem, or want to share feedback? We\'re here to help.',
     link: '/contact',
-    gradient: 'linear-gradient(135deg, #3B82F6, #60A5FA)',
+    gradient: 'linear-gradient(135deg, #720455, #910A67)',
   },
   {
     icon: PenLine,
     title: 'Blog',
     description: 'Stay updated with TexFlow news, tutorials, LaTeX tips, and product updates.',
     link: '/blog',
-    gradient: 'linear-gradient(135deg, #8B5CF6, #A78BFA)',
+    gradient: 'linear-gradient(135deg, #720455, #910A67)',
   },
 ];
 
@@ -57,7 +57,7 @@ export default function HelpPage() {
                 onMouseEnter={e => {
                   e.currentTarget.style.borderColor = 'var(--color-accent)';
                   e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.15)';
+                  e.currentTarget.style.boxShadow = '0 8px 30px rgba(114, 4, 85, 0.15)';
                 }}
                 onMouseLeave={e => {
                   e.currentTarget.style.borderColor = 'var(--color-border)';

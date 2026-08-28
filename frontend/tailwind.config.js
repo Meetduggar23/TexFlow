@@ -15,9 +15,9 @@ export default {
           900: 'var(--color-background)', 800: 'var(--color-surface)', 700: 'var(--color-surface-elevated)', 600: 'var(--color-surface-elevated)', 500: 'var(--color-accent)',
         },
         accent: {
-          primary: '#22c55e',
-          secondary: '#16a34a',
-          light: 'rgba(34, 197, 94, 0.15)',
+          primary: '#720455',
+          secondary: '#910A67',
+          light: 'rgba(114, 4, 85, 0.15)',
         }
       },
       fontFamily: {
@@ -45,8 +45,8 @@ export default {
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         pulseGlow: {
-          '0%, 100%': { boxShadow: '0 0 20px rgba(34, 197, 94, 0.2)' },
-          '50%': { boxShadow: '0 0 40px rgba(34, 197, 94, 0.4)' },
+          '0%, 100%': { boxShadow: '0 0 20px rgba(114, 4, 85, 0.2)' },
+          '50%': { boxShadow: '0 0 40px rgba(114, 4, 85, 0.4)' },
         },
         loadingBar: {
           '0%': { transform: 'translateX(-100%)' },

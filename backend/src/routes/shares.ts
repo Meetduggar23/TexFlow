@@ -71,7 +71,15 @@ router.get('/join/:token', async (req: Request, res: Response) => {
   try {
     const link = await prisma.shareLink.findUnique({
       where: { token: req.params.token },
-      include: { project: true }
+      include: { 
+        project: {
+          include: {
+            owner: { select: { id: true, name: true, email: true, avatarUrl: true } },
+            members: { include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } } },
+            _count: { select: { files: true } }
+          }
+        }
+      }
     });
     if (!link) return res.status(404).json({ error: 'Invalid link' });
     
@@ -79,7 +87,9 @@ router.get('/join/:token', async (req: Request, res: Response) => {
       return res.status(410).json({ error: 'Link expired' });
     }
     
-    res.json({ project: link.project, role: link.role });
+    // Only return project metadata, not file contents
+    const projectMeta = link.project;
+    res.json({ project: projectMeta, role: link.role });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -100,7 +110,12 @@ router.get('/project/:projectId/members', authenticate, async (req: AuthRequest,
 
 router.delete('/project/:projectId/members/:userId', authenticate, async (req: AuthRequest, res: Response) => {
   try {
-    if (!(await userCanAccessProject(req.params.projectId, req.userId!, true))) return res.status(403).json({ error: 'Project access denied' });
+    const project = await prisma.project.findUnique({ where: { id: req.params.projectId }, select: { ownerId: true } });
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    const isOwner = project.ownerId === req.userId;
+    const isSelf = req.params.userId === req.userId;
+    if (!isOwner && !isSelf) return res.status(403).json({ error: 'Not authorized to remove this member' });
+    
     await prisma.projectMember.deleteMany({
       where: { projectId: req.params.projectId, userId: req.params.userId }
     });

@@ -26,6 +26,7 @@ model User {
   compilations  Compilation[]
   notifications Notification[]
   sessions      UserSession[]
+  contactMessages ContactMessage[]
 }
 
 model Project {
@@ -185,4 +186,17 @@ model UserSession {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ContactMessage {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  subject   String?
+  category  String?
+  message   String
+  userId    String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 }

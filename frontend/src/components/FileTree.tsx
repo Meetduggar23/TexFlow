@@ -1,8 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import {
-  ChevronRight, ChevronDown, File, Folder, FolderOpen, Plus, Trash2,
+  ChevronRight, ChevronDown, ChevronLeft, File, Folder, FolderOpen, Plus, Trash2,
   FilePlus, FolderPlus, MoreHorizontal, Pencil, Download, Copy,
-  Upload, X, ChevronDown as ChevronDownIcon, Search,
+  Upload, Search,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setCurrentFile, createFile, deleteFile, updateFileContent, updateFileInTree } from '../store/projectSlice';
@@ -28,22 +28,29 @@ function ContextMenu({ x, y, items, onClose }: { x: number; y: number; items: { 
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const handleClick = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) onClose(); };
+    const handleEscape = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleEscape);
+    return () => { document.removeEventListener('mousedown', handleClick); document.removeEventListener('keydown', handleEscape); };
   }, [onClose]);
 
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div ref={ref} className="fixed z-50 border border-[var(--color-border)] rounded-lg shadow-xl py-1 min-w-[170px]" style={{ background: 'var(--color-surface)', left: x, top: y }}>
+      <div
+        ref={ref}
+        className="fixed z-50 border rounded-lg shadow-xl py-1 min-w-[170px]"
+        style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border-strong)', left: x, top: y }}
+      >
         {items.map((item, i) => (
           <button
             key={i}
             onClick={() => { item.action(); onClose(); }}
             className={clsx(
-              'w-full flex items-center gap-2 px-3 py-1.5 text-sm transition-colors',
-              item.danger ? 'text-red-500 hover:bg-red-50' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-secondary)]'
+              'w-full flex items-center gap-2 px-3 py-1.5 text-[13px] transition-colors',
+              item.danger ? 'hover:bg-[rgba(239,68,68,0.1)]' : 'hover:bg-[var(--color-surface-elevated)]'
             )}
+            style={{ color: item.danger ? 'var(--color-error)' : 'var(--color-text-secondary)' }}
           >
             <span className="w-4 h-4 flex items-center justify-center">{item.icon}</span>
             {item.label}
@@ -54,10 +61,10 @@ function ContextMenu({ x, y, items, onClose }: { x: number; y: number; items: { 
   );
 }
 
-function FileTreeItem({ node, projectId, level = 0, startCreation }: FileTreeItemProps) {
+function FileTreeItem({ node, projectId, level = 0 }: FileTreeItemProps) {
   const dispatch = useAppDispatch();
   const { currentFile } = useAppSelector(state => state.project);
-  const { fileTreeExpanded } = useAppSelector(state => state.ui);
+  const { fileTreeExpanded, selectedFolderId } = useAppSelector(state => state.ui);
   const [showMenu, setShowMenu] = useState<{ x: number; y: number } | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [renaming, setRenaming] = useState(false);
@@ -70,6 +77,7 @@ function FileTreeItem({ node, projectId, level = 0, startCreation }: FileTreeIte
   const isExpanded = fileTreeExpanded[node.id] ?? false;
   const isSelected = currentFile?.id === node.id;
   const isFolder = node.type === 'folder';
+  const isTargetFolder = selectedFolderId === node.id;
 
   useEffect(() => {
     if (renaming && inputRef.current) {
@@ -116,11 +124,11 @@ function FileTreeItem({ node, projectId, level = 0, startCreation }: FileTreeIte
     setRenaming(false);
   }, [dispatch, node, renameValue]);
 
-  const handleCreateFile = useCallback(async () => {
+  const handleCreateFile = useCallback(() => {
     setCreating('file'); setCreateValue(''); setCreateError(''); setShowMenu(null);
   }, []);
 
-  const handleCreateFolder = useCallback(async () => {
+  const handleCreateFolder = useCallback(() => {
     setCreating('folder'); setCreateValue(''); setCreateError(''); setShowMenu(null);
   }, []);
 
@@ -140,7 +148,7 @@ function FileTreeItem({ node, projectId, level = 0, startCreation }: FileTreeIte
     if ((node.children || []).some(child => child.name.toLowerCase() === name.toLowerCase())) { setCreateError(`${name} already exists`); return; }
     try {
       const result = await dispatch(createFile({ projectId, name, parentId: node.id, type: creating! })).unwrap();
-      toast.success('File created');
+      toast.success('Created');
       if (!isExpanded) dispatch(toggleFileNode(node.id));
       if (result && creating === 'file') dispatch(setCurrentFile(result));
       setCreating(null); setCreateValue(''); setCreateError('');
@@ -152,10 +160,9 @@ function FileTreeItem({ node, projectId, level = 0, startCreation }: FileTreeIte
   const handleDuplicate = useCallback(async () => {
     const extension = node.type === 'file' && node.name.includes('.') ? `.${node.name.split('.').pop()}` : '';
     const stem = extension ? node.name.slice(0, -extension.length) : node.name;
-    const siblings = node.parentId ? [] : [];
     const name = `${stem} copy${extension}`;
     try {
-      await dispatch(createFile({ projectId, name, parentId: node.parentId, type: node.type })).unwrap();
+      await dispatch(createFile({ projectId, name, parentId: node.parentId, type: node.type, ...(node.type === 'file' ? { copyFromId: node.id } : {}) })).unwrap();
       toast.success('Duplicated');
     } catch {
       toast.error('Failed to duplicate');
@@ -164,13 +171,15 @@ function FileTreeItem({ node, projectId, level = 0, startCreation }: FileTreeIte
 
   const getFileIcon = () => {
     if (isFolder) {
-      return isExpanded ? <FolderOpen size={15} style={{ color: 'var(--color-accent)' }} /> : <Folder size={15} style={{ color: 'var(--color-accent)' }} />;
+      return isExpanded
+        ? <FolderOpen size={14} style={{ color: 'var(--color-accent)' }} />
+        : <Folder size={14} style={{ color: 'var(--color-accent)' }} />;
     }
     const ext = node.name.split('.').pop()?.toLowerCase();
     const colors: Record<string, string> = {
-      tex: 'var(--color-accent)', bib: '#16A34A', cls: '#FFFFFF', sty: '#FFFFFF',
+      tex: 'var(--color-accent)', bib: '#16A34A', cls: '#A78BFA', sty: '#A78BFA',
     };
-    return <File size={15} style={{ color: colors[ext || ''] || 'var(--color-text-muted)' }} />;
+    return <File size={14} style={{ color: colors[ext || ''] || 'var(--color-text-muted)' }} />;
   };
 
   const contextMenuItems = isFolder ? [
@@ -183,7 +192,16 @@ function FileTreeItem({ node, projectId, level = 0, startCreation }: FileTreeIte
     { label: 'Open', icon: <File size={14} />, action: handleClick },
     { label: 'Rename', icon: <Pencil size={14} />, action: () => setRenaming(true) },
     { label: 'Duplicate', icon: <Copy size={14} />, action: handleDuplicate },
-    { label: 'Download', icon: <Download size={14} />, action: () => toast.success('Downloaded') },
+    { label: 'Download', icon: <Download size={14} />, action: async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/files/${node.id}/download`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+        if (!response.ok) throw new Error('Download failed');
+        const url = URL.createObjectURL(await response.blob());
+        const link = document.createElement('a'); link.href = url; link.download = node.name; link.click();
+        URL.revokeObjectURL(url);
+      } catch { toast.error('Failed to download'); }
+    } },
     { label: 'Delete', icon: <Trash2 size={14} />, action: handleDelete, danger: true },
   ];
 
@@ -193,20 +211,26 @@ function FileTreeItem({ node, projectId, level = 0, startCreation }: FileTreeIte
         onClick={handleClick}
         onContextMenu={handleContextMenu}
         className={clsx(
-          'flex items-center gap-1.5 py-1 text-[13px] cursor-pointer group relative',
+          'flex items-center gap-1.5 py-[5px] text-[13px] cursor-pointer group relative transition-colors',
           isSelected
             ? 'font-medium'
-            : 'hover:bg-[var(--color-surface-secondary)]'
+            : isTargetFolder
+            ? ''
+            : 'hover:bg-[var(--color-surface-elevated)]'
         )}
         style={{
           paddingLeft: `${level * 14 + 8}px`,
           paddingRight: '8px',
-          ...(isSelected ? { background: 'var(--color-accent-soft)', color: 'var(--color-accent)' } : { color: 'var(--color-text-secondary)' }),
+          ...(isSelected
+            ? { background: 'var(--color-accent-soft)', color: 'var(--color-accent)' }
+            : isTargetFolder
+            ? { background: 'rgba(var(--color-accent-rgb, 34,197,94), 0.08)', borderLeft: '2px solid var(--color-accent)' }
+            : { color: 'var(--color-text-secondary)' }),
         }}
       >
         {isFolder && (
           <span className="w-4 h-4 flex items-center justify-center flex-shrink-0" style={{ color: 'var(--color-text-disabled)' }}>
-            {isExpanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+            {isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
           </span>
         )}
         {!isFolder && <span className="w-4" />}
@@ -235,6 +259,14 @@ function FileTreeItem({ node, projectId, level = 0, startCreation }: FileTreeIte
             <MoreHorizontal size={13} style={{ color: 'var(--color-text-muted)' }} />
           </button>
         )}
+        {!isFolder && !renaming && (
+          <button
+            onClick={(e) => { e.stopPropagation(); setContextMenu({ x: e.clientX, y: e.clientY }); }}
+            className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-[var(--color-border)] rounded transition-all flex-shrink-0"
+          >
+            <MoreHorizontal size={13} style={{ color: 'var(--color-text-muted)' }} />
+          </button>
+        )}
       </div>
 
       {creating && (
@@ -245,9 +277,9 @@ function FileTreeItem({ node, projectId, level = 0, startCreation }: FileTreeIte
             onChange={e => { setCreateValue(e.target.value); setCreateError(''); }}
             onBlur={() => { if (!createValue.trim()) setCreating(null); }}
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); submitCreation(); } if (e.key === 'Escape') setCreating(null); }}
-            placeholder={creating === 'folder' ? 'folder name' : 'file name'}
+            placeholder={creating === 'folder' ? 'Folder name' : 'File name'}
             aria-label={`New ${creating} name`}
-            className="w-full rounded border px-2 py-1 text-xs outline-none"
+            className="w-full rounded border px-2 py-1 text-[12px] outline-none"
             style={{ background: 'var(--color-surface)', borderColor: createError ? 'var(--color-error)' : 'var(--color-accent)', color: 'var(--color-text-primary)' }}
           />
           {createError && <p className="mt-1 text-[10px]" style={{ color: 'var(--color-error)' }}>{createError}</p>}
@@ -283,7 +315,7 @@ export default function FileTree({ files, projectId, onSearch }: FileTreeProps) 
   const [creatingRoot, setCreatingRoot] = useState<'file' | 'folder' | null>(null);
   const [rootName, setRootName] = useState('');
   const [rootError, setRootError] = useState('');
-  const [outlineOpen, setOutlineOpen] = useState(true);
+  const [filterText, setFilterText] = useState('');
   const { currentFile } = useAppSelector(state => state.project);
   const { selectedFolderId } = useAppSelector(state => state.ui);
 
@@ -330,62 +362,51 @@ export default function FileTree({ files, projectId, onSearch }: FileTreeProps) 
       if (!filesList) return;
       for (const f of Array.from(filesList)) {
         try {
-          const result = await dispatch(createFile({ projectId, name: f.name, parentId: null, type: 'file' })).unwrap();
-          if (result && f.type !== 'application/octet-stream') {
-            const content = await f.text();
-            await dispatch(updateFileInTree({ fileId: result.id, content }));
-          }
-        } catch {}
+          const isBinary = f.type.startsWith('image/') || f.type === 'application/pdf';
+          const content = isBinary
+            ? await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+                reader.onerror = () => reject(reader.error);
+                reader.readAsDataURL(f);
+              })
+            : await f.text();
+          await dispatch(createFile({ projectId, name: f.name, parentId: null, type: 'file', content, mimeType: f.type || undefined })).unwrap();
+        } catch { /* skip failed uploads */ }
       }
       toast.success(`${filesList.length} file(s) uploaded`);
     };
     input.click();
   };
 
-  const sections = currentFile?.content
-    ? (() => {
-        const matches = currentFile.content.match(/\\(section|subsection|subsubsection)\{([^}]+)\}/g);
-        if (!matches) return [];
-        return matches.map((m) => {
-          const levelMatch = m.match(/\\(section|subsection|subsubsection)\{([^}]+)\}/);
-          return { level: levelMatch?.[1] || 'section', name: levelMatch?.[2] || '' };
-        });
-      })()
-    : [];
-
   return (
     <div className="h-full flex flex-col" style={{ background: 'var(--color-background)' }}>
-      {/* Header matching Overleaf style */}
-      <div className="relative flex items-center gap-1 px-2 py-1.5 border-b" style={{ borderColor: 'var(--color-border)' }}>
-        <ChevronDownIcon size={12} style={{ color: 'var(--color-text-muted)' }} />
-        <span className="text-[11px] font-semibold tf-brand"><span className="tf-brand-tex">Tex</span><span className="tf-brand-flow">Flow</span></span>
+      {/* ── Header: FILES + actions + collapse ── */}
+      <div className="flex items-center gap-1 px-2 py-2 border-b" style={{ borderColor: 'var(--color-border)' }}>
+        <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+          Files
+        </span>
+
         <div className="flex-1" />
-        {onSearch && (
-          <button
-            onClick={onSearch}
-            className="p-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
-            style={{ color: 'var(--color-text-muted)' }}
-            title="Search in project (Ctrl+Shift+F)"
-            aria-label="Search in project"
-          >
-            <Search size={13} />
-          </button>
-        )}
+
         <button
-          onClick={() => setShowNewMenu(p => !p)}
+          onClick={() => startRootCreation('file')}
           className="p-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
           style={{ color: 'var(--color-text-muted)' }}
-          title="New file or folder"
-          aria-label="New file or folder"
-          aria-expanded={showNewMenu}
-          aria-haspopup="menu"
+          title="New File (Ctrl+N)"
+          aria-label="New file"
         >
-          <Plus size={14} />
+          <FilePlus size={13} />
         </button>
-        {showNewMenu && <div className="absolute right-9 top-8 z-50 min-w-[150px] rounded-md border py-1 shadow-xl" role="menu" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border-strong)' }}>
-          <button onClick={() => startRootCreation('file')} className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-[var(--color-surface-elevated)]" role="menuitem" style={{ color: 'var(--color-text-primary)' }}><FilePlus size={13} /> New File</button>
-          <button onClick={() => startRootCreation('folder')} className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-[var(--color-surface-elevated)]" role="menuitem" style={{ color: 'var(--color-text-primary)' }}><FolderPlus size={13} /> New Folder</button>
-        </div>}
+        <button
+          onClick={() => startRootCreation('folder')}
+          className="p-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
+          style={{ color: 'var(--color-text-muted)' }}
+          title="New Folder"
+          aria-label="New folder"
+        >
+          <FolderPlus size={13} />
+        </button>
         <button
           onClick={handleUpload}
           className="p-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
@@ -395,23 +416,38 @@ export default function FileTree({ files, projectId, onSearch }: FileTreeProps) 
         >
           <Upload size={13} />
         </button>
+
+        <div className="w-px h-3.5 mx-0.5" style={{ background: 'var(--color-border)' }} />
+
         <button
           onClick={() => dispatch(toggleSidebar())}
           className="p-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
           style={{ color: 'var(--color-text-muted)' }}
-          title="Close TexFlow"
-          aria-label="Close TexFlow"
+          title="Collapse sidebar"
+          aria-label="Collapse sidebar"
         >
-          <X size={13} />
+          <ChevronLeft size={13} />
         </button>
       </div>
 
-      {/* File list */}
+      {/* ── File list ── */}
       <div className="flex-1 overflow-auto py-1">
-        {creatingRoot && <div className="px-2 py-1">
-          <input autoFocus value={rootName} onChange={e => { setRootName(e.target.value); setRootError(''); }} onBlur={() => { if (!rootName.trim()) setCreatingRoot(null); }} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); submitRootCreation(); } if (e.key === 'Escape') setCreatingRoot(null); }} placeholder={creatingRoot === 'folder' ? 'folder name' : 'file name'} aria-label={`New ${creatingRoot} name`} className="w-full rounded border px-2 py-1 text-xs outline-none" style={{ background: 'var(--color-surface)', borderColor: rootError ? 'var(--color-error)' : 'var(--color-accent)', color: 'var(--color-text-primary)' }} />
-          {rootError && <p className="px-1 pt-1 text-[10px]" style={{ color: 'var(--color-error)' }}>{rootError}</p>}
-        </div>}
+        {creatingRoot && (
+          <div className="px-2 py-1">
+            <input
+              autoFocus
+              value={rootName}
+              onChange={e => { setRootName(e.target.value); setRootError(''); }}
+              onBlur={() => { if (!rootName.trim()) setCreatingRoot(null); }}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); submitRootCreation(); } if (e.key === 'Escape') setCreatingRoot(null); }}
+              placeholder={creatingRoot === 'folder' ? 'Folder name' : 'File name'}
+              aria-label={`New ${creatingRoot} name`}
+              className="w-full rounded border px-2 py-1 text-[12px] outline-none"
+              style={{ background: 'var(--color-surface)', borderColor: rootError ? 'var(--color-error)' : 'var(--color-accent)', color: 'var(--color-text-primary)' }}
+            />
+            {rootError && <p className="px-1 pt-1 text-[10px]" style={{ color: 'var(--color-error)' }}>{rootError}</p>}
+          </div>
+        )}
         {files
           .sort((a, b) => {
             if (a.type === b.type) return a.name.localeCompare(b.name);
@@ -420,41 +456,6 @@ export default function FileTree({ files, projectId, onSearch }: FileTreeProps) 
           .map(node => (
             <FileTreeItem key={node.id} node={node} projectId={projectId} />
           ))}
-      </div>
-
-      {/* File outline section */}
-      <div className="border-t" style={{ borderColor: 'var(--color-border)' }}>
-        <button
-          onClick={() => setOutlineOpen(p => !p)}
-          className="w-full flex items-center gap-1.5 px-3 py-2 transition-colors hover:bg-[var(--color-surface-elevated)]"
-        >
-          {outlineOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-          <span className="text-[11px] font-semibold" style={{ color: 'var(--color-text-secondary)' }}>File outline</span>
-        </button>
-        {outlineOpen && (
-          <div className="px-3 pb-3">
-            {sections.length === 0 ? (
-              <p className="text-[11px] py-2" style={{ color: 'var(--color-text-muted)' }}>
-                We can't find any sections or subsections in this file.
-              </p>
-            ) : (
-              <div className="flex flex-col gap-0.5">
-                {sections.map((s, i) => (
-                  <button
-                    key={i}
-                    className="text-left text-[11px] py-0.5 px-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
-                    style={{
-                      color: 'var(--color-text-secondary)',
-                      paddingLeft: s.level === 'subsection' ? 16 : s.level === 'subsubsection' ? 32 : 4,
-                    }}
-                  >
-                    {s.name}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

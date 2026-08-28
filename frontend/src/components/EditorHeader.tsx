@@ -1,19 +1,60 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  Play, PanelLeftClose, PanelLeftOpen, Users, Share2, History, MessageSquare,
+  Play, Users, Share2, History, MessageSquare,
   Search, Command, ChevronDown, FileText, FolderOpen, Upload, Save, Download, Settings,
   Undo, Redo, Scissors, Copy, ClipboardPaste, Replace, Type, Bold, Italic,
   List, ListOrdered, Table2, Link2, Image as ImageIcon, FileCode2,
   Eye, EyeOff, Terminal, LayoutTemplate,
   BookOpen, Bug, Mail, Home,
 } from 'lucide-react';
-import clsx from 'clsx';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import BrandLogo from './BrandLogo';
 import { toggleSidebar, togglePdf, toggleTerminal, resetLayout } from '../store/uiSlice';
 import CompileSettingsDropdown from './CompileSettingsDropdown';
 import type { Project } from '../types';
+
+/** Logo that morphs into Home icon on hover */
+function LogoHomeButton({ onClick }: { onClick: () => void }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="relative flex items-center justify-center rounded-md transition-colors"
+      style={{ width: 32, height: 32 }}
+      title=""
+      aria-label="Go to Dashboard"
+    >
+      {/* Logo layer */}
+      <span
+        className="absolute inset-0 flex items-center justify-center transition-all duration-200"
+        style={{
+          opacity: hovered ? 0 : 1,
+          transform: hovered ? 'scale(0.8)' : 'scale(1)',
+          filter: hovered ? 'blur(4px)' : 'blur(0)',
+          pointerEvents: 'none',
+        }}
+      >
+        <BrandLogo alt="TexFlow" className="w-6 h-6 object-contain" />
+      </span>
+      {/* Home icon layer */}
+      <span
+        className="absolute inset-0 flex items-center justify-center transition-all duration-200"
+        style={{
+          opacity: hovered ? 1 : 0,
+          transform: hovered ? 'scale(1)' : 'scale(0.8)',
+          filter: hovered ? 'blur(0)' : 'blur(4px)',
+          pointerEvents: hovered ? 'auto' : 'none',
+          color: 'var(--color-text-primary)',
+        }}
+      >
+        <Home size={18} />
+      </span>
+    </button>
+  );
+}
 
 interface EditorHeaderProps {
   project: Project;
@@ -46,27 +87,42 @@ function MenuDropdown({ items, onClose }: { items: MenuItem[]; onClose: () => vo
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const handleClick = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) onClose(); };
+    const handleEscape = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleEscape);
+    };
   }, [onClose]);
 
   return (
-    <div ref={ref} className="absolute top-full left-0 mt-1 z-50 border rounded-lg shadow-xl py-1 min-w-[220px]" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border-strong)' }}>
+    <div
+      ref={ref}
+      role="menu"
+      className="absolute top-full left-0 mt-0.5 z-50 border rounded-lg shadow-xl py-1 min-w-[220px]"
+      style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border-strong)' }}
+    >
       {items.map((item, i) => {
-        if (item.divider) return <div key={i} className="my-1" style={{ borderTop: '1px solid var(--color-border)' }} />;
+        if (item.divider) return <div key={i} className="my-1 mx-2" style={{ borderTop: '1px solid var(--color-border)' }} />;
         return (
           <button
             key={i}
+            role="menuitem"
             onClick={() => { item.action?.(); onClose(); }}
             disabled={item.disabled}
-            className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full flex items-center gap-2.5 px-3 py-1.5 text-[13px] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ color: 'var(--color-text-secondary)' }}
             onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-elevated)'; }}
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
           >
-            <span className="w-4 h-4 flex items-center justify-center">{item.icon}</span>
+            <span className="w-4 h-4 flex items-center justify-center flex-shrink-0">{item.icon}</span>
             <span className="flex-1 text-left">{item.label}</span>
-            {item.shortcut && <span className="text-xs font-mono" style={{ color: 'var(--color-text-disabled)' }}>{item.shortcut}</span>}
+            {item.shortcut && (
+              <span className="text-[11px] font-mono ml-4" style={{ color: 'var(--color-text-disabled)' }}>
+                {item.shortcut}
+              </span>
+            )}
           </button>
         );
       })}
@@ -82,11 +138,10 @@ export default function EditorHeader({
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { compiling, compileStatus } = useAppSelector(state => state.editor);
-  const { filesOpen: sidebarOpen, pdfOpen: pdfVisible } = useAppSelector(state => state.ui);
+  const { filesOpen, pdfOpen, terminalOpen } = useAppSelector(state => state.ui);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [showCompileDropdown, setShowCompileDropdown] = useState(false);
   const compileDropdownRef = useRef<HTMLDivElement>(null);
-  const [logoHovered, setLogoHovered] = useState(false);
 
   const closeMenu = useCallback(() => setActiveMenu(null), []);
 
@@ -128,17 +183,6 @@ export default function EditorHeader({
     { label: 'Reference', icon: <Link2 size={14} /> },
   ];
 
-  const viewMenu: MenuItem[] = [
-    { label: sidebarOpen ? 'Hide File Explorer' : 'Show File Explorer', icon: sidebarOpen ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />, action: () => dispatch(toggleSidebar()), shortcut: 'Ctrl+Shift+B' },
-    { label: pdfVisible ? 'Hide PDF' : 'Show PDF', icon: pdfVisible ? <EyeOff size={14} /> : <Eye size={14} />, action: () => dispatch(togglePdf()), shortcut: 'Ctrl+B' },
-    { label: 'Toggle Terminal', icon: <Terminal size={14} />, action: () => dispatch(toggleTerminal()), shortcut: 'Ctrl+`' },
-    { divider: true },
-    { label: 'Search', icon: <Search size={14} />, action: onOpenSearch, shortcut: 'Ctrl+Shift+F' },
-    { label: 'Command Palette', icon: <Command size={14} />, action: onOpenCommandPalette, shortcut: 'Ctrl+K' },
-    { divider: true },
-    { label: 'Reset Layout', icon: <LayoutTemplate size={14} />, action: () => dispatch(resetLayout()) },
-  ];
-
   const formatMenu: MenuItem[] = [
     { label: 'Bold', icon: <Bold size={14} />, shortcut: 'Ctrl+B' },
     { label: 'Italic', icon: <Italic size={14} />, shortcut: 'Ctrl+I' },
@@ -148,6 +192,17 @@ export default function EditorHeader({
     { divider: true },
     { label: 'Table', icon: <Table2 size={14} /> },
     { label: 'Link', icon: <Link2 size={14} /> },
+  ];
+
+  const viewMenu: MenuItem[] = [
+    { label: filesOpen ? 'Hide File Explorer' : 'Show File Explorer', icon: filesOpen ? <EyeOff size={14} /> : <Eye size={14} />, action: () => dispatch(toggleSidebar()), shortcut: 'Ctrl+Shift+B' },
+    { label: pdfOpen ? 'Hide PDF' : 'Show PDF', icon: pdfOpen ? <EyeOff size={14} /> : <Eye size={14} />, action: () => dispatch(togglePdf()), shortcut: 'Ctrl+B' },
+    { label: terminalOpen ? 'Hide Terminal' : 'Show Terminal', icon: <Terminal size={14} />, action: () => dispatch(toggleTerminal()), shortcut: 'Ctrl+`' },
+    { divider: true },
+    { label: 'Search', icon: <Search size={14} />, action: onOpenSearch, shortcut: 'Ctrl+Shift+F' },
+    { label: 'Command Palette', icon: <Command size={14} />, action: onOpenCommandPalette, shortcut: 'Ctrl+K' },
+    { divider: true },
+    { label: 'Reset Layout', icon: <LayoutTemplate size={14} />, action: () => dispatch(resetLayout()) },
   ];
 
   const toolsMenu: MenuItem[] = [
@@ -168,100 +223,139 @@ export default function EditorHeader({
   };
 
   return (
-    <header className="h-11 flex items-center px-3 gap-1 relative z-50" style={{ background: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)' }}>
-      <div className="flex items-center gap-1 mr-2">
+    <header
+      className="flex items-center px-2 gap-0 relative z-50 select-none"
+      style={{
+        height: 44,
+        background: 'var(--color-surface)',
+        borderBottom: '1px solid var(--color-border)',
+      }}
+    >
+      {/* ── Left: Logo→Home + Menu bar ── */}
+      <div className="flex items-center gap-1">
+        <LogoHomeButton onClick={onBack} />
+
+        <div className="w-px h-5 mx-1" style={{ background: 'var(--color-border)' }} />
+
+        {/* Menu bar */}
+        <nav className="flex items-center gap-0 relative z-50">
+          {Object.keys(menus).map(menuName => (
+            <div key={menuName} className="relative">
+              <button
+                onClick={() => setActiveMenu(activeMenu === menuName ? null : menuName)}
+                onMouseEnter={() => activeMenu && setActiveMenu(menuName)}
+                className="px-2.5 py-1 text-[13px] rounded transition-colors"
+                style={{
+                  background: activeMenu === menuName ? 'var(--color-accent-soft)' : 'transparent',
+                  color: activeMenu === menuName ? 'var(--color-accent)' : 'var(--color-text-secondary)',
+                }}
+                onMouseOver={e => { if (activeMenu !== menuName) e.currentTarget.style.background = 'var(--color-surface-elevated)'; }}
+                onMouseOut={e => { if (activeMenu !== menuName) e.currentTarget.style.background = 'transparent'; }}
+              >
+                {menuName}
+              </button>
+              {activeMenu === menuName && <MenuDropdown items={menus[menuName]} onClose={closeMenu} />}
+            </div>
+          ))}
+        </nav>
+      </div>
+
+      {/* ── Center: Project name ── */}
+      <div className="flex-1 flex items-center justify-center min-w-0">
         <div
-          className="relative"
-          onMouseEnter={() => setLogoHovered(true)}
-          onMouseLeave={() => setLogoHovered(false)}
+          className="flex items-center gap-1.5 px-3 py-1 rounded-md text-sm font-medium truncate max-w-[300px]"
+          style={{ color: 'var(--color-text-primary)' }}
+          title={project.name}
         >
-          {/* Default: Logo + brand */}
-          <div className={clsx('flex items-center gap-1.5 transition-all duration-200', logoHovered ? 'opacity-0 blur-[3px] scale-90' : 'opacity-100 blur-0 scale-100')} style={{ pointerEvents: logoHovered ? 'none' : 'auto' }}>
-            <button onClick={onBack} className="flex items-center gap-1.5 rounded px-1.5 py-1 transition-colors hover:bg-[var(--color-surface-elevated)]" aria-label="Go to dashboard">
-              <BrandLogo alt="TexFlow" className="w-5 h-5 object-contain" />
-              <span className="text-sm font-bold tf-brand"><span className="tf-brand-tex">Tex</span><span className="tf-brand-flow">Flow</span></span>
-            </button>
-          </div>
-          {/* Hovered: Home icon */}
-          <div className={clsx('absolute inset-0 flex items-center justify-center transition-all duration-200', logoHovered ? 'opacity-100 blur-0 scale-100' : 'opacity-0 blur-[3px] scale-90')} style={{ pointerEvents: logoHovered ? 'auto' : 'none' }}>
-            <button onClick={onBack} className="flex items-center gap-1.5 rounded px-1.5 py-1 transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-primary)' }} aria-label="Back to dashboard">
-              <Home size={16} />
-            </button>
-          </div>
+          <span className="truncate">{project.name}</span>
         </div>
       </div>
 
-      <nav className="flex items-center gap-0 relative z-50">
-        {Object.keys(menus).map(menuName => (
-          <div key={menuName} className="relative">
-            <button
-              onClick={() => setActiveMenu(activeMenu === menuName ? null : menuName)}
-              onMouseEnter={() => activeMenu && setActiveMenu(menuName)}
-              className="px-2.5 py-1 text-xs font-medium rounded transition-colors"
-              style={{
-                background: activeMenu === menuName ? 'var(--color-accent-soft)' : 'transparent',
-                color: activeMenu === menuName ? 'var(--color-accent)' : 'var(--color-text-secondary)',
-              }}
-              onMouseOver={e => { if (activeMenu !== menuName) e.currentTarget.style.background = 'var(--color-surface-elevated)'; }}
-              onMouseOut={e => { if (activeMenu !== menuName) e.currentTarget.style.background = 'transparent'; }}
-            >
-              {menuName}
-            </button>
-            {activeMenu === menuName && <MenuDropdown items={menus[menuName]} onClose={closeMenu} />}
-          </div>
-        ))}
-      </nav>
-
-      <div className="ml-auto flex items-center gap-1">
-        {/* Project name */}
-        <div className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded cursor-pointer transition-colors hover:bg-[var(--color-surface-elevated)]" style={{ color: 'var(--color-text-primary)' }}>
-          {project.name}
-          <ChevronDown size={12} style={{ color: 'var(--color-text-muted)' }} />
-        </div>
-
-        <div className="w-px h-5 mx-1" style={{ background: 'var(--color-border)' }} />
-
-        <button onClick={onOpenCommandPalette} className="p-1.5 rounded transition-colors" style={{ color: 'var(--color-text-muted)' }} title="Command Palette (Ctrl+K)"
+      {/* ── Right: Actions ── */}
+      <div className="flex items-center gap-1">
+        <button
+          onClick={onToggleHistory}
+          className="p-1.5 rounded-md transition-colors"
+          style={{ color: 'var(--color-text-muted)' }}
           onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-elevated)'; e.currentTarget.style.color = 'var(--color-text-primary)'; }}
           onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)'; }}
+          title="History"
+          aria-label="History"
         >
-          <Command size={14} />
+          <History size={15} />
+        </button>
+
+        <button
+          onClick={onToggleComments}
+          className="p-1.5 rounded-md transition-colors"
+          style={{ color: 'var(--color-text-muted)' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-elevated)'; e.currentTarget.style.color = 'var(--color-text-primary)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)'; }}
+          title="Comments"
+          aria-label="Comments"
+        >
+          <MessageSquare size={15} />
+        </button>
+
+        <button
+          onClick={onOpenSearch}
+          className="p-1.5 rounded-md transition-colors"
+          style={{ color: 'var(--color-text-muted)' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-elevated)'; e.currentTarget.style.color = 'var(--color-text-primary)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)'; }}
+          title="Search (Ctrl+F)"
+          aria-label="Search"
+        >
+          <Search size={15} />
         </button>
 
         <div className="w-px h-5 mx-1" style={{ background: 'var(--color-border)' }} />
 
-        <button onClick={onToggleShare} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded transition-all" style={{ background: 'var(--color-accent)' }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-accent-hover)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'var(--color-accent)'; }}
+        {/* Share button */}
+        <button
+          onClick={onToggleShare}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium rounded-md transition-all"
+          style={{ background: 'var(--color-accent)', color: '#fff' }}
+          onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
           title="Share"
+          aria-label="Share project"
         >
-          <Share2 size={12} />
+          <Share2 size={13} />
           Share
         </button>
 
+        <div className="w-px h-5 mx-1" style={{ background: 'var(--color-border)' }} />
+
+        {/* Recompile button group */}
         <div className="relative z-50" ref={compileDropdownRef}>
-          <div className="inline-flex items-stretch overflow-hidden rounded-md border shadow-sm" style={{ borderColor: 'rgba(255,255,255,0.22)', background: 'var(--color-accent)' }}>
+          <div className="inline-flex items-stretch overflow-hidden rounded-md" style={{ border: '1px solid rgba(255,255,255,0.15)' }}>
             <button
               onClick={onCompile}
               disabled={compiling}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-60"
-              style={{ background: compiling ? 'var(--color-border)' : 'var(--color-accent)' }}
-              onMouseEnter={e => { if (!compiling) e.currentTarget.style.background = 'var(--color-accent-hover)'; }}
-              onMouseLeave={e => { if (!compiling) e.currentTarget.style.background = 'var(--color-accent)'; }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-white transition-colors disabled:opacity-60"
+              style={{ background: 'var(--color-accent)' }}
+              onMouseEnter={e => { if (!compiling) e.currentTarget.style.opacity = '0.85'; }}
+              onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
               title="Recompile (Ctrl+Enter)"
+              aria-label="Recompile"
             >
-              {compiling ? <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent" /> : <Play size={11} />}
+              {compiling ? (
+                <div className="animate-spin rounded-full h-3 w-3 border-[1.5px] border-white border-t-transparent" />
+              ) : (
+                <Play size={12} />
+              )}
               {compiling ? 'Compiling...' : 'Recompile'}
             </button>
             <button
               onClick={() => setShowCompileDropdown(p => !p)}
-              className="flex items-center justify-center px-2 py-1.5 text-white transition-colors border-l border-white/25 hover:bg-white/10 focus-visible:bg-white/15"
+              className="flex items-center justify-center px-2 py-1.5 text-white transition-colors border-l"
               style={{
-                background: compiling ? 'var(--color-border)' : 'var(--color-accent)',
+                background: 'var(--color-accent)',
                 borderColor: 'rgba(255,255,255,0.2)',
               }}
-              onMouseEnter={e => { if (!compiling) e.currentTarget.style.background = 'var(--color-accent-hover)'; }}
-              onMouseLeave={e => { if (!compiling) e.currentTarget.style.background = 'var(--color-accent)'; }}
+              onMouseEnter={e => { if (!compiling) e.currentTarget.style.opacity = '0.85'; }}
+              onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
               title="Compilation settings"
               aria-label="Compilation options"
               aria-haspopup="menu"

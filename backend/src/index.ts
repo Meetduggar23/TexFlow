@@ -12,6 +12,7 @@ import commentRoutes from './routes/comments';
 import shareRoutes from './routes/shares';
 import templateRoutes from './routes/templates';
 import userRoutes from './routes/users';
+import contactRoutes from './routes/contact';
 import { authenticate } from './middleware/auth';
 import jwt from 'jsonwebtoken';
 import helmet from 'helmet';
@@ -48,11 +49,17 @@ const compileLimiter = rateLimit({ windowMs: 60 * 1000, limit: 30, standardHeade
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/files', authenticate, fileRoutes);
-app.use('/api/compile', authenticate, compileLimiter, compileRoutes);
+// Compilation is rate limited, but generated PDF/log reads must remain cheap
+// and available even after the compile quota is reached.
+app.use('/api/compile', authenticate, (req, res, next) => {
+  if (req.method !== 'POST' || req.path.endsWith('/pdf')) return next();
+  return compileLimiter(req, res, next);
+}, compileRoutes);
 app.use('/api/comments', authenticate, commentRoutes);
 app.use('/api/shares', shareRoutes);
 app.use('/api/templates', templateRoutes);
 app.use('/api/users', authenticate, userRoutes);
+app.use('/api/contact', contactRoutes);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -88,13 +95,18 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3001;
+const HOST = process.env.HOST || '0.0.0.0';
 
 async function main() {
   await prisma.$connect();
   console.log('Database connected');
   
-  server.listen(PORT, () => {
-    console.log(`TexFlow API running on port ${PORT}`);
+  await new Promise<void>((resolve, reject) => {
+    server.listen(Number(PORT), HOST, () => {
+      console.log(`TexFlow API running on ${HOST}:${PORT}`);
+      resolve();
+    });
+    server.on('error', reject);
   });
 }
 

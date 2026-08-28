@@ -26,6 +26,8 @@ interface EditorState {
   cursors: CursorPosition[];
   openTabs: EditorTab[];
   activeTabId: string | null;
+  /** Per-file content cache — always holds the latest content for each open file */
+  contentCache: Record<string, string>;
   sourceRevision: number;
   compiledRevision: number;
   lastSavedAt: number | null;
@@ -62,6 +64,34 @@ function saveCompileSettings(settings: CompileSettings, projectId?: string) {
   } catch {}
 }
 
+/**
+ * Validates that content is pure LaTeX source without line-number contamination.
+ * CodeMirror 6 renders line numbers in a separate .cm-gutters div, so
+ * doc.toString() never includes them. This is a safety-net assertion.
+ *
+ * Returns the content unchanged (it should already be clean).
+ */
+function validateEditorContent(content: string, fileId?: string): string {
+  const lines = content.split('\n');
+  const lineNumberPattern = /^\d+[\t ]/;
+  let contaminatedLines = 0;
+  const sampleSize = Math.min(lines.length, 20);
+  let nonEmptyCount = 0;
+  for (let i = 0; i < sampleSize; i++) {
+    if (lines[i].length === 0) continue;
+    nonEmptyCount++;
+    if (lineNumberPattern.test(lines[i])) contaminatedLines++;
+  }
+  if (nonEmptyCount > 0 && contaminatedLines / nonEmptyCount > 0.8) {
+    console.error(
+      `[TexFlow] CONTENT VALIDATION FAILED: Line-number contamination detected in file ${fileId || 'unknown'}. ` +
+      `${contaminatedLines}/${nonEmptyCount} sample lines start with "digits+whitespace". ` +
+      `Content must be pure LaTeX. First line: "${lines[0].slice(0, 80)}"`
+    );
+  }
+  return content;
+}
+
 const initialState: EditorState = {
   content: '',
   compiling: false,
@@ -69,6 +99,7 @@ const initialState: EditorState = {
   cursors: [],
   openTabs: [],
   activeTabId: null,
+  contentCache: {},
   sourceRevision: 0,
   compiledRevision: 0,
   lastSavedAt: null,
@@ -95,14 +126,88 @@ export const saveFile = createAsyncThunk(
   }
 );
 
+/**
+ * Save all dirty files AND the active tab before compiling.
+ * Uses getState() to always get the absolute latest content.
+ * The state parameter is just for initial dirty-tab detection;
+ * actual content is always re-read from the live store.
+ */
+async function saveAllDirtyFiles(
+  editorState: EditorState,
+  getState: () => any
+): Promise<boolean> {
+  const token = localStorage.getItem('token');
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  // Collect the files that need saving (using initial state for dirty detection)
+  const tabsToSave: { fileId: string; isActiveTab: boolean }[] = [];
+  for (const tab of editorState.openTabs) {
+    const isActiveTab = tab.fileId === editorState.activeTabId;
+    if (!tab.dirty && !isActiveTab) continue;
+    tabsToSave.push({ fileId: tab.fileId, isActiveTab });
+  }
+
+  if (tabsToSave.length === 0) return true;
+
+  // Now re-read the ABSOLUTE LATEST state and save each file
+  // Sequential saves prevent race conditions between parallel fetches
+  for (const { fileId, isActiveTab } of tabsToSave) {
+    const latestEditor = (getState() as any).editor as EditorState;
+    const rawContent = isActiveTab
+      ? latestEditor.content
+      : (latestEditor.contentCache[fileId] ?? '');
+    if (!rawContent && rawContent !== '') continue;
+    // Validate content is pure LaTeX before saving to server
+    const fileContent = validateEditorContent(rawContent, fileId);
+    try {
+      await fetch(`/api/files/${fileId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ content: fileContent }),
+      });
+    } catch {
+      console.warn(`[TexFlow] Failed to save file ${fileId} before compile`);
+    }
+  }
+  return true;
+}
+
 export const compileProject = createAsyncThunk(
   'editor/compileProject',
-  async (projectId: string, { getState }) => {
-    const state = getState() as { editor: EditorState; settings?: { compilation?: { compiler?: string; mainDocument?: string; timeout?: number } } };
-    const requestId = state.editor.compileRequestId + 1;
-    const sourceRevision = state.editor.sourceRevision;
-    const settings = state.editor.compileSettings;
+  async (projectId: string, { getState, dispatch }) => {
+    // ── Step 1: Save ALL dirty files + active tab with the absolute latest content ──
+    await saveAllDirtyFiles((getState() as any).editor, getState);
+
+    // ── Step 1b: Final defensive save — re-read state and save active tab one more time.
+    //     This ensures absolutely nothing is lost even if getState() changed between steps. ──
     const token = localStorage.getItem('token');
+    const tokenHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) tokenHeaders.Authorization = `Bearer ${token}`;
+    // Re-read state RIGHT NOW for the absolute latest content
+    const latestState = getState() as { editor: EditorState; settings?: { compilation?: { compiler?: string; mainDocument?: string; timeout?: number } } };
+    if (latestState.editor.activeTabId) {
+      // Validate content is pure LaTeX before saving to server
+      const validatedContent = validateEditorContent(latestState.editor.content, latestState.editor.activeTabId);
+      await fetch(`/api/files/${latestState.editor.activeTabId}`, {
+        method: 'PATCH',
+        headers: tokenHeaders,
+        body: JSON.stringify({ content: validatedContent }),
+      });
+    }
+
+    // Mark saved tabs as clean
+    for (const tab of latestState.editor.openTabs) {
+      if (tab.dirty) dispatch(markTabSaved(tab.fileId));
+    }
+
+    // ── Step 2: Compile ──
+    const requestId = latestState.editor.compileRequestId + 1;
+    const sourceRevision = latestState.editor.sourceRevision;
+    const settings = latestState.editor.compileSettings;
 
     const response = await fetch(`/api/compile/${projectId}`, {
       method: 'POST',
@@ -111,9 +216,9 @@ export const compileProject = createAsyncThunk(
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify({
-        compiler: state.settings?.compilation?.compiler || 'pdflatex',
-        mainDocument: state.settings?.compilation?.mainDocument || 'main.tex',
-        timeout: state.settings?.compilation?.timeout,
+        compiler: latestState.settings?.compilation?.compiler || 'pdflatex',
+        mainDocument: latestState.settings?.compilation?.mainDocument || 'main.tex',
+        timeout: latestState.settings?.compilation?.timeout,
         draft: settings.compileMode === 'draft',
         syntaxCheck: settings.syntaxCheck === 'check',
         errorHandling: settings.errorHandling,
@@ -166,12 +271,33 @@ export const compileProject = createAsyncThunk(
 
 export const cleanBuild = createAsyncThunk(
   'editor/cleanBuild',
-  async (projectId: string, { getState }) => {
-    const state = getState() as { editor: EditorState; settings?: { compilation?: { compiler?: string; mainDocument?: string; timeout?: number } } };
-    const requestId = state.editor.compileRequestId + 1;
-    const sourceRevision = state.editor.sourceRevision;
-    const settings = state.editor.compileSettings;
+  async (projectId: string, { getState, dispatch }) => {
+    // ── Step 1: Save ALL dirty files + active tab with the absolute latest content ──
+    await saveAllDirtyFiles((getState() as any).editor, getState);
+
+    // ── Step 1b: Final defensive save — re-read state and save active tab one more time ──
     const token = localStorage.getItem('token');
+    const tokenHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) tokenHeaders.Authorization = `Bearer ${token}`;
+    // Re-read state RIGHT NOW for the absolute latest content
+    const latestState = getState() as { editor: EditorState; settings?: { compilation?: { compiler?: string; mainDocument?: string; timeout?: number } } };
+    if (latestState.editor.activeTabId) {
+      // Validate content is pure LaTeX before saving to server
+      const validatedContent = validateEditorContent(latestState.editor.content, latestState.editor.activeTabId);
+      await fetch(`/api/files/${latestState.editor.activeTabId}`, {
+        method: 'PATCH',
+        headers: tokenHeaders,
+        body: JSON.stringify({ content: validatedContent }),
+      });
+    }
+
+    for (const tab of latestState.editor.openTabs) {
+      if (tab.dirty) dispatch(markTabSaved(tab.fileId));
+    }
+
+    const requestId = latestState.editor.compileRequestId + 1;
+    const sourceRevision = latestState.editor.sourceRevision;
+    const settings = latestState.editor.compileSettings;
 
     const response = await fetch(`/api/compile/${projectId}/clean`, {
       method: 'POST',
@@ -180,9 +306,9 @@ export const cleanBuild = createAsyncThunk(
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify({
-        compiler: state.settings?.compilation?.compiler || 'pdflatex',
-        mainDocument: state.settings?.compilation?.mainDocument || 'main.tex',
-        timeout: state.settings?.compilation?.timeout,
+        compiler: latestState.settings?.compilation?.compiler || 'pdflatex',
+        mainDocument: latestState.settings?.compilation?.mainDocument || 'main.tex',
+        timeout: latestState.settings?.compilation?.timeout,
         draft: settings.compileMode === 'draft',
         syntaxCheck: settings.syntaxCheck === 'check',
         errorHandling: settings.errorHandling,
@@ -254,10 +380,30 @@ const editorSlice = createSlice({
       state.content = action.payload;
       state.sourceRevision += 1;
       state.compileStatus = 'idle';
+      // Keep the per-file content cache in sync
       if (state.activeTabId) {
+        state.contentCache[state.activeTabId] = action.payload;
         const tab = state.openTabs.find(t => t.fileId === state.activeTabId);
         if (tab) tab.dirty = true;
       }
+    },
+    /**
+     * Switch to a different tab. Saves current content to cache,
+     * loads the target file's content from cache (or fallback).
+     * Always initializes cache entry so saveAllDirtyFiles never sees empty content.
+     */
+    switchTab(state, action: { payload: { fileId: string; content: string } }) {
+      const { fileId, content } = action.payload;
+      // Persist current tab's content to cache before switching
+      if (state.activeTabId) {
+        state.contentCache[state.activeTabId] = state.content;
+      }
+      state.activeTabId = fileId;
+      // Initialize cache for new file if not present (prevents empty-string fallback)
+      if (!(fileId in state.contentCache)) {
+        state.contentCache[fileId] = content;
+      }
+      state.content = state.contentCache[fileId];
     },
     setCursors(state, action) {
       state.cursors = action.payload;
@@ -278,15 +424,21 @@ const editorSlice = createSlice({
       state.compileResult = null;
     },
     openTab(state, action: { payload: { fileId: string; name: string; content?: string } }) {
-      const { fileId, name } = action.payload;
+      const { fileId, name, content } = action.payload;
       if (!state.openTabs.find(t => t.fileId === fileId)) {
         state.openTabs.push({ fileId, name, dirty: false });
+      }
+      // Initialize content cache for this file (only if no cached version exists)
+      if (content !== undefined && !(fileId in state.contentCache)) {
+        state.contentCache[fileId] = content;
       }
       state.activeTabId = fileId;
     },
     closeTab(state, action: { payload: string }) {
       const fileId = action.payload;
       state.openTabs = state.openTabs.filter(t => t.fileId !== fileId);
+      // Clean up content cache for closed tab
+      delete state.contentCache[fileId];
       if (state.activeTabId === fileId) {
         state.activeTabId = state.openTabs.length > 0 ? state.openTabs[state.openTabs.length - 1].fileId : null;
       }
@@ -300,8 +452,13 @@ const editorSlice = createSlice({
     },
     closeOtherTabs(state, action: { payload: string }) {
       const keepId = action.payload;
+      const keepSet = new Set([keepId]);
       state.openTabs = state.openTabs.filter(t => t.fileId === keepId);
       state.activeTabId = keepId;
+      // Clean up cache for closed tabs
+      for (const key of Object.keys(state.contentCache)) {
+        if (!keepSet.has(key)) delete state.contentCache[key];
+      }
     },
     markTabSaved(state, action: { payload: string }) {
       const tab = state.openTabs.find(t => t.fileId === action.payload);
@@ -447,6 +604,6 @@ export const {
   clearCompileResult, openTab, closeTab, setActiveTab,
   closeAllTabs, closeOtherTabs, markTabSaved, setSaving,
   setAutoCompile, setCompileMode, setSyntaxCheck, setErrorHandling,
-  initCompileSettings, setCompileStatus,
+  initCompileSettings, setCompileStatus, switchTab,
 } = editorSlice.actions;
 export default editorSlice.reducer;

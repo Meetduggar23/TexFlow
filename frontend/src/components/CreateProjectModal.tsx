@@ -47,7 +47,7 @@ const TEMPLATES: Record<string, { name: string; icon: any; desc: string; content
   },
   cv: {
     name: 'CV / Résumé', icon: User, desc: 'Professional curriculum vitae',
-    content: `\\documentclass[11pt]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage{enumitem}\n\\usepackage{hyperref}\n\\usepackage[margin=0.75in]{geometry}\n\\name{Your Name}\n\\address{Email: email@example.com \\\\ Phone: (555) 123-4567 \\\\ Location: City, State}\n\\date{}\n\\begin{document}\n\\maketitle\n\\section{Profile}\nExperienced professional with expertise in software development and project management.\n\\section{Education}\n\\textbf{University Name} \\hfill 2020--2024\\\\\nBachelor of Science in Computer Science\n\\section{Experience}\n\\textbf{Company Name} \\hfill 2023--2024\\\\\nSoftware Engineer\n\\begin{itemize}[nosep]\n\\item Developed and maintained web applications\n\\item Improved system performance by 40%\n\\end{itemize}\n\\section{Skills}\nProgramming: Python, Java, C++, JavaScript\\\\\nTools: Git, Docker, LaTeX, VS Code\n\\section{Projects}\n\\textbf{Project Name} -- Description of the project\n\\section{Certifications}\n\\begin{itemize}[nosep]\n\\item AWS Certified Developer\n\\end{itemize}\n\\end{document}`,
+    content: `\\documentclass[11pt]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage{enumitem}\n\\usepackage{hyperref}\n\\usepackage[margin=0.75in]{geometry}\n\\title{Your Name -- Curriculum Vitae}\n\\author{email@example.com \\\\ (555) 123-4567 \\\\ City, State}\n\\date{}\n\\begin{document}\n\\maketitle\n\\section{Profile}\nExperienced professional with expertise in software development and project management.\n\\section{Education}\n\\textbf{University Name} \\hfill 2020--2024\\\\\nBachelor of Science in Computer Science\n\\section{Experience}\n\\textbf{Company Name} \\hfill 2023--2024\\\\\nSoftware Engineer\n\\begin{itemize}[nosep]\n\\item Developed and maintained web applications\n\\item Improved system performance by 40%\n\\end{itemize}\n\\section{Skills}\nProgramming: Python, Java, C++, JavaScript\\\\\nTools: Git, Docker, LaTeX, VS Code\n\\section{Projects}\n\\textbf{Project Name} -- Description of the project\n\\section{Certifications}\n\\begin{itemize}[nosep]\n\\item AWS Certified Developer\n\\end{itemize}\n\\end{document}`,
   },
   thesis: {
     name: 'Thesis', icon: GraduationCap, desc: 'Complete thesis structure with chapters',
@@ -56,7 +56,8 @@ const TEMPLATES: Record<string, { name: string; icon: any; desc: string; content
   },
   markdown: {
     name: 'Markdown Document', icon: FileCode2, desc: 'Simple Markdown document',
-    content: `# My Document\n\n## Introduction\n\nThis is a Markdown document.\n\n## Getting Started\n\n### Prerequisites\n\n- Node.js\n- npm\n\n### Installation\n\n\\\`\\\`\\\`bash\nnpm install\n\\\`\\\`\\\`\n\n## Usage\n\n1. Step one\n2. Step two\n3. Step three\n\n## Features\n\n| Feature | Status |\n|---------|--------|\n| Feature A | Done |\n| Feature B | In Progress |\n\n## License\n\nMIT License\n`,
+    // This is intentionally LaTeX, because TexFlow's PDF pipeline is LaTeX-only.
+    content: `\\documentclass{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage{hyperref}\n\\title{My Document}\n\\author{TexFlow}\n\\date{\\today}\n\\begin{document}\n\\maketitle\n\\section{Introduction}\nThis document uses a simple, Markdown-like structure while compiling through the supported LaTeX pipeline.\n\\section{Getting Started}\n\\begin{itemize}\n\\item Node.js\n\\item npm\n\\end{itemize}\n\\section{Features}\nFeature A -- Done.\\\\\nFeature B -- In Progress.\n\\section{License}\nMIT License\n\\end{document}`,
   },
 };
 

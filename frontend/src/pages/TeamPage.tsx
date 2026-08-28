@@ -74,8 +74,8 @@ export default function TeamPage() {
 
   const roleColors: Record<string, string> = {
     owner: 'var(--color-accent)',
-    admin: '#3b82f6',
-    editor: '#a855f7',
+    admin: 'var(--color-accent)',
+    editor: 'var(--color-accent)',
     viewer: 'var(--color-text-muted)',
   };
 

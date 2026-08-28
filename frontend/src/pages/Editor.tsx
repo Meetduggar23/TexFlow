@@ -1,19 +1,19 @@
 import { useEffect, useCallback, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { store } from '../store';
 import {
   fetchProject, fetchFiles, setCurrentFile, clearCurrentProject,
-  updateFileInTree, updateFileContent, createFile,
+  updateFileInTree, createFile,
 } from '../store/projectSlice';
 import {
   setContent, compileProject, cleanBuild, openTab,
   closeTab,
   setSaving, markTabSaved,
   saveFile, setAutoCompile, initCompileSettings,
-  stopCompilation,
+  stopCompilation, switchTab,
 } from '../store/editorSlice';
 import { initLayout, toggleSidebar, togglePdf, toggleTerminal, setFilesWidth, setFilesWidthTransient, setFilesSidebarResizing, setPdfWidth, setPdfWidthTransient, setTerminalHeight } from '../store/uiSlice';
-import { COLLAPSED_RAIL_WIDTH } from '../store/uiSlice';
 import EditorHeader from '../components/EditorHeader';
 import FileTree from '../components/FileTree';
 import CodeEditor from '../components/CodeEditor';
@@ -30,17 +30,12 @@ import BibliographyManager from '../components/BibliographyManager';
 import ImageUploader from '../components/ImageUploader';
 import LinkDialog from '../components/LinkDialog';
 import ThemeSelector from '../components/ThemeSelector';
+import AuthModal from '../components/AuthModal';
 import useSocket from '../hooks/useSocket';
 import toast from 'react-hot-toast';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
-import {
-  ChevronRight, ChevronLeft, FileText, FolderPlus, Search,
-  FolderTree, MessageSquare, History, Settings, HelpCircle,
-  BookOpen, Mail,
-} from 'lucide-react';
 
-const AUTO_COMPILE_DELAY = 1000;
 const SAVE_COMPILE_DELAY = 500;
 
 export default function Editor() {
@@ -53,6 +48,7 @@ export default function Editor() {
     saving, compileStatus, sourceRevision, compiledRevision, compileSettings,
   } = useAppSelector(state => state.editor);
   const { filesOpen, filesWidth, isResizingFilesSidebar, pdfOpen, pdfWidth, terminalOpen, terminalHeight } = useAppSelector(state => state.ui);
+  const fileSettings = useAppSelector(state => state.settings.files);
 
   const [showComments, setShowComments] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -65,34 +61,37 @@ export default function Editor() {
   const [showImage, setShowImage] = useState(false);
   const [showLink, setShowLink] = useState(false);
   const [showThemeSelector, setShowThemeSelector] = useState(false);
-  const [isPdfResizing, setIsPdfResizing] = useState(false);
-  const [showHelpRailMenu, setShowHelpRailMenu] = useState(false);
-  const helpRailMenuRef = useRef<HTMLDivElement>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const socket = useSocket(projectId);
 
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) setShowAuthModal(true);
+  }, [projectId]);
+
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const compileTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const savePromiseRef = useRef<Promise<boolean> | null>(null);
   const lastSavedContentRef = useRef<string>('');
-  const isSavingRef = useRef(false);
   const contentRef = useRef(content);
   const currentFileRef = useRef(currentFile);
+  const activeTabIdRef = useRef(activeTabId);
+  const openTabsRef = useRef(openTabs);
   const insertSelectionRef = useRef<{ from: number; to: number } | null>(null);
   const autoCompileRef = useRef(compileSettings.autoCompile);
   const projectIdRef = useRef(projectId);
-  const filesResizeRef = useRef<HTMLDivElement>(null);
-  const filesWidthRef = useRef(filesWidth);
-  const terminalResizeRef = useRef<HTMLDivElement>(null);
-  const pdfResizeRef = useRef<HTMLDivElement>(null);
-  const workspaceRef = useRef<HTMLDivElement>(null);
+  const isTabSwitchingRef = useRef(false);
   const doSaveRef = useRef<() => void>(() => undefined);
   const handleCompileRef = useRef<() => void>(() => undefined);
+  const workspaceRef = useRef<HTMLDivElement>(null);
 
   contentRef.current = content;
   currentFileRef.current = currentFile;
+  activeTabIdRef.current = activeTabId;
+  openTabsRef.current = openTabs;
   autoCompileRef.current = compileSettings.autoCompile;
   projectIdRef.current = projectId;
-  filesWidthRef.current = filesWidth;
 
   useEffect(() => {
     if (projectId) {
@@ -105,6 +104,22 @@ export default function Editor() {
   }, [projectId, dispatch]);
 
   useEffect(() => {
+    const handleTabSwitch = (e: Event) => {
+      isTabSwitchingRef.current = true;
+      const detail = (e as CustomEvent<{ content?: string }>).detail;
+      if (detail?.content !== undefined) {
+        lastSavedContentRef.current = detail.content;
+      }
+    };
+    window.addEventListener('texflow:tab-switch', handleTabSwitch);
+    return () => window.removeEventListener('texflow:tab-switch', handleTabSwitch);
+  }, []);
+
+  useEffect(() => {
+    if (isTabSwitchingRef.current) {
+      isTabSwitchingRef.current = false;
+      return;
+    }
     if (currentFile?.content !== undefined) {
       dispatch(setContent(currentFile.content));
       dispatch(openTab({ fileId: currentFile.id, name: currentFile.name, content: currentFile.content }));
@@ -128,8 +143,6 @@ export default function Editor() {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'F') { e.preventDefault(); setShowSearch(p => !p); }
       if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); doSaveRef.current(); }
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); handleCompileRef.current(); }
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b' && !(e.target as HTMLElement).closest('.cm-editor')) { e.preventDefault(); dispatch(togglePdf()); }
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'B') { e.preventDefault(); dispatch(toggleSidebar()); }
       if ((e.ctrlKey || e.metaKey) && e.key === '`') { e.preventDefault(); dispatch(toggleTerminal()); }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') { e.preventDefault(); window.dispatchEvent(new CustomEvent('texflow:start-file-creation', { detail: 'file' })); }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'w') { e.preventDefault(); if (activeTabId) dispatch(closeTab(activeTabId)); }
@@ -139,43 +152,30 @@ export default function Editor() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeTabId, dispatch]);
 
-  // Close help rail menu on outside click
-  useEffect(() => {
-    if (!showHelpRailMenu) return;
-    const handleClick = (e: MouseEvent) => {
-      if (helpRailMenuRef.current && !helpRailMenuRef.current.contains(e.target as Node)) {
-        setShowHelpRailMenu(false);
-      }
-    };
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setShowHelpRailMenu(false);
-    };
-    document.addEventListener('mousedown', handleClick);
-    document.addEventListener('keydown', handleEscape);
-    return () => {
-      document.removeEventListener('mousedown', handleClick);
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [showHelpRailMenu]);
-
   const doSave = useCallback(async (): Promise<boolean> => {
-    const file = currentFileRef.current;
-    const currentContent = contentRef.current;
-    if (!file || isSavingRef.current) return false;
-    if (currentContent === lastSavedContentRef.current) return true;
-    isSavingRef.current = true;
-    dispatch(setSaving(true));
-    try {
-      await dispatch(saveFile({ fileId: file.id, content: currentContent })).unwrap();
-      lastSavedContentRef.current = currentContent;
-      dispatch(markTabSaved(file.id));
-      return true;
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to save changes');
-      return false;
-    } finally {
-      isSavingRef.current = false;
-    }
+    if (savePromiseRef.current) return savePromiseRef.current;
+    const tabId = activeTabIdRef.current;
+    if (!tabId) return true;
+    // Read the ABSOLUTE latest content directly from the Redux store
+    // instead of from a ref that might be stale during rapid typing.
+    const latestContent = store.getState().editor.content;
+    if (latestContent === lastSavedContentRef.current) return true;
+    const promise = (async () => {
+      dispatch(setSaving(true));
+      try {
+        await dispatch(saveFile({ fileId: tabId, content: latestContent })).unwrap();
+        lastSavedContentRef.current = latestContent;
+        dispatch(updateFileInTree({ fileId: tabId, content: latestContent }));
+        return true;
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Failed to save changes');
+        return false;
+      } finally {
+        savePromiseRef.current = null;
+      }
+    })();
+    savePromiseRef.current = promise;
+    return promise;
   }, [dispatch]);
 
   const doCompile = useCallback(async () => {
@@ -194,6 +194,7 @@ export default function Editor() {
 
   useEffect(() => {
     if (!currentFile) return;
+    if (!fileSettings.autosave) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     if (compileTimerRef.current) clearTimeout(compileTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
@@ -202,22 +203,24 @@ export default function Editor() {
           compileTimerRef.current = setTimeout(() => { doCompile(); }, SAVE_COMPILE_DELAY);
         }
       });
-    }, AUTO_COMPILE_DELAY);
+    }, Math.max(0.25, fileSettings.autosaveDelay) * 1000);
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       if (compileTimerRef.current) clearTimeout(compileTimerRef.current);
     };
-  }, [content, currentFile?.id, doSave, doCompile]);
+  }, [content, currentFile?.id, doSave, doCompile, fileSettings.autosave, fileSettings.autosaveDelay]);
 
   const handleContentChange = useCallback((newContent: string) => {
     dispatch(setContent(newContent));
-    if (socket && currentFile && projectId) {
+    if (socket && activeTabIdRef.current && projectId) {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
-      socket.emit('file-update', { projectId, fileId: currentFile.id, content: newContent, userId: user.id });
+      socket.emit('file-update', { projectId, fileId: activeTabIdRef.current, content: newContent, userId: user.id });
     }
-  }, [dispatch, socket, currentFile, projectId]);
+  }, [dispatch, socket, projectId]);
 
   const handleCompile = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) { setShowAuthModal(true); return; }
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     if (compileTimerRef.current) clearTimeout(compileTimerRef.current);
     await doSaveThenCompile();
@@ -246,6 +249,8 @@ export default function Editor() {
   }, [dispatch]);
 
   const handleSave = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) { setShowAuthModal(true); return; }
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     if (compileTimerRef.current) clearTimeout(compileTimerRef.current);
     await doSave();
@@ -267,9 +272,7 @@ export default function Editor() {
     if (!currentProject || !projectId) return;
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`/api/files/project/${projectId}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      const res = await fetch(`/api/files/project/${projectId}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
       const data = await res.json();
       const zip = new JSZip();
       for (const file of (data.files || [])) zip.file(file.path || file.name, file.content || '');
@@ -281,39 +284,52 @@ export default function Editor() {
   }, [currentProject, projectId]);
 
   const handleInsertLatex = useCallback((latex: string) => {
-    if (!currentFile) return;
+    if (!activeTabIdRef.current) return;
     const selection = insertSelectionRef.current;
     const from = selection ? Math.min(selection.from, content.length) : content.length;
     const to = selection ? Math.min(selection.to, content.length) : content.length;
     const prefix = from > 0 && content[from - 1] !== '\n' ? '\n' : '';
     const newContent = `${content.slice(0, from)}${prefix}${latex}${content.slice(to)}`;
     dispatch(setContent(newContent));
-    if (currentFile) dispatch(updateFileContent({ fileId: currentFile.id, content: newContent }));
     insertSelectionRef.current = null;
-  }, [currentFile, content, dispatch]);
+  }, [content, dispatch]);
 
   const handleNewFile = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.dispatchEvent(new CustomEvent('texflow:auth-required', { detail: { action: 'new-file' } }));
+      return;
+    }
     window.dispatchEvent(new CustomEvent('texflow:start-file-creation', { detail: 'file' }));
   }, []);
 
   const handleNewFolder = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.dispatchEvent(new CustomEvent('texflow:auth-required', { detail: { action: 'new-folder' } }));
+      return;
+    }
     window.dispatchEvent(new CustomEvent('texflow:start-file-creation', { detail: 'folder' }));
   }, []);
 
   const handleNavigateToLine = useCallback((_line: number) => {}, []);
+
+  /* ── Files sidebar resize ── */
+  const filesWidthRef = useRef(filesWidth);
+  filesWidthRef.current = filesWidth;
 
   const handleFilesResize = useCallback((e: React.PointerEvent) => {
     e.preventDefault();
     const handle = e.currentTarget;
     handle.setPointerCapture(e.pointerId);
     const startX = e.clientX;
-    const startWidth = filesWidth;
+    const startWidth = filesWidthRef.current;
+    let lastX = startX;
     dispatch(setFilesSidebarResizing(true));
     const onMove = (ev: PointerEvent) => {
+      lastX = ev.clientX;
       const delta = ev.clientX - startX;
-      const nextWidth = Math.max(180, Math.min(420, startWidth + delta));
-      filesWidthRef.current = nextWidth;
-      dispatch(setFilesWidthTransient(nextWidth));
+      dispatch(setFilesWidthTransient(Math.max(180, Math.min(420, startWidth + delta))));
     };
     const finish = (cancelled = false) => {
       window.removeEventListener('pointermove', onMove);
@@ -322,29 +338,29 @@ export default function Editor() {
       window.removeEventListener('keydown', onKeyDown);
       dispatch(setFilesSidebarResizing(false));
       if (cancelled) dispatch(setFilesWidth(startWidth));
-      else dispatch(setFilesWidth(filesWidthRef.current));
+      else dispatch(setFilesWidth(Math.max(180, Math.min(420, startWidth + (lastX - startX)))));
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
     };
     const onUp = () => finish();
     const onCancel = () => finish(true);
     const onKeyDown = (ev: KeyboardEvent) => { if (ev.key === 'Escape') { ev.preventDefault(); finish(true); } };
-    filesWidthRef.current = startWidth;
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
     window.addEventListener('pointercancel', onCancel);
     window.addEventListener('keydown', onKeyDown);
-  }, [filesWidth, dispatch]);
+  }, [dispatch]);
 
+  /* ── Terminal resize ── */
   const handleTerminalResize = useCallback((e: React.PointerEvent) => {
     e.preventDefault();
     const startY = e.clientY;
     const startHeight = terminalHeight;
     const onMove = (ev: PointerEvent) => {
       const delta = startY - ev.clientY;
-      dispatch(setTerminalHeight(startHeight + delta));
+      dispatch(setTerminalHeight(Math.max(100, Math.min(600, startHeight + delta))));
     };
     const finish = () => {
       window.removeEventListener('pointermove', onMove);
@@ -361,6 +377,7 @@ export default function Editor() {
     window.addEventListener('pointercancel', onCancel);
   }, [terminalHeight, dispatch]);
 
+  /* ── Code/PDF divider resize ── */
   const handlePdfResize = useCallback((e: React.PointerEvent) => {
     e.preventDefault();
     const workspace = workspaceRef.current;
@@ -388,13 +405,11 @@ export default function Editor() {
       if (handle.hasPointerCapture(e.pointerId)) handle.releasePointerCapture(e.pointerId);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
-      setIsPdfResizing(false);
       dispatch(setPdfWidth(cancelled ? startPdfWidth : currentPdfWidth));
     };
     const onUp = () => finish();
     const onCancel = () => finish(true);
     const onKeyDown = (ev: KeyboardEvent) => { if (ev.key === 'Escape') { ev.preventDefault(); onCancel(); } };
-    setIsPdfResizing(true);
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
     window.addEventListener('pointermove', onMove);
@@ -415,6 +430,7 @@ export default function Editor() {
 
   return (
     <div className="h-screen flex flex-col" style={{ background: 'var(--color-background)' }}>
+      {/* ── Top Header (Google Docs-style) ── */}
       <EditorHeader
         project={currentProject}
         onCompile={handleCompile}
@@ -433,133 +449,76 @@ export default function Editor() {
         onOpenCommandPalette={() => setShowCommandPalette(p => !p)}
       />
 
+      {/* ── Main Workspace ── */}
       <div className="flex-1 flex overflow-hidden" style={{ minHeight: 0 }}>
-        {/* Icon Rail - always visible */}
-        <div className="flex-shrink-0 flex flex-col items-center py-2 gap-1 border-r" style={{ width: 40, background: 'var(--color-background)', borderColor: 'var(--color-border)' }}>
-          <button
-            onClick={() => dispatch(toggleSidebar())}
-            className="p-2 rounded transition-colors"
-            style={{
-              background: filesOpen ? 'var(--color-accent)' : 'transparent',
-              color: filesOpen ? '#fff' : 'var(--color-text-muted)',
-            }}
-            title="TexFlow files"
-            aria-label="Toggle TexFlow files"
-          >
-            <FolderTree size={16} />
-          </button>
-          <button
-            onClick={() => setShowSearch(p => !p)}
-            className="p-2 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
-            style={{ color: 'var(--color-text-muted)' }}
-            title="Search (Ctrl+Shift+F)"
-            aria-label="Search"
-          >
-            <Search size={16} />
-          </button>
-          <button
-            onClick={() => setShowComments(p => !p)}
-            className="p-2 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
-            style={{ color: showComments ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
-            title="Comments"
-            aria-label="Comments"
-          >
-            <MessageSquare size={16} />
-          </button>
-          <button
-            onClick={() => setShowHistory(p => !p)}
-            className="p-2 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
-            style={{ color: showHistory ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
-            title="History"
-            aria-label="History"
-          >
-            <History size={16} />
-          </button>
-          <div className="flex-1" />
-          <div className="relative" ref={helpRailMenuRef}>
-            <button
-              onClick={() => setShowHelpRailMenu(p => !p)}
-              className="p-2 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
-              style={{ color: showHelpRailMenu ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
-              title="Help"
-              aria-label="Help"
-              aria-haspopup="menu"
-              aria-expanded={showHelpRailMenu}
-            >
-              <HelpCircle size={16} />
-            </button>
-            {showHelpRailMenu && (
-              <div
-                role="menu"
-                className="absolute left-full ml-2 bottom-0 z-50 w-52 rounded-lg border py-1 shadow-xl"
-                style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border-strong)' }}
-              >
-                {[
-                  { icon: <BookOpen size={14} />, label: 'Documentation', path: '/documentation' },
-                  { icon: <Mail size={14} />, label: 'Contact Us', path: '/contact' },
-                  { icon: <FileText size={14} />, label: 'Blog', path: '/blog' },
-                ].map((item) => (
-                  <button
-                    key={item.path}
-                    role="menuitem"
-                    onClick={() => { setShowHelpRailMenu(false); navigate(item.path); }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors"
-                    style={{ color: 'var(--color-text-secondary)' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'var(--color-surface-elevated)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                  >
-                    <span className="w-4 h-4 flex items-center justify-center">{item.icon}</span>
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <button
-            className="p-2 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
-            style={{ color: 'var(--color-text-muted)' }}
-            title="Settings"
-            aria-label="Settings"
-            onClick={() => navigate('/settings')}
-          >
-            <Settings size={16} />
-          </button>
-        </div>
 
-        {/* File Tree Panel */}
+        {/* ── Collapsed sidebar expand strip ── */}
+        {!filesOpen && (
+          <div
+            className="flex-shrink-0 flex items-center justify-center border-r cursor-pointer transition-colors"
+            style={{
+              width: 28,
+              background: 'var(--color-background)',
+              borderColor: 'var(--color-border)',
+            }}
+            onClick={() => dispatch(toggleSidebar())}
+            role="button"
+            tabIndex={0}
+            aria-label="Expand sidebar"
+            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); dispatch(toggleSidebar()); } }}
+          >
+            <svg
+              width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+              style={{ color: 'var(--color-text-muted)' }}
+              className="transition-transform hover:scale-110"
+            >
+              <path d="M4 2L8 6L4 10" />
+            </svg>
+          </div>
+        )}
+
+        {/* ── File Tree Panel ── */}
         <div
-          className="flex-shrink-0 border-r overflow-visible relative"
+          className="flex-shrink-0 overflow-hidden relative"
           style={{
             width: filesOpen ? filesWidth : 0,
             background: 'var(--color-background)',
-            borderRight: '1px solid rgba(0,0,0,0.3)',
+            borderRight: filesOpen ? '1px solid var(--color-border)' : 'none',
             transition: isResizingFilesSidebar ? 'none' : 'width 220ms cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
           <div className="h-full flex flex-col relative overflow-hidden" style={{ width: filesOpen ? filesWidth : 0 }}>
             <FileTree files={files} projectId={projectId!} onSearch={() => setShowSearch(p => !p)} />
-            {filesOpen && <div
-              ref={filesResizeRef}
-              className="absolute top-0 -right-1 w-2 h-full cursor-col-resize z-10"
-              role="separator"
-              tabIndex={0}
-              aria-label="Resize Files sidebar"
-              aria-orientation="vertical"
-              onKeyDown={e => {
-                if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-                e.preventDefault();
-                const amount = e.shiftKey ? 50 : 10;
-                dispatch(setFilesWidth(filesWidth + (e.key === 'ArrowRight' ? amount : -amount)));
-              }}
-              style={{ background: isResizingFilesSidebar ? 'var(--color-accent)' : 'transparent' }}
-              onPointerDown={handleFilesResize}
-              onMouseEnter={e => { if (!isResizingFilesSidebar) e.currentTarget.style.background = 'var(--color-surface-elevated)'; }}
-              onMouseLeave={e => { if (!isResizingFilesSidebar) e.currentTarget.style.background = 'transparent'; }}
-            />}
+            {filesOpen && (
+              <div
+                className="absolute top-0 -right-1.5 w-3 h-full cursor-col-resize z-10 group"
+                role="separator"
+                tabIndex={0}
+                aria-label="Resize file explorer"
+                aria-orientation="vertical"
+                onKeyDown={e => {
+                  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+                  e.preventDefault();
+                  const amount = e.shiftKey ? 50 : 10;
+                  dispatch(setFilesWidth(filesWidth + (e.key === 'ArrowRight' ? amount : -amount)));
+                }}
+                onPointerDown={handleFilesResize}
+              >
+                <div
+                  className="w-0.5 h-full mx-auto rounded-full transition-all group-hover:w-1 group-active:w-1"
+                  style={{ background: isResizingFilesSidebar ? 'var(--color-accent)' : 'var(--color-border)' }}
+                />
+              </div>
+            )}
           </div>
         </div>
 
-        <div ref={workspaceRef} className="flex-1 flex flex-col min-w-0 overflow-hidden">              <div className="flex-1 flex overflow-hidden" style={{ minHeight: 0 }}>
+        {/* ── Right workspace: Code + PDF + Terminal ── */}
+        <div ref={workspaceRef} className="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+          {/* ── Code + PDF row ── */}
+          <div className="flex-1 flex overflow-hidden" style={{ minHeight: 0 }}>
+            {/* ── Code Editor ── */}
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden" style={{ minWidth: 0 }}>
               <CodeEditor
                 content={content}
@@ -577,11 +536,11 @@ export default function Editor() {
               />
             </div>
 
-            {/* PDF Divider — draggable, follows pointer directly */}
+            {/* ── Code/PDF Divider ── */}
             {pdfOpen && (
               <div
-                ref={pdfResizeRef}
-                className={`pdf-divider flex-shrink-0 ${isPdfResizing ? 'dragging' : ''}`}
+                className="flex-shrink-0 cursor-col-resize relative group"
+                style={{ width: 5, background: 'var(--color-border)', touchAction: 'none' }}
                 role="separator"
                 tabIndex={0}
                 aria-label="Resize code and PDF panels"
@@ -596,46 +555,68 @@ export default function Editor() {
                   const workspace = workspaceRef.current;
                   const amountPx = e.shiftKey ? 50 : 10;
                   const amount = workspace ? (amountPx / workspace.getBoundingClientRect().width) * 100 : 2;
-                  // ArrowLeft = divider moves left = Code gets smaller, PDF gets bigger
-                  // ArrowRight = divider moves right = Code gets bigger, PDF gets smaller
                   dispatch(setPdfWidth(pdfWidth + (e.key === 'ArrowLeft' ? amount : -amount)));
                 }}
-              />
+              >
+                <div
+                  className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 rounded-full transition-all group-hover:w-1 group-active:w-1"
+                  style={{ background: 'transparent' }}
+                />
+              </div>
             )}
 
-            {/* PDF not open - show expand button */}
+            {/* ── PDF not open — small expand button ── */}
             {!pdfOpen && (
-              <div className="flex-shrink-0 flex flex-col items-center justify-center" style={{ width: 24, background: 'var(--color-background)', borderLeft: '1px solid rgba(0,0,0,0.3)' }}>
+              <div
+                className="flex-shrink-0 flex flex-col items-center justify-center border-l"
+                style={{ width: 28, background: 'var(--color-background)', borderColor: 'var(--color-border)' }}
+              >
                 <button
                   onClick={() => dispatch(togglePdf())}
-                  className="p-1 rounded transition-colors hover:bg-[var(--color-accent-soft)]"
+                  className="p-1 rounded transition-colors hover:bg-[var(--color-surface-elevated)]"
                   style={{ color: 'var(--color-accent)' }}
-                  title="Show PDF"
-                  aria-label="Show PDF"
+                  title="Show PDF Preview"
+                  aria-label="Show PDF preview"
                 >
-                  <ChevronLeft size={14} />
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M8 2L4 6L8 10" />
+                  </svg>
                 </button>
               </div>
             )}
 
+            {/* ── PDF Preview Panel ── */}
             {pdfOpen && (
-              <div className="flex flex-col overflow-hidden flex-shrink-0" style={{ width: `${pdfWidth}%`, minWidth: 0, background: 'var(--color-surface)' }}>
-                <PDFViewer projectId={projectId!} />
+              <div
+                className="flex flex-col overflow-hidden flex-shrink-0"
+                style={{ width: `${pdfWidth}%`, minWidth: 0, background: 'var(--color-surface)' }}
+              >
+                <PDFViewer projectId={projectId!} onRecompile={handleCompile} />
               </div>
             )}
           </div>
 
+          {/* ── Terminal Divider ── */}
           {terminalOpen && (
             <div
-              ref={terminalResizeRef}
-              className="terminal-resize-handle flex-shrink-0"
+              className="flex-shrink-0 cursor-row-resize relative group"
+              style={{ height: 5, background: 'var(--color-border)', touchAction: 'none' }}
               onPointerDown={handleTerminalResize}
-            />
+              role="separator"
+              aria-label="Resize terminal"
+              aria-orientation="horizontal"
+            >
+              <div
+                className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-0.5 rounded-full transition-all group-hover:h-1 group-active:h-1"
+                style={{ background: 'transparent' }}
+              />
+            </div>
           )}
 
+          {/* ── Terminal Panel ── */}
           <div
             style={{
-              height: terminalOpen ? terminalHeight : 36,
+              height: terminalOpen ? terminalHeight : 38,
               flexShrink: 0,
               transition: 'height 220ms cubic-bezier(0.4, 0, 0.2, 1)',
               overflow: 'hidden',
@@ -643,19 +624,24 @@ export default function Editor() {
           >
             <TerminalPanel onNavigateToLine={handleNavigateToLine} />
           </div>
-        </div>            {showComments && (
-          <aside className="flex-shrink-0 border-l overflow-hidden" style={{ width: 320, borderColor: 'rgba(0,0,0,0.3)' }}>
+        </div>
+
+        {/* ── Comments Sidebar ── */}
+        {showComments && (
+          <aside className="flex-shrink-0 border-l overflow-hidden" style={{ width: 320, borderColor: 'var(--color-border)' }}>
             <CommentsPanel projectId={projectId!} onClose={() => setShowComments(false)} />
           </aside>
         )}
 
+        {/* ── History Sidebar ── */}
         {showHistory && (
-          <aside className="flex-shrink-0 border-l overflow-hidden" style={{ width: 320, borderColor: 'rgba(0,0,0,0.3)' }}>
+          <aside className="flex-shrink-0 border-l overflow-hidden" style={{ width: 320, borderColor: 'var(--color-border)' }}>
             <HistoryPanel onClose={() => setShowHistory(false)} />
           </aside>
         )}
       </div>
 
+      {/* ── Overlays ── */}
       {showSearch && <SearchPanel onClose={() => setShowSearch(false)} onNavigateToFile={() => {}} />}
       {showCommandPalette && (
         <CommandPalette
@@ -678,6 +664,7 @@ export default function Editor() {
       {showLink && <LinkDialog onInsert={handleInsertLatex} onClose={() => setShowLink(false)} />}
       {showShare && <ShareDialog onClose={() => setShowShare(false)} />}
       {showThemeSelector && <ThemeSelector onClose={() => setShowThemeSelector(false)} />}
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onSuccess={() => {}} />}
     </div>
   );
 }

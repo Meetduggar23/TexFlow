@@ -19,6 +19,10 @@ router.get('/notifications', async (req: AuthRequest, res: Response) => {
 
 router.patch('/notifications/:id/read', async (req: AuthRequest, res: Response) => {
   try {
+    const notification = await prisma.notification.findUnique({ where: { id: req.params.id }, select: { userId: true } });
+    if (!notification) return res.status(404).json({ error: 'Notification not found' });
+    if (notification.userId !== req.userId) return res.status(403).json({ error: 'Not authorized' });
+    
     await prisma.notification.update({
       where: { id: req.params.id },
       data: { read: true }

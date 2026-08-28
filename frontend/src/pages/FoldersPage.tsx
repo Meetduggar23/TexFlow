@@ -4,6 +4,7 @@ import { FolderOpen, Plus, Pencil, Trash2, X, ChevronRight, Folder } from 'lucid
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { fetchProjects } from '../store/projectSlice';
 import toast from 'react-hot-toast';
+import { useDialog } from '../components/DialogProvider';
 
 const FOLDERS_KEY = 'texflow-folders';
 
@@ -34,6 +35,7 @@ export default function FoldersPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [folderName, setFolderName] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const { confirm } = useDialog();
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { dispatch(fetchProjects()); }, [dispatch]);
@@ -57,10 +59,10 @@ export default function FoldersPage() {
     setEditingId(null);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     const folder = folders.find(f => f.id === id);
     if (folder && folder.projectIds.length > 0) {
-      if (!confirm(`Delete "${folder.name}"? ${folder.projectIds.length} project(s) will be ungrouped but not deleted.`)) return;
+      if (!(await confirm({ title: 'Delete folder?', message: `Delete "${folder.name}"? ${folder.projectIds.length} project(s) will be ungrouped but not deleted.`, confirmText: 'Delete', danger: true }))) return;
     }
     setFolders(prev => { const updated = prev.filter(f => f.id !== id); saveFolders(updated); return updated; });
     if (expandedId === id) setExpandedId(null);

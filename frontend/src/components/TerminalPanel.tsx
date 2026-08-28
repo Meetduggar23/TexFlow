@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Terminal, ChevronUp, ChevronDown, AlertCircle, AlertTriangle, X, Trash2 } from 'lucide-react';
+import { Terminal, ChevronUp, ChevronDown, AlertCircle, AlertTriangle, Trash2 } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { setTerminalOpen } from '../store/uiSlice';
 import clsx from 'clsx';
@@ -36,9 +36,10 @@ export default function TerminalPanel({ onNavigateToLine }: TerminalPanelProps) 
 
   return (
     <div className="h-full flex flex-col" style={{ background: 'var(--color-surface)' }}>
+      {/* ── Terminal Header ── */}
       <div
-        className="flex items-center justify-between px-3 py-1.5 cursor-pointer select-none flex-shrink-0 border-t border-[var(--color-border)]"
-        style={{ background: 'var(--color-background)', height: 36 }}
+        className="flex items-center justify-between px-3 cursor-pointer select-none flex-shrink-0 border-t"
+        style={{ background: 'var(--color-background)', borderColor: 'var(--color-border)', height: 38 }}
         onClick={() => dispatch(setTerminalOpen(!terminalOpen))}
       >
         <div className="flex items-center gap-2">
@@ -59,7 +60,7 @@ export default function TerminalPanel({ onNavigateToLine }: TerminalPanelProps) 
           {terminalOpen && (
             <button
               onClick={(e) => { e.stopPropagation(); dispatch(setTerminalOpen(false)); }}
-              className="p-0.5 rounded hover:bg-[var(--color-surface-secondary)]"
+              className="p-0.5 rounded hover:bg-[var(--color-surface-elevated)]"
               title="Collapse terminal"
               aria-label="Collapse terminal"
             >
@@ -72,16 +73,18 @@ export default function TerminalPanel({ onNavigateToLine }: TerminalPanelProps) 
         </div>
       </div>
 
+      {/* ── Terminal Body ── */}
       {terminalOpen && (
         <div className="flex-1 flex flex-col overflow-hidden min-h-0">
-          <div className="flex items-center gap-1 px-3 py-1 border-b border-[var(--color-border)] flex-shrink-0" style={{ background: 'var(--color-surface)' }}>
+          {/* Tab bar */}
+          <div className="flex items-center gap-1 px-3 py-1 border-b flex-shrink-0" style={{ borderColor: 'var(--color-border)' }}>
             {(['logs', 'errors', 'warnings'] as const).map(tab => (
               <button
                 key={tab}
                 onClick={(e) => { e.stopPropagation(); setActiveTab(tab); }}
-                className={clsx('px-2.5 py-1 text-[11px] font-medium rounded transition-colors capitalize')}
+                className="px-2.5 py-1 text-[11px] font-medium rounded transition-colors capitalize"
                 style={activeTab === tab
-                  ? { background: tab === 'errors' ? 'rgba(220,38,38,0.1)' : tab === 'warnings' ? 'rgba(234,179,8,0.1)' : 'var(--color-surface-secondary)', color: 'var(--color-text-primary)' }
+                  ? { background: tab === 'errors' ? 'rgba(220,38,38,0.1)' : tab === 'warnings' ? 'rgba(234,179,8,0.1)' : 'var(--color-surface-elevated)', color: 'var(--color-text-primary)' }
                   : { color: 'var(--color-text-muted)' }
                 }
               >
@@ -93,13 +96,15 @@ export default function TerminalPanel({ onNavigateToLine }: TerminalPanelProps) 
             <div className="flex-1" />
             <button
               onClick={(e) => { e.stopPropagation(); }}
-              className="p-1 rounded hover:bg-[var(--color-surface-secondary)]"
+              className="p-1 rounded hover:bg-[var(--color-surface-elevated)]"
               title="Clear logs"
               aria-label="Clear logs"
             >
               <Trash2 size={11} style={{ color: 'var(--color-text-disabled)' }} />
             </button>
           </div>
+
+          {/* Log content */}
           <div ref={logsRef} className="flex-1 overflow-auto p-3 font-mono text-[12px] leading-relaxed min-h-0">
             {activeTab === 'logs' && (
               <pre style={{ color: 'var(--color-text-secondary)' }}>
@@ -116,7 +121,7 @@ export default function TerminalPanel({ onNavigateToLine }: TerminalPanelProps) 
                     onClick={() => handleErrorClick(error.line)}
                     className={clsx(
                       'flex items-start gap-2 rounded px-2 py-1 transition-colors',
-                      error.line > 0 && 'cursor-pointer hover:bg-[var(--color-surface-secondary)]'
+                      error.line > 0 && 'cursor-pointer hover:bg-[var(--color-surface-elevated)]'
                     )}
                     style={{ color: 'var(--color-error)' }}
                   >
@@ -140,7 +145,7 @@ export default function TerminalPanel({ onNavigateToLine }: TerminalPanelProps) 
                     onClick={() => handleErrorClick(warning.line)}
                     className={clsx(
                       'flex items-start gap-2 rounded px-2 py-1 transition-colors',
-                      warning.line > 0 && 'cursor-pointer hover:bg-[var(--color-surface-secondary)]'
+                      warning.line > 0 && 'cursor-pointer hover:bg-[var(--color-surface-elevated)]'
                     )}
                     style={{ color: 'var(--color-warning)' }}
                   >

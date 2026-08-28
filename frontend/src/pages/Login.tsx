@@ -17,6 +17,7 @@ export default function Login() {
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
@@ -35,9 +36,9 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-dark-900 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-gradient-to-b from-texflow-900/30 to-dark-900" />
-      <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-texflow-600/5 rounded-full blur-[100px]" />
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--color-background)', color: 'var(--color-text-primary)' }}>
+      <div className="absolute inset-0 opacity-30" style={{ background: 'linear-gradient(to bottom, var(--color-accent-soft), transparent)' }} />
+      <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full blur-[100px]" style={{ background: 'var(--color-accent-soft)' }} />
       
       <div className="relative w-full max-w-md">
         <div className="text-center mb-8">
@@ -45,16 +46,16 @@ export default function Login() {
             <BrandLogo className="w-10 h-10 object-contain" />
             <span className="text-2xl font-bold tf-brand"><span className="tf-brand-tex">Tex</span><span className="tf-brand-flow">Flow</span></span>
           </Link>
-          <h1 className="text-2xl font-bold text-texflow-900 mb-2">Welcome back</h1>
-          <p className="text-texflow-600">Sign in to your account</p>
+          <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>Welcome back</h1>
+          <p style={{ color: 'var(--color-text-muted)' }}>Sign in to your account</p>
         </div>
 
         <div className="card">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-texflow-700 mb-1.5">Email</label>
+              <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>Email</label>
               <div className="relative">
-                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-texflow-500" />
+                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--color-text-muted)' }} />
                 <input
                   type="email"
                   value={email}
@@ -67,9 +68,9 @@ export default function Login() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-texflow-700 mb-1.5">Password</label>
+              <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>Password</label>
               <div className="relative">
-                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-texflow-500" />
+                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--color-text-muted)' }} />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
@@ -81,7 +82,7 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-texflow-500 hover:text-texflow-900"
+                  className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--color-text-muted)' }}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -102,9 +103,9 @@ export default function Login() {
           </form>
         </div>
 
-        <p className="text-center text-sm text-texflow-600 mt-6">
+        <p className="text-center text-sm mt-6" style={{ color: 'var(--color-text-muted)' }}>
           Don't have an account?{' '}
-          <Link to="/signup" className="text-texflow-400 hover:text-texflow-300 font-medium">
+          <Link to="/signup" className="font-medium" style={{ color: 'var(--color-accent)' }}>
             Sign up
           </Link>
         </p>

@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@prisma/client": "^5.10.0",
-    "@types/archiver": "^8.0.0",
+    "@types/unzipper": "^0.10.11",
     "archiver": "^8.0.0",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",
@@ -21,10 +21,12 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "socket.io": "^4.7.4",
+    "unzipper": "^0.12.5",
     "uuid": "^9.0.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@types/archiver": "^8.0.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/cookie-parser": "^1.4.6",
     "@types/cors": "^2.8.17",

@@ -32,10 +32,21 @@ export default function ContactPage() {
     e.preventDefault();
     if (!validate()) return;
     setSending(true);
-    await new Promise(r => setTimeout(r, 1200));
-    setSending(false);
-    setSent(true);
-    toast.success('Message sent successfully!');
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, subject, category, message }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send message');
+      setSending(false);
+      setSent(true);
+      toast.success('Message sent successfully!');
+    } catch (err: any) {
+      setSending(false);
+      toast.error(err.message || 'Failed to send message');
+    }
   };
 
   return (
@@ -74,8 +85,8 @@ export default function ContactPage() {
           <div className="lg:col-span-3">
             {sent ? (
               <div className="rounded-xl border p-8 text-center" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
-                <div className="w-12 h-12 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'rgba(16,185,129,0.12)' }}>
-                  <Check size={24} style={{ color: '#10B981' }} />
+                <div className="w-12 h-12 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'var(--color-accent-soft)' }}>
+                  <Check size={24} style={{ color: 'var(--color-accent)' }} />
                 </div>
                 <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>Message sent successfully!</h3>
                 <p className="text-[13px] mb-6" style={{ color: 'var(--color-text-muted)' }}>Thanks for contacting TexFlow. We'll get back to you soon.</p>

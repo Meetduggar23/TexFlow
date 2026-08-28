@@ -23,9 +23,9 @@ interface ProjectMember {
 }
 
 const roleConfig: Record<ShareRole, { label: string; color: string; bg: string; border: string; icon: typeof Shield }> = {
-  editor: { label: 'Can edit', color: '#FF4C29', bg: 'rgba(255,76,41,0.08)', border: 'rgba(255,76,41,0.2)', icon: Shield },
-  commenter: { label: 'Can comment', color: '#3B82F6', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.2)', icon: Shield },
-  viewer: { label: 'Can view', color: '#10B981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.2)', icon: Shield },
+  editor: { label: 'Can edit', color: 'var(--color-accent)', bg: 'var(--color-accent-soft)', border: 'var(--color-accent)', icon: Shield },
+  commenter: { label: 'Can comment', color: 'var(--color-accent)', bg: 'var(--color-accent-soft)', border: 'var(--color-accent)', icon: Shield },
+  viewer: { label: 'Can view', color: 'var(--color-accent)', bg: 'var(--color-accent-soft)', border: 'var(--color-accent)', icon: Shield },
 };
 
 export default function ShareDialog({ onClose }: ShareDialogProps) {
@@ -58,7 +58,7 @@ export default function ShareDialog({ onClose }: ShareDialogProps) {
   };
 
   const getAvatarColor = (index: number) => {
-    const colors = ['#FF4C29', '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EC4899'];
+    const colors = ['var(--color-accent)', 'var(--color-accent-hover)', 'var(--color-text-muted)', 'var(--color-text-secondary)', 'var(--color-accent)', 'var(--color-accent-hover)'];
     return colors[index % colors.length];
   };
 
@@ -309,11 +309,11 @@ export default function ShareDialog({ onClose }: ShareDialogProps) {
               <div className="flex items-center gap-3">
                 <div
                   className="flex h-9 w-9 items-center justify-center rounded-lg"
-                  style={{ background: shareLink ? 'rgba(16,185,129,0.12)' : 'var(--color-surface-elevated)' }}
+                  style={{ background: shareLink ? 'var(--color-accent-soft)' : 'var(--color-surface-elevated)' }}
                 >
                   <Link2
                     size={18}
-                    style={{ color: shareLink ? '#10B981' : 'var(--color-text-muted)' }}
+                    style={{ color: shareLink ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
                   />
                 </div>
                 <div>
@@ -329,7 +329,7 @@ export default function ShareDialog({ onClose }: ShareDialogProps) {
                 {shareLink && (
                   <span
                     className="text-xs font-medium px-2 py-1 rounded-full"
-                    style={{ background: 'rgba(16,185,129,0.12)', color: '#10B981' }}
+                    style={{ background: 'var(--color-accent-soft)', color: 'var(--color-accent)' }}
                   >
                     Active
                   </span>
@@ -340,8 +340,8 @@ export default function ShareDialog({ onClose }: ShareDialogProps) {
                     onClick={handleCopyLink}
                     className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-all"
                     style={{
-                      background: copied ? 'rgba(16,185,129,0.12)' : 'var(--color-surface-elevated)',
-                      color: copied ? '#10B981' : 'var(--color-text-primary)',
+                      background: copied ? 'var(--color-accent-soft)' : 'var(--color-surface-elevated)',
+                      color: copied ? 'var(--color-accent)' : 'var(--color-text-primary)',
                       border: '1px solid var(--color-border)',
                     }}
                     onMouseEnter={e => {
@@ -395,7 +395,7 @@ export default function ShareDialog({ onClose }: ShareDialogProps) {
                   type="button"
                   onClick={handleCopyLink}
                   className="rounded-md p-1.5 transition-colors"
-                  style={{ color: copied ? '#10B981' : 'var(--color-text-muted)' }}
+                  style={{ color: copied ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
                   onMouseEnter={e => {
                     e.currentTarget.style.background = 'var(--color-surface-elevated)';
                   }}

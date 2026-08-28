@@ -124,70 +124,74 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   background-color: var(--color-background);
   border-right: 1px solid var(--color-border);
   color: var(--color-text-muted);
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
-.cm-editor .cm-content { caret-color: var(--color-accent); color: var(--color-text-primary) !important; }
-.cm-editor .cm-activeLine { background-color: rgba(255, 255, 255, 0.05); color: var(--color-text-primary); }
-.cm-editor .cm-activeLineGutter { background-color: rgba(255, 76, 41, 0.12); }
+/* Gutter numbers are never part of the document selection. Keep their own
+   background stable even when the complete source is selected. */
+.cm-editor .cm-gutterElement,
+.cm-editor .cm-lineNumbers .cm-gutterElement {
+  background: transparent !important;
+  color: var(--tf-editor-line-number) !important;
+}
+
+.cm-editor .cm-lineNumbers,
+.cm-editor .cm-lineNumbers .cm-gutterElement {
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.cm-editor .cm-foldGutter .cm-gutterElement,
+.cm-editor .cm-gutters .cm-foldGutter {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.cm-editor .cm-content {
+  caret-color: var(--color-accent);
+  color: var(--color-text-primary) !important;
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+}
+.cm-editor .cm-line { user-select: text; -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; color: var(--color-text-primary) !important; }
+.cm-editor .cm-activeLine { background-color: color-mix(in srgb, var(--tf-editor-selection) 22%, transparent); color: var(--color-text-primary); }
+.cm-editor .cm-activeLineGutter { background-color: color-mix(in srgb, var(--tf-editor-selection) 55%, transparent); }
 .cm-editor .cm-activeLine .cm-gutterElement, .cm-editor .cm-activeLineGutter .cm-gutterElement { color: var(--color-accent) !important; }
-.cm-editor .cm-selectionBackground { background-color: rgba(255, 76, 41, 0.20) !important; }
-.cm-editor.cm-focused .cm-selectionBackground { background-color: rgba(255, 76, 41, 0.24) !important; }
-.cm-editor .cm-matchingBracket { background-color: rgba(255, 76, 41, 0.15); outline: 1px solid rgba(255, 76, 41, 0.4); }
-.cm-editor .cm-cursor { border-left: 2px solid var(--color-accent); }
+.cm-editor .cm-selectionBackground { background-color: var(--tf-editor-selection) !important; }
+.cm-editor.cm-focused .cm-selectionBackground { background-color: var(--tf-editor-selection) !important; }
+.cm-editor .cm-matchingBracket { background-color: color-mix(in srgb, var(--tf-editor-selection) 65%, transparent); outline: 1px solid var(--tf-editor-cursor); }
+.cm-editor .cm-cursor { border-left: 2px solid var(--tf-editor-cursor); }
 
-/* Split handle */
-.editor-split-handle {
-  width: 5px;
-  flex: 0 0 5px;
-  cursor: col-resize;
-  background: var(--color-border);
+/* Split handles — Google Docs-style smooth resize */
+[role="separator"][aria-orientation="vertical"] {
   touch-action: none;
-  transition: background-color 150ms ease;
+  user-select: none;
 }
 
-.editor-split-handle:hover,
-.editor-split-handle:active {
-  background: var(--color-accent);
-}
-
-/* PDF/Code divider */
-.pdf-divider {
-  width: 1px;
-  flex-shrink: 0;
-  cursor: col-resize;
+[role="separator"][aria-orientation="horizontal"] {
   touch-action: none;
-  background: var(--color-border);
-  transition: background-color 150ms ease;
-  position: relative;
+  user-select: none;
 }
 
-.pdf-divider::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: -4px;
-  right: -4px;
+/* Hover indicator for splitters */
+[role="separator"]:hover > div,
+[role="separator"]:active > div {
+  background: var(--color-accent) !important;
+  width: 1px !important;
 }
 
-.pdf-divider:hover,
-.pdf-divider.dragging {
-  background: var(--color-accent);
-}
-
-/* Terminal resize handle */
-.terminal-resize-handle {
-  height: 4px;
-  flex: 0 0 4px;
-  cursor: row-resize;
-  touch-action: none;
-  transition: background-color 150ms ease;
-}
-
-.terminal-resize-handle:hover,
-.terminal-resize-handle:active {
-  background: var(--color-accent);
-}
+/* Keep the browser's normal cursor behavior. Resize handlers set their own
+   cursor only while an actual drag is active. */
 
 /* Scrollbars */
 ::-webkit-scrollbar { width: 7px; height: 7px; }
@@ -328,5 +332,3 @@ input[type="checkbox"] { cursor: pointer; accent-color: var(--color-accent); }
   html, body, #root { min-height: 100%; }
   .card { padding: 20px; }
 }
-
-

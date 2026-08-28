@@ -29,6 +29,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
@@ -52,13 +53,14 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
     if (!name) newErrors.name = 'Name is required';
     if (!email) newErrors.email = 'Email is required';
     if (!password) newErrors.password = 'Password is required';
-    else if (password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+    else if (password.length < 8) newErrors.password = 'Password must be at least 8 characters';
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
     setErrors({});
     setLoading(true);
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, name }),
       });
@@ -178,7 +180,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
                   <input type="password" value={password} onChange={(e) => { setPassword(e.target.value); setErrors(p => ({ ...p, password: undefined })); }} placeholder="Create a password"
                     className="w-full pl-10 pr-4 py-2.5 text-sm rounded-lg transition-all focus:outline-none focus:ring-2"
                     style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border-strong)', color: 'var(--color-text-primary)' }}
-                    required minLength={6} />
+                    required minLength={8} />
                 </div>
                 {errors.password && <p className="text-xs mt-1" style={{ color: 'var(--color-error)' }}>{errors.password}</p>}
               </div>

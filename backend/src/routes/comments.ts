@@ -90,8 +90,17 @@ router.patch('/:id/resolve', async (req: AuthRequest, res: Response) => {
 
 router.delete('/:id', async (req: AuthRequest, res: Response) => {
   try {
-    const existing = await prisma.comment.findUnique({ where: { id: req.params.id }, select: { projectId: true } });
-    if (!existing || !(await userCanAccessProject(existing.projectId, req.userId!, true))) return res.status(403).json({ error: 'Project access denied' });
+    const existing = await prisma.comment.findUnique({ where: { id: req.params.id }, select: { projectId: true, userId: true } });
+    if (!existing) return res.status(404).json({ error: 'Comment not found' });
+    if (!(await userCanAccessProject(existing.projectId, req.userId!, true))) return res.status(403).json({ error: 'Project access denied' });
+    // Only comment author or project owner/editor can delete
+    if (existing.userId !== req.userId) {
+      const project = await prisma.project.findUnique({ where: { id: existing.projectId }, select: { ownerId: true } });
+      const member = await prisma.projectMember.findFirst({ where: { projectId: existing.projectId, userId: req.userId, role: { in: ['owner', 'editor'] } } });
+      if (!project || (project.ownerId !== req.userId && !member)) {
+        return res.status(403).json({ error: 'Not authorized to delete this comment' });
+      }
+    }
     await prisma.comment.delete({ where: { id: req.params.id } });
     res.json({ success: true });
   } catch (error) {

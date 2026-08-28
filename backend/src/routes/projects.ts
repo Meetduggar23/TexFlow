@@ -5,9 +5,14 @@ import { z } from 'zod';
 import { v4 as uuid } from 'uuid';
 import fs from 'fs';
 import path from 'path';
+import multer from 'multer';
+import unzipper from 'unzipper';
 const archiver = require('archiver') as (type: string, options?: any) => import('archiver').Archiver;
 
+const STORAGE_PATH = process.env.STORAGE_PATH || './storage';
+
 const router = Router();
+const zipUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 
 function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
   return authenticate(req, res, next);
@@ -58,20 +63,25 @@ Happy writing with TexFlow!
 
 router.get('/', optionalAuthenticate, async (req: AuthRequest, res: Response) => {
   try {
-    if (!req.userId) {
-      return res.json({ projects: [] });
-    }
     const showTrashed = req.query.trashed === 'true';
     const showArchived = req.query.archived === 'true';
+    const where: any = {
+      deletedAt: showTrashed ? { not: null } : null,
+      isArchived: showArchived ? true : false,
+    };
+    
+    if (req.userId) {
+      where.OR = [
+        { ownerId: req.userId },
+        { members: { some: { userId: req.userId } } },
+        { isPublic: true }
+      ];
+    } else {
+      where.isPublic = true;
+    }
+    
     const projects = await prisma.project.findMany({
-      where: {
-        OR: [
-          { ownerId: req.userId },
-          { members: { some: { userId: req.userId } } }
-        ],
-        deletedAt: showTrashed ? { not: null } : null,
-        isArchived: showArchived ? true : false,
-      },
+      where,
       include: {
         owner: { select: { id: true, name: true, email: true, avatarUrl: true } },
         members: { include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } } },
@@ -130,6 +140,65 @@ router.post('/', requireAuth, async (req: AuthRequest, res: Response) => {
   }
 });
 
+// Import a complete ZIP while preserving relative folders and binary assets.
+router.post('/import/zip', requireAuth, zipUpload.single('file'), async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'ZIP file is required' });
+    const archive = await unzipper.Open.buffer(req.file.buffer);
+    const entries = archive.files.filter(entry => entry.type === 'File');
+    if (entries.length === 0) return res.status(400).json({ error: 'ZIP contains no files' });
+
+    const safeEntries = entries.map(entry => {
+      const relative = entry.path.replace(/\\/g, '/').replace(/^\/+/, '');
+      if (!relative || relative.split('/').some(part => !part || part === '..' || /[<>:"|?*]/.test(part))) {
+        throw new Error(`Unsafe ZIP path: ${entry.path}`);
+      }
+      return { entry, relative };
+    });
+    const rootTex = safeEntries.find(({ relative }) => /\.tex$/i.test(relative))?.relative;
+    const projectName = String(req.body?.name || req.file.originalname.replace(/\.zip$/i, '')).trim() || 'Imported Project';
+    const project = await prisma.project.create({
+      data: {
+        name: projectName,
+        ownerId: req.userId!,
+        compiler: 'pdflatex',
+        files: { create: { name: '__placeholder__.txt', path: '/__placeholder__.txt', mimeType: 'text/plain', size: 0, content: '' } },
+      },
+      include: { files: true },
+    });
+    await prisma.file.deleteMany({ where: { projectId: project.id } });
+
+    const folders = new Map<string, string>();
+    for (const { relative } of safeEntries) {
+      const parts = relative.split('/');
+      let parentId: string | null = null;
+      for (let i = 0; i < parts.length - 1; i++) {
+        const folderPath = parts.slice(0, i + 1).join('/');
+        if (!folders.has(folderPath)) {
+          const folder = await prisma.folder.create({ data: { projectId: project.id, name: parts[i], parentId, path: `/${folderPath}` } });
+          folders.set(folderPath, folder.id);
+        }
+        parentId = folders.get(folderPath)!;
+      }
+      const { entry } = safeEntries.find(item => item.relative === relative)!;
+      const buffer = await entry.buffer();
+      const name = parts[parts.length - 1];
+      const mimeType = getImportMimeType(name);
+      const content = /^(image\/|application\/pdf)/i.test(mimeType) ? buffer.toString('base64') : buffer.toString('utf8');
+      await prisma.file.create({ data: { projectId: project.id, folderId: parentId, name, path: `/${relative}`, mimeType, size: buffer.length, content } });
+    }
+    const result = await prisma.project.findUnique({ where: { id: project.id }, include: { files: true, folders: true } });
+    res.json({ project: result, rootFile: rootTex || null });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message || 'ZIP import failed' });
+  }
+});
+
+function getImportMimeType(filename: string): string {
+  const ext = filename.split('.').pop()?.toLowerCase();
+  return ({ tex: 'application/x-tex', latex: 'application/x-tex', sty: 'application/x-latex', cls: 'application/x-latex', bib: 'application/x-bibtex', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', pdf: 'application/pdf', md: 'text/markdown', txt: 'text/plain' } as Record<string, string>)[ext || ''] || 'application/octet-stream';
+}
+
 router.post('/trash/empty', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const trashedProjects = await prisma.project.findMany({
@@ -145,7 +214,7 @@ router.post('/trash/empty', requireAuth, async (req: AuthRequest, res: Response)
 
     for (const p of trashedProjects) {
       try {
-        const projectDir = path.join(process.cwd(), 'projects', p.id);
+        const projectDir = path.join(STORAGE_PATH, 'projects', p.id);
         if (fs.existsSync(projectDir)) fs.rmSync(projectDir, { recursive: true, force: true });
       } catch {}
     }
@@ -206,7 +275,7 @@ router.post('/bulk/permanent-delete', requireAuth, async (req: AuthRequest, res:
     });
     for (const p of projects) {
       try {
-        const projectDir = path.join(process.cwd(), 'projects', p.id);
+        const projectDir = path.join(STORAGE_PATH, 'projects', p.id);
         if (fs.existsSync(projectDir)) fs.rmSync(projectDir, { recursive: true, force: true });
       } catch {}
     }
@@ -294,7 +363,7 @@ router.delete('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
     if (permanent) {
       // Permanent delete — remove files from disk and DB
       try {
-        const projectDir = path.join(process.cwd(), 'projects', req.params.id);
+        const projectDir = path.join(STORAGE_PATH, 'projects', req.params.id);
         if (fs.existsSync(projectDir)) fs.rmSync(projectDir, { recursive: true, force: true });
       } catch {}
       await prisma.documentVersion.deleteMany({ where: { projectId: req.params.id } });
@@ -386,6 +455,12 @@ router.post('/:id/versions', requireAuth, async (req: AuthRequest, res: Response
 
 router.post('/:id/restore/:versionId', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
+    const project = await prisma.project.findUnique({ where: { id: req.params.id }, select: { ownerId: true } });
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    const isOwner = project.ownerId === req.userId;
+    const member = await prisma.projectMember.findFirst({ where: { projectId: req.params.id, userId: req.userId, role: { in: ['owner', 'editor'] } } });
+    if (!isOwner && !member) return res.status(403).json({ error: 'Not authorized to restore versions' });
+    
     const version = await prisma.documentVersion.findUnique({
       where: { id: req.params.versionId }
     });

@@ -41,7 +41,7 @@ const templates = [
     category: 'CV / Resume',
     description: 'Professional resume template',
     author: 'TexFlow',
-    content: `\\documentclass[11pt]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage{enumitem}\n\\usepackage{hyperref}\n\\usepackage[margin=0.75in]{geometry}\n\\name{Your Name}\n\\address{Email: email@example.com \\\\ Phone: (555) 123-4567}\n\\date{}\n\\begin{document}\n\\maketitle\n\\section{Education}\n\\textbf{University Name} \\hfill 2020--2024\\\\\nBachelor of Science in Computer Science\n\\section{Experience}\n\\textbf{Company Name} \\hfill 2023--2024\\\\\nSoftware Engineer\n\\begin{itemize}[nosep]\n\\item Achievement 1\n\\item Achievement 2\n\\end{itemize}\n\\section{Skills}\nProgramming: Python, Java, C++\\\\\nTools: Git, Docker, LaTeX\n\\end{document}`
+    content: `\\documentclass[11pt]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage{enumitem}\n\\usepackage{hyperref}\n\\usepackage[margin=0.75in]{geometry}\n\\title{Your Name -- Curriculum Vitae}\n\\author{email@example.com \\\\ Phone: (555) 123-4567}\n\\date{}\n\\begin{document}\n\\maketitle\n\\section{Education}\n\\textbf{University Name} \\hfill 2020--2024\\\\\nBachelor of Science in Computer Science\n\\section{Experience}\n\\textbf{Company Name} \\hfill 2023--2024\\\\\nSoftware Engineer\n\\begin{itemize}[nosep]\n\\item Achievement 1\n\\item Achievement 2\n\\end{itemize}\n\\section{Skills}\nProgramming: Python, Java, C++\\\\\nTools: Git, Docker, LaTeX\n\\end{document}`
   },
   {
     id: 'beamer',
