@@ -57,7 +57,7 @@ export default function Landing() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-2">
               <BrandLogo className="w-8 h-8 object-contain" />
-              <span className="text-xl font-bold text-texflow-900">Tex<span className="gradient-text">Flow</span></span>
+              <span className="text-xl font-bold tf-brand"><span className="tf-brand-tex">Tex</span><span className="tf-brand-flow">Flow</span></span>
             </div>
             
             <div className="hidden md:flex items-center gap-8">
@@ -220,7 +220,7 @@ export default function Landing() {
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-texflow-900 mb-4">
-            Start your next document with <span className="gradient-text tf-brand">TexFlow</span>
+            Start your next document with <span className="tf-brand"><span className="tf-brand-tex">Tex</span><span className="tf-brand-flow">Flow</span></span>
           </h2>
           <p className="text-texflow-600 mb-8">
             {taglines[2]} Join thousands of researchers, students, and writers using TexFlow every day. It's free.
@@ -236,7 +236,7 @@ export default function Landing() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
               <BrandLogo className="w-6 h-6 object-contain" />
-              <span className="font-bold text-texflow-900">Tex<span className="gradient-text">Flow</span></span>
+              <span className="font-bold tf-brand"><span className="tf-brand-tex">Tex</span><span className="tf-brand-flow">Flow</span></span>
             </div>
             
             <div className="flex items-center gap-6 text-sm text-texflow-600">

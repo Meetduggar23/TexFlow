@@ -32,7 +32,7 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
       </div>
       
       <h1 className="text-3xl font-bold text-texflow-900 mb-2 tracking-tight">
-        Tex<span className="gradient-text">Flow</span>
+        <span className="tf-brand"><span className="tf-brand-tex">Tex</span><span className="tf-brand-flow">Flow</span></span>
       </h1>
       <p className="text-texflow-600 text-sm mb-8">Collaborative LaTeX Writing Platform</p>
       

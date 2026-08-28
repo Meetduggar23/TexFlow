@@ -39,7 +39,7 @@ export default function BlogFooter() {
             className="text-[13px] font-semibold mb-2 tf-brand"
             style={{ color: 'var(--color-text-primary)' }}
           >
-            TexFlow
+            <span className="tf-brand"><span className="tf-brand-tex">Tex</span><span className="tf-brand-flow">Flow</span></span>
           </p>
           <p className="text-[12px] leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
             Free collaborative LaTeX editor.

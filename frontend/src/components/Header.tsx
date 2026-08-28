@@ -7,7 +7,7 @@ export default function Header() {
     <header className="h-14 border-b border-texflow-800 bg-dark-900/80 backdrop-blur-sm flex items-center px-4">
       <Link to="/" className="flex items-center gap-2">
         <BrandLogo className="w-8 h-8 object-contain" />
-        <span className="text-lg font-bold text-texflow-900">Tex<span className="gradient-text">Flow</span></span>
+        <span className="text-lg font-bold tf-brand"><span className="tf-brand-tex">Tex</span><span className="tf-brand-flow">Flow</span></span>
       </Link>
 
       <nav className="ml-8 flex items-center gap-1">

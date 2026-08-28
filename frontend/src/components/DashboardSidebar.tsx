@@ -221,7 +221,7 @@ export default function DashboardSidebar({ collapsed, onToggleCollapse, mobileOp
           {/* Logo + brand — always visible */}
           <button onClick={() => nav('/dashboard')} className="flex items-center gap-2 cursor-pointer rounded px-1 py-0.5 hover:bg-[var(--color-surface-elevated)] transition-colors flex-1 min-w-0" aria-label="Go to dashboard">
             <BrandLogo className="w-6 h-6 object-contain flex-shrink-0" />
-            <span className="text-base font-bold whitespace-nowrap" style={{ color: 'var(--color-text-primary)' }}>Tex<span style={{ color: 'var(--color-accent)' }}>Flow</span></span>
+            <span className="text-base font-bold whitespace-nowrap tf-brand"><span className="tf-brand-tex">Tex</span><span className="tf-brand-flow">Flow</span></span>
           </button>
 
           {/* Search icon */}

@@ -83,7 +83,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
         <div className="flex items-center justify-between p-4" style={{ borderBottom: '1px solid var(--color-border)' }}>
           <div className="flex items-center gap-2">
             <BrandLogo className="w-7 h-7 object-contain" />
-            <span className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>Tex<span style={{ color: 'var(--color-accent)' }}>Flow</span></span>
+            <span className="text-lg font-bold tf-brand"><span className="tf-brand-tex">Tex</span><span className="tf-brand-flow">Flow</span></span>
           </div>
           <button onClick={onClose} className="p-1 rounded transition-colors" style={{ color: 'var(--color-text-muted)' }}
             onMouseEnter={e => e.currentTarget.style.background = 'var(--color-surface-elevated)'}

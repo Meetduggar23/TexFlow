@@ -179,7 +179,7 @@ export default function EditorHeader({
           <div className={clsx('flex items-center gap-1.5 transition-all duration-200', logoHovered ? 'opacity-0 blur-[3px] scale-90' : 'opacity-100 blur-0 scale-100')} style={{ pointerEvents: logoHovered ? 'none' : 'auto' }}>
             <button onClick={onBack} className="flex items-center gap-1.5 rounded px-1.5 py-1 transition-colors hover:bg-[var(--color-surface-elevated)]" aria-label="Go to dashboard">
               <BrandLogo alt="TexFlow" className="w-5 h-5 object-contain" />
-              <span className="text-sm font-bold" style={{ color: 'var(--color-accent)' }}>TexFlow</span>
+              <span className="text-sm font-bold tf-brand"><span className="tf-brand-tex">Tex</span><span className="tf-brand-flow">Flow</span></span>
             </button>
           </div>
           {/* Hovered: Home icon */}

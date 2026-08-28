@@ -43,7 +43,7 @@ export default function Login() {
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
             <BrandLogo className="w-10 h-10 object-contain" />
-            <span className="text-2xl font-bold text-texflow-900">Tex<span className="gradient-text">Flow</span></span>
+            <span className="text-2xl font-bold tf-brand"><span className="tf-brand-tex">Tex</span><span className="tf-brand-flow">Flow</span></span>
           </Link>
           <h1 className="text-2xl font-bold text-texflow-900 mb-2">Welcome back</h1>
           <p className="text-texflow-600">Sign in to your account</p>

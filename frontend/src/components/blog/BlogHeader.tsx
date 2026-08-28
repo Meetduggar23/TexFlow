@@ -12,7 +12,7 @@ export default function BlogHeader({ onSearchOpen }: BlogHeaderProps) {
           className="text-[11px] font-bold uppercase tracking-[0.2em] mb-3"
           style={{ color: 'var(--color-accent)' }}
         >
-          <span className="tf-brand" style={{ textTransform: 'none', letterSpacing: '0.02em' }}>TexFlow</span> Blog
+          <span className="tf-brand" style={{ textTransform: 'none', letterSpacing: '0.02em' }}><span className="tf-brand-tex">Tex</span><span className="tf-brand-flow">Flow</span></span> Blog
         </h1>
         <p
           className="text-[15px] md:text-[17px] leading-relaxed max-w-xl"
